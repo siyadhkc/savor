@@ -14,9 +14,25 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
+
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/users/', include('users.urls')),
+    path('api/restaurant/', include('restaurant.urls')),
+    path('api/menu/', include('menu.urls')),
+    # orders and payments coming next
 ]
+
+# WHY this at the bottom?
+# During development Django needs to serve media files
+# (uploaded images) itself. In production a real web
+# server like Nginx handles this. This line enables
+# that development behaviour.
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

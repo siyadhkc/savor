@@ -15,12 +15,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
 
     # Third-party
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
     'django_filters',
+    'rest_framework_simplejwt.token_blacklist',
 
     # Our apps
     'users',
@@ -113,3 +115,28 @@ REST_FRAMEWORK = {
 
 # CORS — allow React frontend
 CORS_ALLOW_ALL_ORIGINS = True
+
+# Add this full JWT config at the bottom of settings.py
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
+    # """
+    # WHY ROTATE_REFRESH_TOKENS = True?
+    # Every time you use a refresh token to get a new
+    # access token, you also get a NEW refresh token.
+    # The old one is blacklisted automatically.
+    # This is called refresh token rotation — it's the
+    # secure standard for JWT-based auth in production.
+    # """
+    'BLACKLIST_AFTER_ROTATION': True,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    # """
+    # WHY Bearer?
+    # This is the industry standard prefix for JWT tokens.
+    # React will send: Authorization: Bearer <your_token>
+    # The PDF specifically mentions this format.
+    # """
+}

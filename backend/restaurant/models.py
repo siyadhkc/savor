@@ -10,7 +10,7 @@ class Restaurant(models.Model):
     """
 
     name = models.CharField(max_length=255)
-    logo = models.ImageField(upload_to='restaurants/logos/', blank=True, null=True)
+    logo = models.ImageField(upload_to='restaurant/logos/', blank=True, null=True)
     """
     WHY ImageField?
     ImageField is a FileField that validates the uploaded
