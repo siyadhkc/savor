@@ -1,5 +1,5 @@
 from rest_framework import viewsets, status
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django.shortcuts import get_object_or_404
@@ -11,7 +11,8 @@ from .serializers import (
 from menu.models import MenuItem
 from payments.models import Payment
 
-
+from django.core.mail import send_mail
+from django.conf import settings
 class CartViewSet(viewsets.GenericViewSet):
     """
     WHY GenericViewSet instead of ModelViewSet?
@@ -219,6 +220,37 @@ class OrderViewSet(viewsets.ModelViewSet):
             method=serializer.validated_data['payment_method'],
             status='pending'
         )
+        try:
+            send_mail(
+                subject=f'Order #{order.id} Placed Successfully! 🎉',
+                message=f'''
+Hi {request.user.username},
+
+Your order #{order.id} has been placed successfully!
+
+Restaurant: {order.restaurant.name}
+Total: ₹{order.total_amount}
+Address: {order.address}
+Payment: {serializer.validated_data["payment_method"].upper()}
+
+We will notify you when your order is ready. 🍕
+
+Thank you for ordering with FoodDelivery!
+        ''',
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[request.user.email],
+        fail_silently=True,
+    )
+        except Exception:
+            pass          
+
+
+
+
+
+
+
+
 
         # Clear cart after order placed
         cart_items.delete()
@@ -247,3 +279,123 @@ class OrderViewSet(viewsets.ModelViewSet):
         order.status = new_status
         order.save()
         return Response(OrderSerializer(order).data)
+    
+
+from django.http import HttpResponse
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.units import inch
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def download_invoice(request, order_id):
+    """
+    WHY ReportLab?
+    PDF requirement from the PDF guidelines.
+    ReportLab is the most widely used Python PDF library.
+    It gives precise control over layout, tables, fonts.
+    We're generating the invoice entirely in Python —
+    no HTML to PDF conversion needed.
+    """
+    try:
+        order = Order.objects.get(id=order_id, user=request.user)
+    except Order.DoesNotExist:
+        return Response(
+            {'error': 'Order not found.'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    # Create HTTP response with PDF headers
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = \
+        f'attachment; filename="invoice_order_{order.id}.pdf"'
+    """
+    WHY these headers?
+    content_type: tells browser this is a PDF file
+    Content-Disposition: 'attachment' triggers download
+    filename: what the downloaded file will be named
+    """
+
+    # Build PDF
+    doc = SimpleDocTemplate(response, pagesize=A4)
+    styles = getSampleStyleSheet()
+    story = []
+
+    # Title
+    story.append(Paragraph(
+        '🍕 FoodDelivery - Order Invoice',
+        styles['Title']
+    ))
+    story.append(Spacer(1, 0.2 * inch))
+
+    # Order Info
+    story.append(Paragraph(f'Order #{order.id}', styles['Heading2']))
+    story.append(Paragraph(
+        f'Date: {order.created_at.strftime("%d %B %Y, %I:%M %p")}',
+        styles['Normal']
+    ))
+    story.append(Paragraph(
+        f'Customer: {order.user.username} ({order.user.email})',
+        styles['Normal']
+    ))
+    story.append(Paragraph(
+        f'Restaurant: {order.restaurant.name}',
+        styles['Normal']
+    ))
+    story.append(Paragraph(
+        f'Delivery Address: {order.address}',
+        styles['Normal']
+    ))
+    story.append(Paragraph(
+        f'Status: {order.status.upper()}',
+        styles['Normal']
+    ))
+    story.append(Spacer(1, 0.2 * inch))
+
+    # Items Table
+    table_data = [['Item', 'Qty', 'Price', 'Total']]
+    for item in order.items.all():
+        table_data.append([
+            item.menu_item.name if item.menu_item else 'Deleted Item',
+            str(item.quantity),
+            f'Rs.{item.price}',
+            f'Rs.{item.total_price}',
+        ])
+
+    # Add total row
+    table_data.append(['', '', 'TOTAL', f'Rs.{order.total_amount}'])
+
+    table = Table(table_data, colWidths=[3 * inch, 1 * inch, 1.5 * inch, 1.5 * inch])
+    table.setStyle(TableStyle([
+        # Header row styling
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#ff4500')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 12),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        # Data rows
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -1), 10),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -2), [colors.white, colors.HexColor('#f9f9f9')]),
+        # Total row
+        ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#fff3f0')),
+        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ('TEXTCOLOR', (2, -1), (-1, -1), colors.HexColor('#ff4500')),
+        # Grid
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#dddddd')),
+        ('PADDING', (0, 0), (-1, -1), 8),
+    ]))
+
+    story.append(table)
+    story.append(Spacer(1, 0.3 * inch))
+    story.append(Paragraph(
+        'Thank you for ordering with FoodDelivery! 🍕',
+        styles['Normal']
+    ))
+
+    doc.build(story)
+    return response

@@ -8,4 +8,5 @@ router.register(r'orders', views.OrderViewSet, basename='order')
 
 urlpatterns = [
     path('', include(router.urls)),
+     path('orders/<int:order_id>/invoice/', views.download_invoice, name='invoice'),
 ]

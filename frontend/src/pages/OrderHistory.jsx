@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import api from '../api/axios'
 import toast from 'react-hot-toast'
-
 /*
 WHY status colors as a config object?
 Instead of writing if/else for every status,
@@ -43,7 +42,41 @@ const OrderHistory = () => {
             setExpandedOrder(location.state.newOrderId)
         }
     }, [location.state?.newOrderId])
-
+    const handleDownloadInvoice = async (orderId) => {
+    try {
+        const response = await api.get(
+            `/orders/orders/${orderId}/invoice/`,
+            { responseType: 'blob' }
+            /*
+            WHY responseType: 'blob'?
+            PDF is binary data, not JSON text.
+            blob tells Axios to treat the response as
+            raw binary data — required for file downloads.
+            Without this, the PDF will be corrupted.
+            */
+        )
+        const url = window.URL.createObjectURL(
+            new Blob([response.data])
+        )
+        const link = document.createElement('a')
+        link.href = url
+        link.setAttribute('download', `invoice_order_${orderId}.pdf`)
+        document.body.appendChild(link)
+        link.click()
+        link.remove()
+        window.URL.revokeObjectURL(url)
+        /*
+        WHY revokeObjectURL?
+        createObjectURL creates a temporary URL in memory.
+        revokeObjectURL releases that memory after download.
+        Always clean up — BEGINNER MISTAKE: memory leaks
+        from not revoking object URLs.
+        */
+        toast.success('Invoice downloaded! 📄')
+    } catch {
+        toast.error('Failed to download invoice.')
+    }
+}
     const fetchOrders = async () => {
         try {
             const response = await api.get('/orders/orders/')
@@ -176,6 +209,12 @@ const OrderHistory = () => {
                                             <div style={styles.orderAddress}>
                                                 <strong>📍 Delivered to:</strong>
                                                 <p>{order.address}</p>
+                                                <button
+                                                    onClick={() => handleDownloadInvoice(order.id)}
+                                                    style={styles.invoiceBtn}
+                                                >
+                                                    📄 Download Invoice
+                                                </button>
                                             </div>
                                         </div>
                                     )}
@@ -310,6 +349,17 @@ const styles = {
         padding: '80px',
         color: '#666',
     },
+    invoiceBtn: {
+    padding: '8px 16px',
+    backgroundColor: '#e3f2fd',
+    color: '#1565c0',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontWeight: '600',
+    fontSize: '0.9rem',
+    marginTop: '12px',
+},
 }
 
 export default OrderHistory

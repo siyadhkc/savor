@@ -1,7 +1,10 @@
+
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../api/axios'
 import toast from 'react-hot-toast'
+
+
 
 const Checkout = () => {
     const [cart, setCart] = useState(null)
@@ -45,35 +48,140 @@ const Checkout = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value })
     }
 
-    const handlePlaceOrder = async (e) => {
-        e.preventDefault()
+    
 
-        if (!formData.address.trim()) {
-            toast.error('Please enter a delivery address!')
+    // const handlePlaceOrder = async (e) => {
+    //     e.preventDefault()
+
+    //     if (!formData.address.trim()) {
+    //         toast.error('Please enter a delivery address!')
+    //         return
+    //     }
+
+    //     setPlacing(true)
+    //     try {
+    //         const response = await api.post('/orders/orders/', formData)
+    //         /*
+    //         WHY navigate to orders page after placing?
+    //         User should see their new order immediately.
+    //         This confirms the order was placed successfully.
+    //         Passing state lets OrderHistory highlight the new order.
+    //         */
+    //         toast.success('Order placed successfully! 🎉')
+    //         navigate('/orders', {
+    //             state: { newOrderId: response.data.id }
+    //         })
+    //     } catch (error) {
+    //         console.error('Failed to place order:', error)
+    //         const message = error.response?.data?.error || 'Failed to place order.'
+    //         toast.error(message)
+    //     } finally {
+    //         setPlacing(false)
+    //     }
+    // }
+
+    // Add at top of Checkout.jsx
+const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+        const script = document.createElement('script')
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+        script.onload = () => resolve(true)
+        script.onerror = () => resolve(false)
+        document.body.appendChild(script)
+        /*
+        WHY dynamically load the script?
+        Razorpay's checkout script must be loaded fresh
+        for each payment session. Dynamic loading ensures
+        the latest version is always used.
+        */
+    })
+}
+
+const handlePlaceOrder = async (e) => {
+    e.preventDefault()
+
+    if (!formData.address.trim()) {
+        toast.error('Please enter a delivery address!')
+        return
+    }
+
+    setPlacing(true)
+    try {
+        // Step 1: Create the order
+        const orderRes = await api.post('/orders/orders/', formData)
+        const order = orderRes.data
+
+        if (formData.payment_method === 'cod') {
+            // COD flow — no payment needed
+            toast.success('Order placed successfully! 🎉')
+            navigate('/orders', { state: { newOrderId: order.id } })
             return
         }
 
-        setPlacing(true)
-        try {
-            const response = await api.post('/orders/orders/', formData)
-            /*
-            WHY navigate to orders page after placing?
-            User should see their new order immediately.
-            This confirms the order was placed successfully.
-            Passing state lets OrderHistory highlight the new order.
-            */
-            toast.success('Order placed successfully! 🎉')
-            navigate('/orders', {
-                state: { newOrderId: response.data.id }
-            })
-        } catch (error) {
-            console.error('Failed to place order:', error)
-            const message = error.response?.data?.error || 'Failed to place order.'
-            toast.error(message)
-        } finally {
-            setPlacing(false)
+        // Step 2: Razorpay flow
+        const loaded = await loadRazorpayScript()
+        if (!loaded) {
+            toast.error('Razorpay failed to load. Try again.')
+            return
         }
+
+        // Step 3: Create Razorpay order on backend
+        const razorRes = await api.post('/payments/create-razorpay-order/', {
+            order_id: order.id,
+        })
+
+        // Step 4: Open Razorpay popup
+        const options = {
+            key: razorRes.data.key,
+            amount: razorRes.data.amount,
+            currency: razorRes.data.currency,
+            name: 'FoodDelivery',
+            description: `Order #${order.id}`,
+            order_id: razorRes.data.razorpay_order_id,
+            handler: async (paymentResponse) => {
+                /*
+                WHY handler function?
+                Razorpay calls this function after successful payment.
+                It receives payment_id, order_id, and signature.
+                We send these to our backend for verification.
+                */
+                try {
+                    await api.post('/payments/verify-payment/', {
+                        razorpay_order_id: paymentResponse.razorpay_order_id,
+                        razorpay_payment_id: paymentResponse.razorpay_payment_id,
+                        razorpay_signature: paymentResponse.razorpay_signature,
+                    })
+                    toast.success('Payment successful! 🎉')
+                    navigate('/orders', {
+                        state: { newOrderId: order.id }
+                    })
+                } catch {
+                    toast.error('Payment verification failed.')
+                }
+            },
+            prefill: {
+                name: cart?.user || '',
+                email: '',
+            },
+            theme: { color: '#ff4500' },
+            modal: {
+                ondismiss: () => {
+                    toast.error('Payment cancelled.')
+                    setPlacing(false)
+                }
+            }
+        }
+
+        const razorpay = new window.Razorpay(options)
+        razorpay.open()
+
+    } catch (error) {
+        const message = error.response?.data?.error || 'Failed to place order.'
+        toast.error(message)
+    } finally {
+        setPlacing(false)
     }
+}
 
     if (loading) {
         return (
