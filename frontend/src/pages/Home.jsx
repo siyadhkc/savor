@@ -23,7 +23,7 @@ const Home = () => {
 
     useEffect(() => {
         fetchRestaurants()
-    }, [currentPage])
+    }, [currentPage]) // eslint-disable-line react-hooks/exhaustive-deps
     /*
     WHY [currentPage] in dependency array?
     useEffect re-runs whenever currentPage changes.
@@ -65,6 +65,7 @@ const Home = () => {
             */
             setTotalPages(Math.ceil(response.data.count / 10))
         } catch (error) {
+            console.error('Failed to load restaurants:', error)
             toast.error('Failed to load restaurants.')
         } finally {
             setLoading(false)

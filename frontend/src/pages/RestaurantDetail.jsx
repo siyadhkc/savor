@@ -34,7 +34,7 @@ const RestaurantDetail = () => {
 
     useEffect(() => {
         fetchRestaurantData()
-    }, [id])
+    }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
 
     const fetchRestaurantData = async () => {
         setLoading(true)
@@ -61,6 +61,7 @@ const RestaurantDetail = () => {
             setMenuItems(menuRes.data.results)
             setCategories(categoriesRes.data.results)
         } catch (error) {
+            console.error('Failed to load restaurant:', error)
             toast.error('Failed to load restaurant.')
             navigate('/')
         } finally {
@@ -83,6 +84,7 @@ const RestaurantDetail = () => {
             })
             toast.success(`${menuItem.name} added to cart! 🛒`)
         } catch (error) {
+            console.error('Failed to add item to cart:', error)
             toast.error('Failed to add item to cart.')
         } finally {
             setAddingItem(null)

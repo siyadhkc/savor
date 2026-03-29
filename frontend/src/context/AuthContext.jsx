@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect } from 'react'
 import api from '../api/axios'
 
@@ -45,6 +46,7 @@ export const AuthProvider = ({ children }) => {
             const response = await api.get('/users/profile/')
             setUser(response.data)
         } catch (error) {
+            console.error('Failed to fetch user:', error)
             localStorage.removeItem('access_token')
             localStorage.removeItem('refresh_token')
         } finally {

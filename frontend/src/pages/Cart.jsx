@@ -19,6 +19,7 @@ const Cart = () => {
             const response = await api.get('/orders/cart/my_cart/')
             setCart(response.data)
         } catch (error) {
+            console.error('Failed to load cart:', error)
             toast.error('Failed to load cart.')
         } finally {
             setLoading(false)
@@ -42,6 +43,7 @@ const Cart = () => {
             setCart(response.data)
             toast.success('Cart updated!')
         } catch (error) {
+            console.error('Failed to update quantity:', error)
             toast.error('Failed to update quantity.')
         } finally {
             setUpdatingItem(null)
@@ -57,6 +59,7 @@ const Cart = () => {
             setCart(response.data)
             toast.success('Item removed from cart.')
         } catch (error) {
+            console.error('Failed to remove item from cart:', error)
             toast.error('Failed to remove item.')
         } finally {
             setUpdatingItem(null)
@@ -76,6 +79,7 @@ const Cart = () => {
             */
             toast.success('Cart cleared!')
         } catch (error) {
+            console.error('Failed to clear cart:', error)
             toast.error('Failed to clear cart.')
         }
     }

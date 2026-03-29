@@ -42,13 +42,14 @@ const OrderHistory = () => {
         if (location.state?.newOrderId) {
             setExpandedOrder(location.state.newOrderId)
         }
-    }, [])
+    }, [location.state?.newOrderId])
 
     const fetchOrders = async () => {
         try {
             const response = await api.get('/orders/orders/')
             setOrders(response.data.results)
         } catch (error) {
+            console.error('Failed to load orders:', error)
             toast.error('Failed to load orders.')
         } finally {
             setLoading(false)

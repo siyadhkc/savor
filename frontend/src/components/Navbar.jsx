@@ -31,7 +31,20 @@ const Navbar = () => {
                             <Link to="/orders" style={styles.link}>My Orders</Link>
                             <Link to="/profile" style={styles.link}>
                                 👤 {user.username}
+                                  {/* Add this after the Profile link */}
+                                {/* {(user?.role === 'admin' || user?.is_staff) && (
+                                    <Link to="/admin" style={styles.adminLink}>
+                                        👑 Admin
+                                    </Link>
+                                )} */}
+ 
                             </Link>
+                                                           {(user?.is_staff === true || user?.role === 'admin') && (
+    <Link to="/admin" style={styles.adminLink}>
+        👑 Admin
+    </Link>
+)}
+                          
                             <button onClick={handleLogout} style={styles.logoutBtn}>
                                 Logout
                             </button>
@@ -108,6 +121,14 @@ const styles = {
         fontWeight: 'bold',
         textDecoration: 'none',
     },
+    adminLink: {
+    color: 'white',
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    padding: '6px 14px',
+    borderRadius: '6px',
+    fontWeight: 'bold',
+    textDecoration: 'none',
+},
 }
 
 export default Navbar

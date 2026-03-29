@@ -105,8 +105,8 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ['id', 'email', 'username', 'phone', 'role', 'is_active', 'created_at']
-        read_only_fields = ['id', 'created_at', 'role']
+        fields = ['id', 'email', 'username', 'phone', 'role', 'is_active','is_staff', 'created_at']
+        read_only_fields = ['id', 'created_at', 'role','is_staff']
         """
         WHY read_only_fields?
         id and created_at are auto-generated — never editable.
@@ -114,3 +114,10 @@ class UserSerializer(serializers.ModelSerializer):
         to 'admin' through the profile API.
         Only a superuser can change roles via Django Admin.
         """
+        # WHY add is_staff?
+        # React's Navbar checks user.is_staff to show Admin link.
+        # Without this field in the API response, user.is_staff
+        # is always undefined in React — so Admin link never shows.
+        # is_staff is Django's built-in admin permission flag.
+        # Superusers have is_staff=True automatically.
+        # """

@@ -15,7 +15,7 @@ const Checkout = () => {
 
     useEffect(() => {
         fetchCart()
-    }, [])
+    }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
     const fetchCart = async () => {
         try {
@@ -33,6 +33,7 @@ const Checkout = () => {
             }
             setCart(response.data)
         } catch (error) {
+            console.error('Failed to load cart:', error)
             toast.error('Failed to load cart.')
             navigate('/cart')
         } finally {
@@ -66,6 +67,7 @@ const Checkout = () => {
                 state: { newOrderId: response.data.id }
             })
         } catch (error) {
+            console.error('Failed to place order:', error)
             const message = error.response?.data?.error || 'Failed to place order.'
             toast.error(message)
         } finally {

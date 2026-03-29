@@ -13,6 +13,13 @@ import Checkout from './pages/Checkout'
 import OrderHistory from './pages/OrderHistory'
 import Profile from './pages/Profile'
 
+
+import AdminDashboard from './pages/admin/AdminDashboard'
+import AdminRestaurants from './pages/admin/AdminRestaurants'
+import AdminMenu from './pages/admin/AdminMenu'
+import AdminOrders from './pages/admin/AdminOrders'
+import AdminUsers from './pages/admin/AdminUsers'
+
 /*
 WHY wrap everything in AuthProvider?
 AuthProvider must be the outermost wrapper so that
@@ -51,6 +58,23 @@ function App() {
                     } />
                     <Route path="/profile" element={
                         <ProtectedRoute><Profile /></ProtectedRoute>
+                    } />
+
+                         {/* Admin Protected */}
+                    <Route path="/admin" element={
+                        <ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>
+                    } />
+                    <Route path="/admin/restaurants" element={
+                        <ProtectedRoute adminOnly><AdminRestaurants /></ProtectedRoute>
+                    } />
+                    <Route path="/admin/menu" element={
+                        <ProtectedRoute adminOnly><AdminMenu /></ProtectedRoute>
+                    } />
+                    <Route path="/admin/orders" element={
+                        <ProtectedRoute adminOnly><AdminOrders /></ProtectedRoute>
+                    } />
+                    <Route path="/admin/users" element={
+                        <ProtectedRoute adminOnly><AdminUsers /></ProtectedRoute>
                     } />
 
                     {/* Catch all — redirect to home */}
