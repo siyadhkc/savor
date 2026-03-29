@@ -96,6 +96,7 @@ const AdminRestaurants = () => {
 
             setShowModal(false)
             fetchRestaurants()
+        // eslint-disable-next-line no-unused-vars
         } catch (error) {
             toast.error('Failed to save restaurant.')
         } finally {
