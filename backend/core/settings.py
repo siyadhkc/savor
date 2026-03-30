@@ -178,10 +178,10 @@ if os.environ.get('DATABASE_URL'):
 
 # Production CORS — only allow your Vercel frontend
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173',       # local dev
-    'https://food-delivery-fc1seb8ud-siyadhkcs-projects.vercel.app', # replace after Vercel deploy
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'https://food-delivery-seven-bice.vercel.app',  # ← correct URL
 ]
 CORS_ALLOW_ALL_ORIGINS = False
-
 # Security for production
 ALLOWED_HOSTS = ['*']
