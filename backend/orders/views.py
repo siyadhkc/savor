@@ -157,6 +157,8 @@ class OrderViewSet(viewsets.ModelViewSet):
         user = self.request.user
         if user.is_staff:
             return Order.objects.all().order_by('-created_at')
+        if hasattr(user, 'restaurant'):
+            return Order.objects.filter(restaurant=user.restaurant).order_by('-created_at')
         return Order.objects.filter(user=user).order_by('-created_at')
 
     def create(self, request):
@@ -223,8 +225,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         try:
             send_mail(
                 subject=f'Order #{order.id} Placed Successfully! 🎉',
-                message=f'''
-Hi {request.user.username},
+                message=f'''Hi {request.user.username},
 
 Your order #{order.id} has been placed successfully!
 
@@ -236,21 +237,13 @@ Payment: {serializer.validated_data["payment_method"].upper()}
 We will notify you when your order is ready. 🍕
 
 Thank you for ordering with FoodDelivery!
-        ''',
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[request.user.email],
-        fail_silently=True,
-    )
+                ''',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[request.user.email],
+                fail_silently=True,
+            )
         except Exception:
-            pass          
-
-
-
-
-
-
-
-
+            pass
 
         # Clear cart after order placed
         cart_items.delete()
@@ -260,14 +253,21 @@ Thank you for ordering with FoodDelivery!
             status=status.HTTP_201_CREATED
         )
 
-    @action(detail=True, methods=['post'], permission_classes=[IsAdminUser])
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def update_status(self, request, pk=None):
         """
         POST /api/orders/orders/1/update_status/
         Body: { "status": "preparing" }
-        Admin only — customers cannot change their own order status.
+        Admin and restaurant owner only. Customers cannot change their own order status.
         """
         order = self.get_object()
+        
+        # Check permission: MUST be admin or the owner of the restaurant for this order
+        is_admin = request.user.is_staff
+        is_owner = hasattr(request.user, 'restaurant') and order.restaurant == request.user.restaurant
+        if not (is_admin or is_owner):
+            return Response({'error': 'Permission denied.'}, status=status.HTTP_403_FORBIDDEN)
+
         new_status = request.data.get('status')
 
         if new_status not in dict(Order.Status.choices):

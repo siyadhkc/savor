@@ -142,74 +142,75 @@ const AdminRestaurants = () => {
     }
 
     return (
-        <div style={styles.layout}>
-            <AdminSidebar />
-            <div style={styles.main}>
+        <div className="flex min-h-screen">
+            {/* <AdminSidebar /> */}
+            <div className="flex-1 p-7.5 bg-gray-100">
 
                 {/* Header */}
-                <div style={styles.pageHeader}>
-                    <h1 style={styles.title}>Restaurants 🍽️</h1>
-                    <button onClick={openCreateModal} style={styles.addBtn}>
+                <div className="flex justify-between items-center mb-6">
+                    <h1 className="text-3xl font-bold text-gray-800">Restaurants 🍽️</h1>
+                    <button onClick={openCreateModal} className="px-5 py-2.5 bg-primary-600 text-white border-0 rounded-lg font-bold cursor-pointer hover:opacity-90">
                         + Add Restaurant
                     </button>
                 </div>
 
                 {loading ? <p>Loading...</p> : (
-                    <div style={styles.tableCard}>
-                        <table style={styles.table}>
-                            <thead>
-                                <tr style={styles.tableHead}>
-                                    <th style={styles.th}>Logo</th>
-                                    <th style={styles.th}>Name</th>
-                                    <th style={styles.th}>Address</th>
-                                    <th style={styles.th}>Phone</th>
-                                    <th style={styles.th}>Status</th>
-                                    <th style={styles.th}>Actions</th>
+                    <div className="bg-white rounded-2xl shadow-sm p-5 overflow-x-auto">
+                        <table className="w-full border-collapse">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    <th className="px-4 py-3 text-left text-gray-600 text-sm font-semibold border-b border-gray-100">Logo</th>
+                                    <th className="px-4 py-3 text-left text-gray-600 text-sm font-semibold border-b border-gray-100">Name</th>
+                                    <th className="px-4 py-3 text-left text-gray-600 text-sm font-semibold border-b border-gray-100">Address</th>
+                                    <th className="px-4 py-3 text-left text-gray-600 text-sm font-semibold border-b border-gray-100">Phone</th>
+                                    <th className="px-4 py-3 text-left text-gray-600 text-sm font-semibold border-b border-gray-100">Status</th>
+                                    <th className="px-4 py-3 text-left text-gray-600 text-sm font-semibold border-b border-gray-100">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {restaurants.map(r => (
-                                    <tr key={r.id} style={styles.tableRow}>
-                                        <td style={styles.td}>
+                                    <tr key={r.id} className="border-b border-gray-50">
+                                        <td className="px-4 py-3 text-sm">
                                             {r.logo ? (
                                                 <img
                                                     src={getImageUrl(r.logo)}
                                                     alt={r.name}
-                                                    style={styles.logoImg}
+                                                    className="w-12 h-12 rounded-lg object-cover"
                                                 />
                                             ) : (
-                                                <div style={styles.logoPlaceholder}>
+                                                <div className="w-12 h-12 rounded-lg bg-orange-50 flex items-center justify-center text-xl">
                                                     🍽️
                                                 </div>
                                             )}
                                         </td>
-                                        <td style={styles.td}>
-                                            <strong>{r.name}</strong>
+                                        <td className="px-4 py-3 text-sm">
+                                            <strong className="text-gray-800">{r.name}</strong>
                                         </td>
-                                        <td style={styles.td}>{r.address}</td>
-                                        <td style={styles.td}>{r.phone || '—'}</td>
-                                        <td style={styles.td}>
+                                        <td className="px-4 py-3 text-sm text-gray-800">{r.address}</td>
+                                        <td className="px-4 py-3 text-sm text-gray-800">{r.phone || '—'}</td>
+                                        <td className="px-4 py-3 text-sm">
                                             <button
                                                 onClick={() => handleToggleActive(r)}
-                                                style={r.is_active
-                                                    ? styles.activeBadge
-                                                    : styles.inactiveBadge
-                                                }
+                                                className={`px-3 py-1 rounded-full text-xs font-semibold border-0 cursor-pointer ${
+                                                    r.is_active
+                                                        ? 'bg-green-100 text-green-700'
+                                                        : 'bg-red-100 text-red-700'
+                                                }`}
                                             >
                                                 {r.is_active ? '🟢 Active' : '🔴 Inactive'}
                                             </button>
                                         </td>
-                                        <td style={styles.td}>
-                                            <div style={styles.actions}>
+                                        <td className="px-4 py-3 text-sm">
+                                            <div className="flex gap-2">
                                                 <button
                                                     onClick={() => openEditModal(r)}
-                                                    style={styles.editBtn}
+                                                    className="px-3 py-1.5 bg-blue-50 text-blue-600 border-0 rounded-lg cursor-pointer font-semibold text-xs hover:bg-blue-100"
                                                 >
                                                     ✏️ Edit
                                                 </button>
                                                 <button
                                                     onClick={() => handleDelete(r.id)}
-                                                    style={styles.deleteBtn}
+                                                    className="px-3 py-1.5 bg-pink-50 text-red-700 border-0 rounded-lg cursor-pointer font-semibold text-xs hover:bg-pink-100"
                                                 >
                                                     🗑️ Delete
                                                 </button>
@@ -220,7 +221,7 @@ const AdminRestaurants = () => {
                             </tbody>
                         </table>
                         {restaurants.length === 0 && (
-                            <p style={styles.empty}>
+                            <p className="text-center py-10 text-gray-500">
                                 No restaurants yet. Add one!
                             </p>
                         )}
@@ -229,10 +230,10 @@ const AdminRestaurants = () => {
 
                 {/* Modal */}
                 {showModal && (
-                    <div style={styles.overlay}>
-                        <div style={styles.modal}>
-                            <div style={styles.modalHeader}>
-                                <h2 style={styles.modalTitle}>
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                        <div className="bg-white rounded-2xl p-7.5 w-11/12 max-w-lg max-h-11/12 overflow-y-auto">
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-xl font-bold text-gray-800">
                                     {editingRestaurant
                                         ? 'Edit Restaurant'
                                         : 'Add Restaurant'
@@ -240,7 +241,7 @@ const AdminRestaurants = () => {
                                 </h2>
                                 <button
                                     onClick={() => setShowModal(false)}
-                                    style={styles.closeBtn}
+                                    className="text-gray-400 hover:text-gray-600 text-xl bg-transparent border-0 cursor-pointer"
                                 >
                                     ✕
                                 </button>
@@ -261,8 +262,8 @@ const AdminRestaurants = () => {
                                         placeholder: 'e.g. 9876543210'
                                     },
                                 ].map(field => (
-                                    <div key={field.name} style={styles.field}>
-                                        <label style={styles.label}>
+                                    <div key={field.name} className="mb-4">
+                                        <label className="block mb-1.5 font-medium text-gray-700">
                                             {field.label}
                                         </label>
                                         <input
@@ -271,27 +272,27 @@ const AdminRestaurants = () => {
                                             value={formData[field.name]}
                                             onChange={handleChange}
                                             placeholder={field.placeholder}
-                                            style={styles.input}
+                                            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm outline-none box-border"
                                             required={field.name === 'name'}
                                         />
                                     </div>
                                 ))}
 
-                                <div style={styles.field}>
-                                    <label style={styles.label}>Address</label>
+                                <div className="mb-4">
+                                    <label className="block mb-1.5 font-medium text-gray-700">Address</label>
                                     <textarea
                                         name="address"
                                         value={formData.address}
                                         onChange={handleChange}
                                         placeholder="Full address..."
-                                        style={styles.textarea}
+                                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm outline-none box-border resize-vertical font-inherit"
                                         rows={3}
                                         required
                                     />
                                 </div>
 
-                                <div style={styles.field}>
-                                    <label style={styles.label}>
+                                <div className="mb-4">
+                                    <label className="block mb-1.5 font-medium text-gray-700">
                                         Logo Image
                                     </label>
                                     <input
@@ -300,11 +301,11 @@ const AdminRestaurants = () => {
                                         onChange={(e) =>
                                             setLogoFile(e.target.files[0])
                                         }
-                                        style={styles.fileInput}
+                                        className="w-full text-sm"
                                     />
                                 </div>
 
-                                <div style={styles.checkboxField}>
+                                <div className="flex items-center gap-2.5 mb-5 text-gray-700">
                                     <input
                                         type="checkbox"
                                         name="is_active"
@@ -317,21 +318,22 @@ const AdminRestaurants = () => {
                                     </label>
                                 </div>
 
-                                <div style={styles.modalFooter}>
+                                <div className="flex gap-3 justify-end">
                                     <button
                                         type="button"
                                         onClick={() => setShowModal(false)}
-                                        style={styles.cancelBtn}
+                                        className="px-5 py-2.5 bg-transparent text-gray-400 border-2 border-gray-300 rounded-lg font-bold cursor-pointer"
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         type="submit"
                                         disabled={submitting}
-                                        style={submitting
-                                            ? styles.btnDisabled
-                                            : styles.saveBtn
-                                        }
+                                        className={`px-6 py-2.5 text-white border-0 rounded-lg font-bold cursor-pointer ${
+                                            submitting
+                                                ? 'bg-gray-400 cursor-not-allowed'
+                                                : 'bg-primary-600 hover:opacity-90'
+                                        }`}
                                     >
                                         {submitting
                                             ? 'Saving...'
@@ -348,126 +350,6 @@ const AdminRestaurants = () => {
             </div>
         </div>
     )
-}
-
-const styles = {
-    layout: { display: 'flex', minHeight: '100vh' },
-    main: { flex: 1, padding: '30px', backgroundColor: '#f5f5f5' },
-    pageHeader: {
-        display: 'flex', justifyContent: 'space-between',
-        alignItems: 'center', marginBottom: '24px',
-    },
-    title: { fontSize: '1.8rem', fontWeight: 'bold', color: '#333' },
-    addBtn: {
-        padding: '10px 20px', backgroundColor: '#ff4500',
-        color: 'white', border: 'none', borderRadius: '8px',
-        fontWeight: 'bold', cursor: 'pointer', fontSize: '0.95rem',
-    },
-    tableCard: {
-        backgroundColor: 'white', borderRadius: '12px',
-        padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-        overflowX: 'auto',
-    },
-    table: { width: '100%', borderCollapse: 'collapse' },
-    tableHead: { backgroundColor: '#f9f9f9' },
-    th: {
-        padding: '12px 16px', textAlign: 'left',
-        color: '#666', fontSize: '0.85rem',
-        fontWeight: '600', borderBottom: '1px solid #f0f0f0',
-    },
-    tableRow: { borderBottom: '1px solid #f9f9f9' },
-    td: { padding: '12px 16px', color: '#333', fontSize: '0.9rem' },
-    logoImg: {
-        width: '48px', height: '48px',
-        borderRadius: '8px', objectFit: 'cover',
-    },
-    logoPlaceholder: {
-        width: '48px', height: '48px', borderRadius: '8px',
-        backgroundColor: '#fff3f0', display: 'flex',
-        alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem',
-    },
-    activeBadge: {
-        backgroundColor: '#e8f5e9', color: '#2e7d32',
-        border: 'none', padding: '4px 12px', borderRadius: '20px',
-        fontSize: '0.8rem', fontWeight: '600', cursor: 'pointer',
-    },
-    inactiveBadge: {
-        backgroundColor: '#fce4ec', color: '#c62828',
-        border: 'none', padding: '4px 12px', borderRadius: '20px',
-        fontSize: '0.8rem', fontWeight: '600', cursor: 'pointer',
-    },
-    actions: { display: 'flex', gap: '8px' },
-    editBtn: {
-        padding: '6px 12px', backgroundColor: '#e3f2fd',
-        color: '#1565c0', border: 'none', borderRadius: '6px',
-        cursor: 'pointer', fontWeight: '600', fontSize: '0.85rem',
-    },
-    deleteBtn: {
-        padding: '6px 12px', backgroundColor: '#fce4ec',
-        color: '#c62828', border: 'none', borderRadius: '6px',
-        cursor: 'pointer', fontWeight: '600', fontSize: '0.85rem',
-    },
-    empty: { textAlign: 'center', padding: '40px', color: '#999' },
-    overlay: {
-        position: 'fixed', top: 0, left: 0,
-        right: 0, bottom: 0,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        display: 'flex', alignItems: 'center',
-        justifyContent: 'center', zIndex: 1000,
-    },
-    modal: {
-        backgroundColor: 'white', borderRadius: '16px',
-        padding: '30px', width: '90%', maxWidth: '500px',
-        maxHeight: '90vh', overflowY: 'auto',
-    },
-    modalHeader: {
-        display: 'flex', justifyContent: 'space-between',
-        alignItems: 'center', marginBottom: '24px',
-    },
-    modalTitle: { fontSize: '1.3rem', fontWeight: 'bold', color: '#333' },
-    closeBtn: {
-        backgroundColor: 'transparent', border: 'none',
-        fontSize: '1.2rem', cursor: 'pointer', color: '#666',
-    },
-    field: { marginBottom: '16px' },
-    label: {
-        display: 'block', marginBottom: '6px',
-        fontWeight: '500', color: '#444',
-    },
-    input: {
-        width: '100%', padding: '10px 12px',
-        border: '1px solid #ddd', borderRadius: '8px',
-        fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box',
-    },
-    textarea: {
-        width: '100%', padding: '10px 12px',
-        border: '1px solid #ddd', borderRadius: '8px',
-        fontSize: '0.95rem', outline: 'none',
-        boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit',
-    },
-    fileInput: { width: '100%', fontSize: '0.9rem' },
-    checkboxField: {
-        display: 'flex', alignItems: 'center',
-        gap: '10px', marginBottom: '20px', color: '#444',
-    },
-    modalFooter: {
-        display: 'flex', gap: '12px', justifyContent: 'flex-end',
-    },
-    cancelBtn: {
-        padding: '10px 20px', backgroundColor: 'transparent',
-        color: '#666', border: '2px solid #ddd',
-        borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer',
-    },
-    saveBtn: {
-        padding: '10px 24px', backgroundColor: '#ff4500',
-        color: 'white', border: 'none', borderRadius: '8px',
-        fontWeight: 'bold', cursor: 'pointer',
-    },
-    btnDisabled: {
-        padding: '10px 24px', backgroundColor: '#ccc',
-        color: 'white', border: 'none', borderRadius: '8px',
-        fontWeight: 'bold', cursor: 'not-allowed',
-    },
 }
 
 export default AdminRestaurants

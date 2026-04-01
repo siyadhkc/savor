@@ -1,84 +1,150 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from './context/AuthContext'
-import ProtectedRoute from './components/ProtectedRoute'
 
-import Navbar from './components/Navbar'
-import Home from './pages/Home'
-import Login from './pages/Login'
-import Register from './pages/Register'
-import RestaurantDetail from './pages/RestaurantDetail'
-import Cart from './pages/Cart'
-import Checkout from './pages/Checkout'
-import OrderHistory from './pages/OrderHistory'
-import Profile from './pages/Profile'
+// Layouts
+import CustomerLayout from './layouts/CustomerLayout'
+import AdminLayout from './layouts/AdminLayout'
+import RestaurantLayout from './layouts/RestaurantLayout'
 
+// Customer Pages
+import Home from './pages/customer/Home'
+import Login from './pages/customer/Login'
+import Register from './pages/customer/Register'
+import RestaurantDetail from './pages/customer/RestaurantDetail'
+import Cart from './pages/customer/Cart'
+import Checkout from './pages/customer/Checkout'
+import OrderHistory from './pages/customer/OrderHistory'
+import Profile from './pages/customer/Profile'
 
+// Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminRestaurants from './pages/admin/AdminRestaurants'
 import AdminMenu from './pages/admin/AdminMenu'
+import AdminCategories from './pages/admin/AdminCategories'
 import AdminOrders from './pages/admin/AdminOrders'
 import AdminUsers from './pages/admin/AdminUsers'
+import AdminPayments from './pages/admin/AdminPayments'
+
+// Restaurant Pages
+import RestaurantDashboard from './pages/restaurant/RestaurantDashboard'
+import RestaurantMenu from './pages/restaurant/RestaurantMenu'
+import RestaurantOrders from './pages/restaurant/RestaurantOrders'
+import RestaurantProfile from './pages/restaurant/RestaurantProfile'
+
+// Route Guards
+import CustomerRoute from './components/CustomerRoute'
+import AdminRoute from './components/AdminRoute'
+import RestaurantRoute from './components/RestaurantRoute'
+import RoleRedirect from './components/RoleRedirect'
 
 /*
-WHY wrap everything in AuthProvider?
-AuthProvider must be the outermost wrapper so that
-every component inside the app can access auth state.
-If you put it inside, some components won't have access.
+WHY separate layout components?
+CustomerLayout   → renders the top Navbar + page content
+AdminLayout      → renders only the sidebar + page content (Admin)
+RestaurantLayout → renders only the sidebar + page content (Restaurant Owner)
+Each role lives in a completely isolated UI shell.
 */
 
 function App() {
     return (
         <AuthProvider>
             <BrowserRouter>
-                <Navbar />
                 <Toaster position="top-right" />
-                {/*
-                WHY Toaster here?
-                react-hot-toast shows notifications anywhere in the app.
-                Placing it here once means any component can trigger
-                a toast notification without extra setup.
-                */}
                 <Routes>
-                    {/* Public routes */}
-                    <Route path="/" element={<Home />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
-                    <Route path="/restaurant/:id" element={<RestaurantDetail />} />
 
-                    {/* Protected routes — login required */}
-                    <Route path="/cart" element={
-                        <ProtectedRoute><Cart /></ProtectedRoute>
-                    } />
-                    <Route path="/checkout" element={
-                        <ProtectedRoute><Checkout /></ProtectedRoute>
-                    } />
-                    <Route path="/orders" element={
-                        <ProtectedRoute><OrderHistory /></ProtectedRoute>
-                    } />
-                    <Route path="/profile" element={
-                        <ProtectedRoute><Profile /></ProtectedRoute>
-                    } />
+                    {/* ================================
+                        PUBLIC ROUTES
+                        No auth required
+                    ================================ */}
+                    <Route element={<CustomerLayout />}>
+                        <Route path="/login" element={
+                            <RoleRedirect>
+                                <Login />
+                            </RoleRedirect>
+                        } />
+                        <Route path="/register" element={
+                            <RoleRedirect>
+                                <Register />
+                            </RoleRedirect>
+                        } />
+                        <Route path="/" element={
+                            <RoleRedirect>
+                                <Home />
+                            </RoleRedirect>
+                        } />
+                        <Route path="/restaurant/:id" element={<RestaurantDetail />} />
+                    </Route>
 
-                         {/* Admin Protected */}
-                    <Route path="/admin" element={
-                        <ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>
-                    } />
-                    <Route path="/admin/restaurants" element={
-                        <ProtectedRoute adminOnly><AdminRestaurants /></ProtectedRoute>
-                    } />
-                    <Route path="/admin/menu" element={
-                        <ProtectedRoute adminOnly><AdminMenu /></ProtectedRoute>
-                    } />
-                    <Route path="/admin/orders" element={
-                        <ProtectedRoute adminOnly><AdminOrders /></ProtectedRoute>
-                    } />
-                    <Route path="/admin/users" element={
-                        <ProtectedRoute adminOnly><AdminUsers /></ProtectedRoute>
-                    } />
+                    {/* ================================
+                        CUSTOMER PROTECTED ROUTES
+                        Must be logged in + not admin
+                    ================================ */}
+                    <Route element={<CustomerLayout />}>
+                        <Route path="/cart" element={
+                            <CustomerRoute><Cart /></CustomerRoute>
+                        } />
+                        <Route path="/checkout" element={
+                            <CustomerRoute><Checkout /></CustomerRoute>
+                        } />
+                        <Route path="/orders" element={
+                            <CustomerRoute><OrderHistory /></CustomerRoute>
+                        } />
+                        <Route path="/profile" element={
+                            <CustomerRoute><Profile /></CustomerRoute>
+                        } />
+                    </Route>
 
-                    {/* Catch all — redirect to home */}
+                    {/* ================================
+                        ADMIN PROTECTED ROUTES
+                        Must be logged in + is admin
+                    ================================ */}
+                    <Route element={<AdminLayout />}>
+                        <Route path="/admin" element={
+                            <AdminRoute><AdminDashboard /></AdminRoute>
+                        } />
+                        <Route path="/admin/restaurants" element={
+                            <AdminRoute><AdminRestaurants /></AdminRoute>
+                        } />
+                        <Route path="/admin/menu" element={
+                            <AdminRoute><AdminMenu /></AdminRoute>
+                        } />
+                        <Route path="/admin/categories" element={
+                            <AdminRoute><AdminCategories /></AdminRoute>
+                        } />
+                        <Route path="/admin/orders" element={
+                            <AdminRoute><AdminOrders /></AdminRoute>
+                        } />
+                        <Route path="/admin/users" element={
+                            <AdminRoute><AdminUsers /></AdminRoute>
+                        } />
+                        <Route path="/admin/payments" element={
+                            <AdminRoute><AdminPayments /></AdminRoute>
+                        } />
+                    </Route>
+
+                    {/* ================================
+                        RESTAURANT PROTECTED ROUTES
+                        Must be logged in + is restaurant
+                    ================================ */}
+                    <Route element={<RestaurantLayout />}>
+                        <Route path="/restaurant-admin" element={
+                            <RestaurantRoute><RestaurantDashboard /></RestaurantRoute>
+                        } />
+                        <Route path="/restaurant-admin/menu" element={
+                            <RestaurantRoute><RestaurantMenu /></RestaurantRoute>
+                        } />
+                        <Route path="/restaurant-admin/orders" element={
+                            <RestaurantRoute><RestaurantOrders /></RestaurantRoute>
+                        } />
+                        <Route path="/restaurant-admin/profile" element={
+                            <RestaurantRoute><RestaurantProfile /></RestaurantRoute>
+                        } />
+                    </Route>
+
+                    {/* Catch all */}
                     <Route path="*" element={<Navigate to="/" replace />} />
+
                 </Routes>
             </BrowserRouter>
         </AuthProvider>

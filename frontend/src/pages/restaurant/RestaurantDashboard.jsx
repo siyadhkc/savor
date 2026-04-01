@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import AdminSidebar from '../../components/AdminSidebar'
 import api from '../../api/axios'
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -7,7 +6,7 @@ import {
     Cell, Legend
 } from 'recharts'
 import { formatOrderId } from '../../utils/helpers'
-import { Package, Users, Store, IndianRupee, TrendingUp, AlertCircle, CircleCheck, CheckCircle2 } from 'lucide-react'
+import { Package, IndianRupee, TrendingUp, AlertCircle, CheckCircle2 } from 'lucide-react'
 
 const STATUS_COLORS = {
     pending: '#f59e0b',       // amber-500
@@ -17,11 +16,9 @@ const STATUS_COLORS = {
     cancelled: '#ef4444',     // red-500
 }
 
-const AdminDashboard = () => {
+const RestaurantDashboard = () => {
     const [stats, setStats] = useState({
         totalOrders: 0,
-        totalUsers: 0,
-        totalRestaurants: 0,
         totalRevenue: 0,
         recentOrders: [],
         ordersByStatus: [],
@@ -34,10 +31,8 @@ const AdminDashboard = () => {
 
     const fetchStats = async () => {
         try {
-            const [ordersRes, usersRes, restaurantsRes] = await Promise.all([
-                api.get('/orders/orders/'),
-                api.get('/users/all/'),
-                api.get('/restaurant/restaurants/'),
+            const [ordersRes] = await Promise.all([
+                api.get('/orders/orders/')
             ])
 
             const orders = ordersRes.data.results
@@ -57,8 +52,6 @@ const AdminDashboard = () => {
 
             setStats({
                 totalOrders: ordersRes.data.count,
-                totalUsers: usersRes.data.count,
-                totalRestaurants: restaurantsRes.data.count,
                 totalRevenue: totalRevenue.toFixed(2),
                 recentOrders: orders.slice(0, 7), // Changed to 7 for better table look
                 ordersByStatus,
@@ -86,31 +79,15 @@ const AdminDashboard = () => {
             colorClass: 'text-blue-600',
             bgClass: 'bg-blue-50',
             trend: '+5.2%'
-        },
-        {
-            label: 'Active Users',
-            value: stats.totalUsers,
-            icon: Users,
-            colorClass: 'text-emerald-600',
-            bgClass: 'bg-emerald-50',
-            trend: '+2.1%'
-        },
-        {
-            label: 'Restaurants',
-            value: stats.totalRestaurants,
-            icon: Store,
-            colorClass: 'text-violet-600',
-            bgClass: 'bg-violet-50',
-            trend: 'Stable'
-        },
+        }
     ]
 
     return (
         <div className="flex-1 px-8 py-10 bg-slate-50 overflow-y-auto">
             <div className="flex justify-between items-end mb-8">
                 <div>
-                    <h1 className="text-3xl font-black text-slate-800 tracking-tight">Overview</h1>
-                    <p className="text-slate-500 font-medium mt-1">Monitor your restaurant ecosystem in real-time.</p>
+                    <h1 className="text-3xl font-black text-slate-800 tracking-tight">Store Overview</h1>
+                    <p className="text-slate-500 font-medium mt-1">Monitor your restaurant performance in real-time.</p>
                 </div>
                 <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-full border border-slate-200 shadow-sm">
                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
@@ -126,7 +103,7 @@ const AdminDashboard = () => {
             ) : (
                 <>
                     {/* Stat Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                         {statCards.map((card, idx) => {
                             const Icon = card.icon;
                             return (
@@ -216,7 +193,6 @@ const AdminDashboard = () => {
                     <div className="bg-white rounded-[24px] border border-slate-100 shadow-sm overflow-hidden">
                         <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center">
                             <h2 className="text-xl font-bold text-slate-800">Recent Orders</h2>
-                            <button className="text-primary-600 font-semibold text-sm hover:text-primary-700">View All</button>
                         </div>
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse">
@@ -224,7 +200,6 @@ const AdminDashboard = () => {
                                     <tr className="bg-slate-50/50">
                                         <th className="px-6 py-4 text-slate-500 font-semibold text-sm border-b border-slate-100">Order ID</th>
                                         <th className="px-6 py-4 text-slate-500 font-semibold text-sm border-b border-slate-100">Customer</th>
-                                        <th className="px-6 py-4 text-slate-500 font-semibold text-sm border-b border-slate-100">Restaurant</th>
                                         <th className="px-6 py-4 text-slate-500 font-semibold text-sm border-b border-slate-100 text-right">Amount</th>
                                         <th className="px-6 py-4 text-slate-500 font-semibold text-sm border-b border-slate-100 text-center">Status</th>
                                     </tr>
@@ -239,9 +214,6 @@ const AdminDashboard = () => {
                                             </td>
                                             <td className="px-6 py-4 border-b border-slate-50 text-slate-600 font-medium text-sm">
                                                 {order.user_email}
-                                            </td>
-                                            <td className="px-6 py-4 border-b border-slate-50 text-slate-600 font-medium text-sm">
-                                                {order.restaurant_name}
                                             </td>
                                             <td className="px-6 py-4 border-b border-slate-50 text-slate-800 font-bold text-sm text-right">
                                                 ₹{order.total_amount}
@@ -273,4 +245,4 @@ const AdminDashboard = () => {
     )
 }
 
-export default AdminDashboard
+export default RestaurantDashboard

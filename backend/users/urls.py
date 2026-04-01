@@ -19,6 +19,7 @@ The PDF specifically requires this flow.
 urlpatterns = [
     # Auth endpoints
     path('register/', views.RegisterView.as_view(), name='register'),
+    path('register/restaurant/', views.RegisterRestaurantView.as_view(), name='register_restaurant'),
     path('login/', TokenObtainPairView.as_view(), name='login'),
     path('login/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('logout/', views.logout_view, name='logout'),

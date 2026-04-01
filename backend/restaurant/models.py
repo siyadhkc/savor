@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 class Restaurant(models.Model):
     """
@@ -8,7 +9,7 @@ class Restaurant(models.Model):
     Separating it into its own app keeps code organized —
     this is the Django principle of "separation of concerns".
     """
-
+    owner = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='restaurant', null=True, blank=True)
     name = models.CharField(max_length=255)
     logo = models.ImageField(upload_to='restaurant/logos/', blank=True, null=True)
     """

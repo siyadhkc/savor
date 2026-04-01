@@ -1,34 +1,7 @@
 import axios from 'axios'
 
-const BASE_URL = 'http://127.0.0.1:8000/api'
-
-/*
-WHY a custom axios instance?
-Instead of writing the base URL in every single API call,
-we create one instance with it pre-configured.
-Every request automatically goes to our Django backend.
-This is the DRY principle — Don't Repeat Yourself.
-BEGINNER MISTAKE: hardcoding the full URL in every component.
-If you change the backend URL, you'd have to update 50 files.
-*/
-// const api = axios.create({
-//     baseURL: BASE_URL,
-//     headers: {
-//         'Content-Type': 'application/json',
-//     },
-// })
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL,
-    /*
-    WHY import.meta.env?
-    Vite uses import.meta.env to read environment variables.
-    In development: reads .env.development → localhost
-    In production build: reads .env.production → Render URL
-    This means ONE codebase works in both environments
-    without any manual URL changes.
-    BEGINNER MISTAKE: hardcoding the backend URL —
-    you'd have to change it every time you deploy.
-    */
     headers: {
         'Content-Type': 'application/json',
     },
@@ -79,8 +52,11 @@ api.interceptors.response.use(
 
             try {
                 const refresh = localStorage.getItem('refresh_token')
+                
+                // CRITICAL: Using environment variable for production readiness
+                // Never hardcode URLs like localhost:8000 here.
                 const response = await axios.post(
-                    `${BASE_URL}/users/login/refresh/`,
+                    `${import.meta.env.VITE_API_URL}/users/login/refresh/`,
                     { refresh }
                 )
 

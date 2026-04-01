@@ -1,12 +1,17 @@
 from pathlib import Path
 from decouple import config
+import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', cast=bool)
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+    'localhost', 
+    '127.0.0.1', 
+    '.onrender.com'
+]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -88,7 +93,6 @@ USE_I18N = True
 USE_TZ = True
 
 # Static & Media files
-import os
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
@@ -113,8 +117,7 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 10,
 }
 
-# CORS — allow React frontend
-CORS_ALLOW_ALL_ORIGINS = True
+# CORS — configured below with explicit origins
 
 # Add this full JWT config at the bottom of settings.py
 from datetime import timedelta
@@ -158,7 +161,18 @@ import os
 
 # WhiteNoise for static files
 MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+    },
+}
+# WHY STORAGES dict instead of STATICFILES_STORAGE?
+# Django 4.2+ deprecated STATICFILES_STORAGE in favour of STORAGES dict.
+# Django 6.0 (your version) will WARN loudly if you use the old setting.
+# This is the new correct way to configure both default and static storage.
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Production database — reads DATABASE_URL from environment
@@ -183,5 +197,22 @@ CORS_ALLOWED_ORIGINS = [
     'https://food-delivery-seven-bice.vercel.app',  # ← correct URL
 ]
 CORS_ALLOW_ALL_ORIGINS = False
+
+# ==============================================================================
+# PRODUCTION SECURITY SETTINGS (Only active when DEBUG=False)
+# ==============================================================================
+if not DEBUG:
+    # Force HTTPS redirect (ensure your Render domain supports SSL)
+    SECURE_SSL_REDIRECT = True
+    # HSTS settings (1 year)
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    # Cookie security
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    # Extra protection
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # Security for production
-ALLOWED_HOSTS = ['*']

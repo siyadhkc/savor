@@ -1,7 +1,44 @@
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
+from django.db import transaction
 from .models import CustomUser
+from restaurant.models import Restaurant
 
+class RestaurantRegisterSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
+    password2 = serializers.CharField(write_only=True, required=True)
+    restaurant_name = serializers.CharField(write_only=True, required=True)
+    restaurant_address = serializers.CharField(write_only=True, required=True)
+
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'email', 'username', 'phone', 'password', 'password2', 'restaurant_name', 'restaurant_address']
+
+    def validate(self, attrs):
+        if attrs['password'] != attrs['password2']:
+            raise serializers.ValidationError({'password': 'Passwords do not match.'})
+        return attrs
+
+    @transaction.atomic
+    def create(self, validated_data):
+        restaurant_name = validated_data.pop('restaurant_name')
+        restaurant_address = validated_data.pop('restaurant_address')
+        validated_data.pop('password2')
+        
+        user = CustomUser.objects.create_user(
+            email=validated_data['email'],
+            username=validated_data['username'],
+            phone=validated_data.get('phone', ''),
+            password=validated_data['password'],
+            role=CustomUser.Role.RESTAURANT
+        )
+        
+        Restaurant.objects.create(
+            owner=user,
+            name=restaurant_name,
+            address=restaurant_address
+        )
+        return user
 
 class RegisterSerializer(serializers.ModelSerializer):
     """
@@ -94,30 +131,50 @@ class RegisterSerializer(serializers.ModelSerializer):
         return user
 
 
+from restaurant.serializers import RestaurantSerializer
+
 class UserSerializer(serializers.ModelSerializer):
     """
-    WHY a separate UserSerializer?
-    RegisterSerializer is only for creating users.
-    UserSerializer is for READING user data — profile page,
-    user list in admin panel, current user info, etc.
-    Separating read and write serializers is clean architecture.
+    UserSerializer is for READING and UPDATING user data.
+    Now supports nested restaurant updates for restaurant owners.
     """
+    restaurant = RestaurantSerializer(read_only=False, required=False)
+    restaurant_id = serializers.SerializerMethodField()
 
     class Meta:
         model = CustomUser
-        fields = ['id', 'email', 'username', 'phone', 'role', 'is_active','is_staff', 'created_at']
-        read_only_fields = ['id', 'created_at', 'role','is_staff']
+        fields = [
+            'id', 'email', 'username', 'phone', 'role', 
+            'is_active', 'is_staff', 'created_at', 
+            'restaurant_id', 'restaurant'
+        ]
+        read_only_fields = ['id', 'created_at', 'role', 'is_staff', 'restaurant_id']
+
+    def get_restaurant_id(self, obj):
+        if hasattr(obj, 'restaurant'):
+            return obj.restaurant.id
+        return None
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
         """
-        WHY read_only_fields?
-        id and created_at are auto-generated — never editable.
-        role is sensitive — users cannot change their own role
-        to 'admin' through the profile API.
-        Only a superuser can change roles via Django Admin.
+        WHY override update()?
+        By default, DRF ModelSerializer doesn't support nested updates.
+        If we send restaurant data, we must manually update the
+        related Restaurant instance.
         """
-        # WHY add is_staff?
-        # React's Navbar checks user.is_staff to show Admin link.
-        # Without this field in the API response, user.is_staff
-        # is always undefined in React — so Admin link never shows.
-        # is_staff is Django's built-in admin permission flag.
-        # Superusers have is_staff=True automatically.
-        # """
+        restaurant_data = validated_data.pop('restaurant', None)
+        
+        # Update User fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        # Update Restaurant fields if provided
+        if restaurant_data and hasattr(instance, 'restaurant'):
+            restaurant = instance.restaurant
+            for attr, value in restaurant_data.items():
+                setattr(restaurant, attr, value)
+            restaurant.save()
+
+        return instance

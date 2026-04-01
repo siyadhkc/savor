@@ -6,6 +6,7 @@ class CustomUser(AbstractUser):
     class Role(models.TextChoices):
         CUSTOMER = 'customer', 'Customer'
         ADMIN = 'admin', 'Admin'
+        RESTAURANT = 'restaurant', 'Restaurant'
 
     email = models.EmailField(unique=True)
     """

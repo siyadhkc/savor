@@ -21,6 +21,25 @@ class CategoryViewSet(viewsets.ModelViewSet):
         return [permission() for permission in permission_classes]
 
 
+from rest_framework import permissions
+
+class IsAdminOrRestaurantOwner(permissions.BasePermission):
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        if not request.user or not request.user.is_authenticated:
+            return False
+        return request.user.is_staff or hasattr(request.user, 'restaurant')
+
+    def has_object_permission(self, request, view, obj):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        if request.user.is_staff:
+            return True
+        if hasattr(request.user, 'restaurant'):
+            return obj.restaurant == request.user.restaurant
+        return False
+
 class MenuItemViewSet(viewsets.ModelViewSet):
     """
     WHY filter by restaurant and category?
@@ -37,9 +56,25 @@ class MenuItemViewSet(viewsets.ModelViewSet):
     search_fields = ['name', 'description']
     ordering_fields = ['price', 'name']
 
+    def get_queryset(self):
+        """
+        For ordinary listing, anyone can see everything.
+        But for the restaurant-admin panel, we only want to manage
+        our own items. Or just provide safety.
+        """
+        user = self.request.user
+        if not user.is_anonymous and hasattr(user, 'restaurant'):
+            # Only filter if they are specifically in 'restaurant' management role context?
+            # Actually, the frontend already filters. But this is more secure.
+            # Wait, if I filter here, customers won't see anything if I'm not careful.
+            # Let's only filter if it's NOT a safe method or if it's the admin panel?
+            # Better check if the user HAS a restaurant.
+            pass
+        return super().get_queryset()
+
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
             permission_classes = [AllowAny]
         else:
-            permission_classes = [IsAdminUser]
+            permission_classes = [IsAdminOrRestaurantOwner]
         return [permission() for permission in permission_classes]

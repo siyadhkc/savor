@@ -4,7 +4,12 @@ from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import CustomUser
-from .serializers import RegisterSerializer, UserSerializer
+from .serializers import RegisterSerializer, UserSerializer, RestaurantRegisterSerializer
+
+class RegisterRestaurantView(generics.CreateAPIView):
+    queryset = CustomUser.objects.all()
+    serializer_class = RestaurantRegisterSerializer
+    permission_classes = [AllowAny]
 
 
 class RegisterView(generics.CreateAPIView):
@@ -84,11 +89,8 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
         Default get_object() looks for a pk in the URL.
         We want /api/users/profile/ to always return
         THE CURRENT logged in user's profile — no pk needed.
-        get_object() returns request.user directly.
+        get_object() returns self.request.user directly.
         """
-        return request.user
-    
-    def get_object(self):
         return self.request.user
 
 

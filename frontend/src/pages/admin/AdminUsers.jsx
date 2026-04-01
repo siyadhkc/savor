@@ -45,62 +45,64 @@ const AdminUsers = () => {
     )
 
     return (
-        <div style={styles.layout}>
-            <AdminSidebar />
-            <div style={styles.main}>
-                <h1 style={styles.title}>Users 👥</h1>
+        <div className="flex min-h-screen">
+            {/* <AdminSidebar /> */}
+            <div className="flex-1 p-7.5 bg-gray-100">
+                <h1 className="text-3xl font-bold text-gray-800 mb-5">Users 👥</h1>
 
                 <input
                     type="text"
                     placeholder="Search by email or username..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    style={styles.search}
+                    className="w-full max-w-100 px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm mb-5 outline-none box-border"
                 />
 
                 {loading ? <p>Loading users...</p> : (
-                    <div style={styles.tableCard}>
-                        <table style={styles.table}>
-                            <thead>
-                                <tr style={styles.tableHead}>
-                                    <th style={styles.th}>ID</th>
-                                    <th style={styles.th}>Email</th>
-                                    <th style={styles.th}>Username</th>
-                                    <th style={styles.th}>Phone</th>
-                                    <th style={styles.th}>Role</th>
-                                    <th style={styles.th}>Status</th>
-                                    <th style={styles.th}>Action</th>
+                    <div className="bg-white rounded-2xl shadow-sm p-5 overflow-x-auto">
+                        <table className="w-full border-collapse">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    <th className="px-4 py-3 text-left text-gray-600 text-sm font-semibold border-b border-gray-100">ID</th>
+                                    <th className="px-4 py-3 text-left text-gray-600 text-sm font-semibold border-b border-gray-100">Email</th>
+                                    <th className="px-4 py-3 text-left text-gray-600 text-sm font-semibold border-b border-gray-100">Username</th>
+                                    <th className="px-4 py-3 text-left text-gray-600 text-sm font-semibold border-b border-gray-100">Phone</th>
+                                    <th className="px-4 py-3 text-left text-gray-600 text-sm font-semibold border-b border-gray-100">Role</th>
+                                    <th className="px-4 py-3 text-left text-gray-600 text-sm font-semibold border-b border-gray-100">Status</th>
+                                    <th className="px-4 py-3 text-left text-gray-600 text-sm font-semibold border-b border-gray-100">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {filteredUsers.map(user => (
-                                    <tr key={user.id} style={styles.tableRow}>
-                                        <td style={styles.td}>#{user.id}</td>
-                                        <td style={styles.td}>{user.email}</td>
-                                        <td style={styles.td}>{user.username}</td>
-                                        <td style={styles.td}>{user.phone || '—'}</td>
-                                        <td style={styles.td}>
-                                            <span style={styles.roleBadge}>
+                                    <tr key={user.id} className="border-b border-gray-50">
+                                        <td className="px-4 py-3 text-sm">#{user.id}</td>
+                                        <td className="px-4 py-3 text-sm text-gray-800">{user.email}</td>
+                                        <td className="px-4 py-3 text-sm text-gray-800">{user.username}</td>
+                                        <td className="px-4 py-3 text-sm text-gray-800">{user.phone || '—'}</td>
+                                        <td className="px-4 py-3 text-sm">
+                                            <span className="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full text-xs">
                                                 {user.role}
                                             </span>
                                         </td>
-                                        <td style={styles.td}>
-                                            <span style={user.is_active
-                                                ? styles.activeBadge
-                                                : styles.inactiveBadge
-                                            }>
+                                        <td className="px-4 py-3 text-sm">
+                                            <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+                                                user.is_active
+                                                    ? 'bg-green-100 text-green-700'
+                                                    : 'bg-red-100 text-red-700'
+                                            }`}>
                                                 {user.is_active ? 'Active' : 'Blocked'}
                                             </span>
                                         </td>
-                                        <td style={styles.td}>
+                                        <td className="px-4 py-3 text-sm">
                                             <button
                                                 onClick={() =>
                                                     handleBlockToggle(user.id)
                                                 }
-                                                style={user.is_active
-                                                    ? styles.blockBtn
-                                                    : styles.unblockBtn
-                                                }
+                                                className={`px-3 py-1.5 border-0 rounded-lg cursor-pointer font-semibold text-xs ${
+                                                    user.is_active
+                                                        ? 'bg-pink-50 text-red-700 hover:bg-pink-100'
+                                                        : 'bg-green-50 text-green-700 hover:bg-green-100'
+                                                }`}
                                             >
                                                 {user.is_active
                                                     ? '🚫 Block'
@@ -117,58 +119,6 @@ const AdminUsers = () => {
             </div>
         </div>
     )
-}
-
-const styles = {
-    layout: { display: 'flex', minHeight: '100vh' },
-    main: { flex: 1, padding: '30px', backgroundColor: '#f5f5f5' },
-    title: { fontSize: '1.8rem', fontWeight: 'bold', color: '#333', marginBottom: '20px' },
-    search: {
-        width: '100%', maxWidth: '400px', padding: '10px 14px',
-        border: '1px solid #ddd', borderRadius: '8px',
-        fontSize: '0.95rem', marginBottom: '20px',
-        outline: 'none', boxSizing: 'border-box',
-    },
-    tableCard: {
-        backgroundColor: 'white', borderRadius: '12px',
-        padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-        overflowX: 'auto',
-    },
-    table: { width: '100%', borderCollapse: 'collapse' },
-    tableHead: { backgroundColor: '#f9f9f9' },
-    th: {
-        padding: '12px 16px', textAlign: 'left',
-        color: '#666', fontSize: '0.85rem',
-        fontWeight: '600', borderBottom: '1px solid #f0f0f0',
-    },
-    tableRow: { borderBottom: '1px solid #f9f9f9' },
-    td: { padding: '12px 16px', color: '#333', fontSize: '0.9rem' },
-    roleBadge: {
-        backgroundColor: '#e3f2fd', color: '#1565c0',
-        padding: '3px 10px', borderRadius: '20px', fontSize: '0.8rem',
-    },
-    activebadge: {
-        backgroundColor: '#e8f5e9', color: '#2e7d32',
-        padding: '3px 10px', borderRadius: '20px', fontSize: '0.8rem',
-    },
-    activeBadge: {
-        backgroundColor: '#e8f5e9', color: '#2e7d32',
-        padding: '3px 10px', borderRadius: '20px', fontSize: '0.8rem',
-    },
-    inactiveBadge: {
-        backgroundColor: '#fce4ec', color: '#c62828',
-        padding: '3px 10px', borderRadius: '20px', fontSize: '0.8rem',
-    },
-    blockBtn: {
-        padding: '6px 12px', backgroundColor: '#fce4ec',
-        color: '#c62828', border: 'none', borderRadius: '6px',
-        cursor: 'pointer', fontWeight: '600', fontSize: '0.85rem',
-    },
-    unblockBtn: {
-        padding: '6px 12px', backgroundColor: '#e8f5e9',
-        color: '#2e7d32', border: 'none', borderRadius: '6px',
-        cursor: 'pointer', fontWeight: '600', fontSize: '0.85rem',
-    },
 }
 
 export default AdminUsers

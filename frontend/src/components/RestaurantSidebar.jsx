@@ -3,18 +3,14 @@ import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
 import { 
     LayoutDashboard, 
-    Store, 
     Pizza, 
-    Layers, 
     PackageSearch, 
-    CreditCard, 
-    Users, 
-    Settings, 
     LogOut,
-    Menu as MenuIcon
+    Store as StoreIcon,
+    UserCog
 } from 'lucide-react'
 
-const AdminSidebar = () => {
+const RestaurantSidebar = () => {
     const { user, logout } = useAuth()
     const navigate = useNavigate()
 
@@ -28,28 +24,25 @@ const AdminSidebar = () => {
         {
             label: 'OVERVIEW',
             links: [
-                { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
+                { to: '/restaurant-admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
             ]
         },
         {
             label: 'MANAGE',
             links: [
-                { to: '/admin/restaurants', label: 'Restaurants', icon: Store },
-                { to: '/admin/menu', label: 'Menu Items', icon: Pizza },
-                { to: '/admin/categories', label: 'Categories', icon: Layers },
+                { to: '/restaurant-admin/menu', label: 'My Menu', icon: Pizza },
             ]
         },
         {
             label: 'OPERATIONS',
             links: [
-                { to: '/admin/orders', label: 'Orders', icon: PackageSearch },
-                { to: '/admin/payments', label: 'Payments', icon: CreditCard },
+                { to: '/restaurant-admin/orders', label: 'Store Orders', icon: PackageSearch },
             ]
         },
         {
-            label: 'ACCOUNTS',
+            label: 'SETTINGS',
             links: [
-                { to: '/admin/users', label: 'Users', icon: Users },
+                { to: '/restaurant-admin/profile', label: 'My Profile', icon: UserCog },
             ]
         },
     ]
@@ -60,21 +53,21 @@ const AdminSidebar = () => {
             {/* Brand Header */}
             <div className="flex items-center gap-3 p-6 border-b border-white/5 bg-slate-900/50">
                 <div className="bg-primary-500 p-2 rounded-xl shadow-lg shadow-primary-500/20 text-white">
-                    <MenuIcon size={24} strokeWidth={2.5} />
+                    <StoreIcon size={24} strokeWidth={2.5} />
                 </div>
                 <div>
                     <p className="text-white font-black text-lg m-0 tracking-tight">FoodDelivery</p>
-                    <p className="text-primary-400 font-medium text-xs tracking-wider uppercase m-0 mt-0.5">Administration</p>
+                    <p className="text-primary-400 font-medium text-xs tracking-wider uppercase m-0 mt-0.5">Partner Portal</p>
                 </div>
             </div>
 
-            {/* Admin User Info */}
+            {/* Restaurant User Info */}
             <div className="flex items-center gap-4 px-6 py-5 border-b border-white/5 bg-white/[0.02]">
-                <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-primary-600 to-primary-400 text-white flex items-center justify-center font-bold text-lg shadow-md flex-shrink-0 border-2 border-slate-800">
+                <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-primary-600 to-emerald-400 text-white flex items-center justify-center font-bold text-lg shadow-md flex-shrink-0 border-2 border-slate-800">
                     {user?.username?.[0]?.toUpperCase()}
                 </div>
                 <div>
-                    <p className="text-white font-bold text-sm m-0">{user?.username || 'Admin User'}</p>
+                    <p className="text-white font-bold text-sm m-0">{user?.username || 'Restaurant Owner'}</p>
                     <p className="text-slate-400 text-xs mt-0.5 font-medium flex items-center gap-1">
                         <span className="w-2 h-2 rounded-full bg-emerald-400"></span> Online
                     </p>
@@ -118,16 +111,6 @@ const AdminSidebar = () => {
             {/* Bottom Actions */}
             <div className="p-4 border-t border-white/5 bg-slate-900/30">
                 <div className="flex flex-col gap-2">
-                    <a
-                        href={`${import.meta.env.VITE_API_URL?.replace('/api', '') || ''}/admin`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex items-center gap-3 text-slate-400 px-3 py-3 rounded-xl hover:bg-slate-800/80 hover:text-white transition-all text-sm font-medium"
-                    >
-                        <Settings size={20} className="text-slate-500" />
-                        <span>Django Admin</span>
-                    </a>
-
                     <button 
                         onClick={handleLogout}
                         className="flex items-center gap-3 text-rose-400/80 px-3 py-3 w-full text-left rounded-xl hover:bg-rose-500/10 hover:text-rose-400 transition-all text-sm font-medium"
@@ -141,4 +124,4 @@ const AdminSidebar = () => {
     )
 }
 
-export default AdminSidebar
+export default RestaurantSidebar

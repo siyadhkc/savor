@@ -1,22 +1,21 @@
 import { useState, useEffect } from 'react'
-import AdminSidebar from '../../components/AdminSidebar'
 import api from '../../api/axios'
 import { getImageUrl } from '../../utils/helpers'
+import { useAuth } from '../../context/AuthContext'
 import toast from 'react-hot-toast'
-import { UtensilsCrossed, Plus, Search, Filter, Pencil, Trash2, X, Image as ImageIcon, AlertCircle } from 'lucide-react'
+import { UtensilsCrossed, Plus, Search, Pencil, Trash2, X, Image as ImageIcon } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
-const AdminMenu = () => {
+const RestaurantMenu = () => {
+    const { user } = useAuth()
     const [menuItems, setMenuItems] = useState([])
-    const [restaurants, setRestaurants] = useState([])
     const [categories, setCategories] = useState([])
     const [loading, setLoading] = useState(true)
     const [showModal, setShowModal] = useState(false)
     const [editingItem, setEditingItem] = useState(null)
     const [imageFile, setImageFile] = useState(null)
-    const [filterRestaurant, setFilterRestaurant] = useState('all')
     const [formData, setFormData] = useState({
-        restaurant: '',
+        restaurant: user?.restaurant_id || '',
         category: '',
         name: '',
         description: '',
@@ -31,13 +30,16 @@ const AdminMenu = () => {
 
     const fetchData = async () => {
         try {
-            const [menuRes, restRes, catRes] = await Promise.all([
-                api.get('/menu/items/'),
-                api.get('/restaurant/restaurants/'),
+            // Because backend filter_backends includes DjangoFilterBackend with 'restaurant' field,
+            // we can just fetch all menu items. The get_queryset will hopefully return only the items
+            // the user is allowed to see, OR we can pass the filter explicitly just in case.
+            // Wait, for restaurants, backend get_permissions allows view all. 
+            // So we pass ?restaurant= restaurant_id
+            const [menuRes, catRes] = await Promise.all([
+                api.get(`/menu/items/?restaurant=${user?.restaurant_id || ''}`),
                 api.get('/menu/categories/'),
             ])
             setMenuItems(menuRes.data.results)
-            setRestaurants(restRes.data.results)
             setCategories(catRes.data.results)
         } catch {
             toast.error('Failed to load menu data.')
@@ -49,7 +51,7 @@ const AdminMenu = () => {
     const openCreateModal = () => {
         setEditingItem(null)
         setFormData({
-            restaurant: '',
+            restaurant: user?.restaurant_id || '',
             category: '',
             name: '',
             description: '',
@@ -129,39 +131,17 @@ const AdminMenu = () => {
         }
     }
 
-    const filteredItems = filterRestaurant === 'all'
-        ? menuItems
-        : menuItems.filter(i =>
-            String(i.restaurant) === String(filterRestaurant)
-        )
-
     return (
         <div className="flex-1 px-8 py-10 bg-slate-50 overflow-y-auto min-h-screen selection:bg-primary-500/30">
             
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-6">
                 <div>
-                    <h1 className="text-3xl font-black text-slate-800 tracking-tight">Menu Items</h1>
-                    <p className="text-slate-500 font-medium mt-1">Design and manage all available dishes.</p>
+                    <h1 className="text-3xl font-black text-slate-800 tracking-tight">Your Menu</h1>
+                    <p className="text-slate-500 font-medium mt-1">Design and manage your available dishes.</p>
                 </div>
                 
                 <div className="flex items-center gap-4 w-full md:w-auto">
-                    {/* Filter Dropdown */}
-                    <div className="relative flex-1 md:w-64">
-                        <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                        <select
-                            value={filterRestaurant}
-                            onChange={(e) => setFilterRestaurant(e.target.value)}
-                            className="w-full pl-11 pr-10 py-3 bg-white border border-slate-200 rounded-full text-slate-700 font-medium text-sm appearance-none focus:outline-none focus:ring-4 focus:ring-primary-500/20 shadow-sm"
-                        >
-                            <option value="all">All Restaurants Scope</option>
-                            {restaurants.map(r => (
-                                <option key={r.id} value={r.id}>{r.name}</option>
-                            ))}
-                        </select>
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none border-l-[5px] border-r-[5px] border-t-[6px] border-l-transparent border-r-transparent border-slate-400"></div>
-                    </div>
-
                     <button 
                         onClick={openCreateModal} 
                         className="flex items-center justify-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-full font-bold shadow-md shadow-primary-600/20 hover:bg-primary-700 active:scale-95 transition-all whitespace-nowrap"
@@ -188,7 +168,6 @@ const AdminMenu = () => {
                             <thead>
                                 <tr className="bg-slate-50/80">
                                     <th className="px-6 py-4 text-slate-400 font-bold text-xs uppercase tracking-wider border-b border-slate-100 pl-8">Dish</th>
-                                    <th className="px-6 py-4 text-slate-400 font-bold text-xs uppercase tracking-wider border-b border-slate-100">Restaurant</th>
                                     <th className="px-6 py-4 text-slate-400 font-bold text-xs uppercase tracking-wider border-b border-slate-100">Category</th>
                                     <th className="px-6 py-4 text-slate-400 font-bold text-xs uppercase tracking-wider border-b border-slate-100">Price</th>
                                     <th className="px-6 py-4 text-slate-400 font-bold text-xs uppercase tracking-wider border-b border-slate-100 text-center">Status</th>
@@ -197,7 +176,7 @@ const AdminMenu = () => {
                             </thead>
                             <tbody>
                                 <AnimatePresence>
-                                    {filteredItems.map((item) => (
+                                    {menuItems.map((item) => (
                                         <motion.tr 
                                             key={item.id} 
                                             initial={{ opacity: 0 }}
@@ -225,9 +204,6 @@ const AdminMenu = () => {
                                                         </p>
                                                     </div>
                                                 </div>
-                                            </td>
-                                            <td className="px-6 py-4 text-sm font-semibold text-slate-600">
-                                                {item.restaurant_name}
                                             </td>
                                             <td className="px-6 py-4 text-sm font-semibold text-slate-600">
                                                 <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-md text-xs tracking-wide">
@@ -270,13 +246,13 @@ const AdminMenu = () => {
                             </tbody>
                         </table>
                     </div>
-                    {filteredItems.length === 0 && (
+                    {menuItems.length === 0 && (
                         <div className="flex flex-col items-center justify-center py-20 bg-slate-50/50">
                             <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm border border-slate-100">
                                 <Search className="text-slate-300" size={32} />
                             </div>
                             <p className="text-slate-500 text-lg font-bold">No menu items found</p>
-                            <p className="text-slate-400 text-sm mt-1">Try switching the restaurant scope or create a new item.</p>
+                            <p className="text-slate-400 text-sm mt-1">Create a new item to get started.</p>
                         </div>
                     )}
                 </motion.div>
@@ -317,38 +293,23 @@ const AdminMenu = () => {
                         <div className="p-8 overflow-y-auto custom-scrollbar">
                             <form id="menuForm" onSubmit={handleSubmit} className="space-y-6">
                                 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <label className="block font-bold text-slate-700 text-sm uppercase tracking-wider">Restaurant Origin</label>
-                                        <select
-                                            name="restaurant"
-                                            value={formData.restaurant}
-                                            onChange={handleChange}
-                                            className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-bold focus:outline-none focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 transition-all appearance-none"
-                                            required
-                                        >
-                                            <option value="" disabled>Select Assignment</option>
-                                            {restaurants.map(r => (
-                                                <option key={r.id} value={r.id}>{r.name}</option>
-                                            ))}
-                                        </select>
-                                    </div>
+                                {/* Removed Restaurant Selector. We implicitly use formData.restaurant */}
+                                <input type="hidden" name="restaurant" value={formData.restaurant} />
 
-                                    <div className="space-y-2">
-                                        <label className="block font-bold text-slate-700 text-sm uppercase tracking-wider">Category Tag</label>
-                                        <select
-                                            name="category"
-                                            value={formData.category}
-                                            onChange={handleChange}
-                                            className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-bold focus:outline-none focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 transition-all appearance-none"
-                                            required
-                                        >
-                                            <option value="" disabled>Select Category grouping</option>
-                                            {categories.map(c => (
-                                                <option key={c.id} value={c.id}>{c.name}</option>
-                                            ))}
-                                        </select>
-                                    </div>
+                                <div className="space-y-2">
+                                    <label className="block font-bold text-slate-700 text-sm uppercase tracking-wider">Category Tag</label>
+                                    <select
+                                        name="category"
+                                        value={formData.category}
+                                        onChange={handleChange}
+                                        className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-bold focus:outline-none focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 transition-all appearance-none"
+                                        required
+                                    >
+                                        <option value="" disabled>Select Category grouping</option>
+                                        {categories.map(c => (
+                                            <option key={c.id} value={c.id}>{c.name}</option>
+                                        ))}
+                                    </select>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-6">
@@ -460,4 +421,4 @@ const AdminMenu = () => {
     )
 }
 
-export default AdminMenu
+export default RestaurantMenu

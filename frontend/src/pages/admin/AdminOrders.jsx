@@ -1,27 +1,22 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect, Fragment } from 'react'
 import AdminSidebar from '../../components/AdminSidebar'
 import api from '../../api/axios'
 import toast from 'react-hot-toast'
 import { formatDate, formatOrderId } from '../../utils/helpers'
+import { ChevronDown, ChevronRight, Package, User, Store, Calendar, CreditCard } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 const STATUS_OPTIONS = [
     'pending', 'preparing',
     'out_for_delivery', 'delivered', 'cancelled'
 ]
 
-const STATUS_COLORS = {
-    pending: '#ff9800',
-    preparing: '#2196f3',
-    out_for_delivery: '#9c27b0',
-    delivered: '#4caf50',
-    cancelled: '#f44336',
-}
-
 const AdminOrders = () => {
     const [orders, setOrders] = useState([])
     const [loading, setLoading] = useState(true)
     const [filterStatus, setFilterStatus] = useState('all')
     const [updatingOrder, setUpdatingOrder] = useState(null)
+    const [expandedOrders, setExpandedOrders] = useState([])
 
     useEffect(() => {
         fetchOrders()
@@ -39,6 +34,14 @@ const AdminOrders = () => {
         }
     }
 
+    const toggleExpand = (orderId) => {
+        setExpandedOrders(prev => 
+            prev.includes(orderId) 
+                ? prev.filter(id => id !== orderId) 
+                : [...prev, orderId]
+        )
+    }
+
     const handleStatusUpdate = async (orderId, newStatus) => {
         setUpdatingOrder(orderId)
         try {
@@ -50,13 +53,6 @@ const AdminOrders = () => {
                     ? { ...order, status: newStatus }
                     : order
             ))
-            /*
-            WHY update state locally?
-            After a successful API call, we update the local
-            state directly instead of refetching all orders.
-            This is called "optimistic update" — faster UX,
-            no unnecessary API calls.
-            */
             toast.success('Order status updated!')
         } catch (error) {
             console.error('Failed to update status:', error)
@@ -71,137 +67,178 @@ const AdminOrders = () => {
         : orders.filter(o => o.status === filterStatus)
 
     return (
-        <div style={styles.layout}>
-            <AdminSidebar />
-
-            <div style={styles.main}>
-                <h1 style={styles.title}>Orders 📦</h1>
-
-                {/* Filter Tabs */}
-                <div style={styles.filterTabs}>
-                    {['all', ...STATUS_OPTIONS].map(status => (
-                        <button
-                            key={status}
-                            onClick={() => setFilterStatus(status)}
-                            style={filterStatus === status
-                                ? styles.tabActive
-                                : styles.tab
-                            }
-                        >
-                            {status.replace('_', ' ')}
-                        </button>
-                    ))}
+        <div className="flex-1 p-8 bg-slate-50 min-h-screen">
+            <div className="flex items-center justify-between mb-8">
+                <div>
+                    <h1 className="text-3xl font-black text-slate-800 tracking-tight">Order Management</h1>
+                    <p className="text-slate-500 font-medium mt-1">Oversee all platform transactions and logistics.</p>
                 </div>
+            </div>
 
-                {loading ? (
-                    <p>Loading orders...</p>
-                ) : (
-                    <div style={styles.tableCard}>
-                        <table style={styles.table}>
+            {/* Filter Tabs */}
+            <div className="flex gap-2 mb-8 flex-wrap overflow-x-auto pb-2 custom-scrollbar">
+                {['all', ...STATUS_OPTIONS].map(status => (
+                    <button
+                        key={status}
+                        onClick={() => setFilterStatus(status)}
+                        className={`px-6 py-2.5 rounded-full font-bold capitalize transition-all duration-300 text-sm whitespace-nowrap ${
+                            filterStatus === status
+                                ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/30'
+                                : 'bg-white text-slate-500 hover:bg-slate-100 border border-slate-200'
+                        }`}
+                    >
+                        {status.replace('_', ' ')}
+                    </button>
+                ))}
+            </div>
+
+            {loading ? (
+                <div className="flex flex-col items-center justify-center py-40">
+                    <div className="w-10 h-10 border-4 border-slate-200 border-t-primary-500 rounded-full animate-spin mb-4"></div>
+                    <p className="text-slate-500 font-medium">Loading orders...</p>
+                </div>
+            ) : (
+                <div className="bg-white rounded-[32px] shadow-sm border border-slate-100 overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr style={styles.tableHead}>
-                                    <th style={styles.th}>ID</th>
-                                    <th style={styles.th}>Customer</th>
-                                    <th style={styles.th}>Restaurant</th>
-                                    <th style={styles.th}>Amount</th>
-                                    <th style={styles.th}>Date</th>
-                                    <th style={styles.th}>Status</th>
-                                    <th style={styles.th}>Update</th>
+                                <tr className="bg-slate-50/80 border-b border-slate-100">
+                                    <th className="px-6 py-5 pl-8"></th>
+                                    <th className="px-6 py-5 text-slate-400 font-bold text-xs uppercase tracking-widest">Order ID</th>
+                                    <th className="px-6 py-5 text-slate-400 font-bold text-xs uppercase tracking-widest">Customer</th>
+                                    <th className="px-6 py-5 text-slate-400 font-bold text-xs uppercase tracking-widest">Restaurant</th>
+                                    <th className="px-6 py-5 text-slate-400 font-bold text-xs uppercase tracking-widest text-center">Status</th>
+                                    <th className="px-6 py-5 text-slate-400 font-bold text-xs uppercase tracking-widest">Total</th>
+                                    <th className="px-6 py-5 text-slate-400 font-bold text-xs uppercase tracking-widest text-right pr-8">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {filteredOrders.map(order => (
-                                    <tr key={order.id} style={styles.tableRow}>
-                                        <td style={styles.td}>#{formatOrderId(order.id)}</td>
-                                        <td style={styles.td}>{order.user_email}</td>
-                                        <td style={styles.td}>{order.restaurant_name}</td>
-                                        <td style={styles.td}>₹{order.total_amount}</td>
-                                        <td style={styles.td}>
-                                             {formatDate(order.created_at)}
-                                        </td>
-                                        <td style={styles.td}>
-                                            <span style={{
-                                                backgroundColor:
-                                                    STATUS_COLORS[order.status] + '20',
-                                                color: STATUS_COLORS[order.status],
-                                                padding: '4px 10px',
-                                                borderRadius: '20px',
-                                                fontSize: '0.8rem',
-                                                fontWeight: '600',
-                                            }}>
-                                                {order.status}
-                                            </span>
-                                        </td>
-                                        <td style={styles.td}>
-                                            <select
-                                                value={order.status}
-                                                onChange={(e) =>
-                                                    handleStatusUpdate(
-                                                        order.id,
-                                                        e.target.value
-                                                    )
-                                                }
-                                                disabled={updatingOrder === order.id}
-                                                style={styles.select}
-                                            >
-                                                {STATUS_OPTIONS.map(s => (
-                                                    <option key={s} value={s}>
-                                                        {s.replace('_', ' ')}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </td>
-                                    </tr>
+                                    <Fragment key={order.id}>
+                                        <tr className={`hover:bg-slate-50/50 transition-colors border-b border-slate-50 relative ${expandedOrders.includes(order.id) ? 'bg-slate-50/30' : ''}`}>
+                                            <td className="px-6 py-5 pl-8">
+                                                <button 
+                                                    onClick={() => toggleExpand(order.id)}
+                                                    className="p-1.5 hover:bg-white rounded-lg transition-colors border border-transparent hover:border-slate-200"
+                                                >
+                                                    {expandedOrders.includes(order.id) ? <ChevronDown size={18} className="text-primary-600" /> : <ChevronRight size={18} className="text-slate-400" />}
+                                                </button>
+                                            </td>
+                                            <td className="px-6 py-5">
+                                                <span className="font-mono text-sm font-bold text-slate-700">#{formatOrderId(order.id)}</span>
+                                            </td>
+                                            <td className="px-6 py-5">
+                                                <div className="flex flex-col">
+                                                    <span className="text-sm font-bold text-slate-800">{order.user_email.split('@')[0]}</span>
+                                                    <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">{order.user_email}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-5">
+                                                <span className="text-sm font-semibold text-slate-600">{order.restaurant_name}</span>
+                                            </td>
+                                            <td className="px-6 py-5 text-center">
+                                                <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                                                    order.status === 'pending' ? 'bg-amber-100 text-amber-600' :
+                                                    order.status === 'preparing' ? 'bg-blue-100 text-blue-600' :
+                                                    order.status === 'out_for_delivery' ? 'bg-purple-100 text-purple-600' :
+                                                    order.status === 'delivered' ? 'bg-emerald-100 text-emerald-600' :
+                                                    order.status === 'cancelled' ? 'bg-rose-100 text-rose-600' :
+                                                    'bg-slate-100 text-slate-600'
+                                                }`}>
+                                                    {order.status.replace('_', ' ')}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-5 font-black text-slate-800">
+                                                ₹{order.total_amount}
+                                            </td>
+                                            <td className="px-6 py-5 pr-8 text-right">
+                                                <select
+                                                    value={order.status}
+                                                    onChange={(e) => handleStatusUpdate(order.id, e.target.value)}
+                                                    disabled={updatingOrder === order.id}
+                                                    className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                                                >
+                                                    {STATUS_OPTIONS.map(s => (
+                                                        <option key={s} value={s}>{s.replace('_', ' ')}</option>
+                                                    ))}
+                                                </select>
+                                            </td>
+                                        </tr>
+                                        <AnimatePresence>
+                                            {expandedOrders.includes(order.id) && (
+                                                <tr>
+                                                    <td colSpan="7" className="p-0 border-b border-white">
+                                                        <motion.div
+                                                            initial={{ height: 0, opacity: 0 }}
+                                                            animate={{ height: 'auto', opacity: 1 }}
+                                                            exit={{ height: 0, opacity: 0 }}
+                                                            className="overflow-hidden bg-slate-50/50"
+                                                        >
+                                                            <div className="px-12 py-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                                {/* Order Items */}
+                                                                <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                                                                    <div className="flex items-center gap-2 mb-4 text-slate-800 font-black text-xs uppercase tracking-widest">
+                                                                        <Package size={14} className="text-primary-600" />
+                                                                        Ordered Formulation
+                                                                    </div>
+                                                                    <div className="space-y-4">
+                                                                        {order.items.map((item, idx) => (
+                                                                            <div key={idx} className="flex justify-between items-center text-sm">
+                                                                                <div className="flex gap-3 items-center">
+                                                                                    <span className="w-6 h-6 flex items-center justify-center bg-slate-100 rounded-md text-[10px] font-bold text-slate-500">
+                                                                                        {item.quantity}x
+                                                                                    </span>
+                                                                                    <span className="font-bold text-slate-700">{item.menu_item_name}</span>
+                                                                                </div>
+                                                                                <span className="font-black text-slate-800">₹{item.total_price}</span>
+                                                                            </div>
+                                                                        ))}
+                                                                        <div className="pt-4 border-t border-slate-100 flex justify-between items-center">
+                                                                            <span className="font-black text-slate-400 text-xs uppercase tracking-widest">Final Amount</span>
+                                                                            <span className="text-xl font-black text-primary-600">₹{order.total_amount}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Logistical Details */}
+                                                                <div className="space-y-4">
+                                                                    <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                                                                        <div className="flex items-center gap-2 mb-4 text-slate-800 font-black text-xs uppercase tracking-widest">
+                                                                            <Calendar size={14} className="text-primary-600" />
+                                                                            Meta Details
+                                                                        </div>
+                                                                        <div className="space-y-3">
+                                                                            <div className="flex justify-between items-start">
+                                                                                <span className="text-xs font-bold text-slate-400">Timestamp</span>
+                                                                                <span className="text-sm font-bold text-slate-700 text-right">{formatDate(order.created_at)}</span>
+                                                                            </div>
+                                                                            <div className="flex justify-between items-start">
+                                                                                <span className="text-xs font-bold text-slate-400">Destination</span>
+                                                                                <span className="text-sm font-bold text-slate-700 text-right max-w-[200px]">{order.address}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </motion.div>
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </AnimatePresence>
+                                    </Fragment>
                                 ))}
                             </tbody>
                         </table>
                         {filteredOrders.length === 0 && (
-                            <p style={styles.empty}>No orders found.</p>
+                            <div className="flex flex-col items-center justify-center py-20 bg-slate-50/50">
+                                <p className="text-slate-500 font-bold">No orders found.</p>
+                            </div>
                         )}
                     </div>
-                )}
-            </div>
+                </div>
+            )}
         </div>
     )
-}
-
-const styles = {
-    layout: { display: 'flex', minHeight: '100vh' },
-    main: { flex: 1, padding: '30px', backgroundColor: '#f5f5f5' },
-    title: { fontSize: '1.8rem', fontWeight: 'bold', color: '#333', marginBottom: '20px' },
-    filterTabs: { display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' },
-    tab: {
-        padding: '8px 16px', border: '2px solid #ddd',
-        borderRadius: '20px', backgroundColor: 'white',
-        cursor: 'pointer', fontWeight: '500', color: '#666',
-        textTransform: 'capitalize',
-    },
-    tabActive: {
-        padding: '8px 16px', border: '2px solid #ff4500',
-        borderRadius: '20px', backgroundColor: '#ff4500',
-        cursor: 'pointer', fontWeight: '500', color: 'white',
-        textTransform: 'capitalize',
-    },
-    tableCard: {
-        backgroundColor: 'white', borderRadius: '12px',
-        padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-        overflowX: 'auto',
-    },
-    table: { width: '100%', borderCollapse: 'collapse' },
-    tableHead: { backgroundColor: '#f9f9f9' },
-    th: {
-        padding: '12px 16px', textAlign: 'left',
-        color: '#666', fontSize: '0.85rem',
-        fontWeight: '600', borderBottom: '1px solid #f0f0f0',
-    },
-    tableRow: { borderBottom: '1px solid #f9f9f9' },
-    td: { padding: '12px 16px', color: '#333', fontSize: '0.9rem' },
-    select: {
-        padding: '6px 10px', borderRadius: '6px',
-        border: '1px solid #ddd', cursor: 'pointer',
-        fontSize: '0.85rem',
-    },
-    empty: { textAlign: 'center', padding: '40px', color: '#999' },
 }
 
 export default AdminOrders
