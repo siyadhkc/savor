@@ -20,6 +20,7 @@ This platform is a mission-critical food delivery system featuring three distinc
 
 > [!TIP]
 > **Video Demo**: [Drop your Loom or MP4 link here! GitHub allows you to drag/drop video files directly into the README editor.]
+> <div style="position: relative; padding-bottom: 52.81250000000001%; height: 0;"><iframe src="https://www.loom.com/embed/dc254df85a25499d9ca6fb45293c8e41" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe></div>
 > 
 > *Recommended: Showcase the end-to-end flow from Customer order to Restaurant fulfillment.*
 
