@@ -396,7 +396,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         try:
             send_mail(
-                subject=f'Order #{order.id} Placed Successfully! 🎉',
+                subject=f'Order #{order.id} Placed Successfully!',
                 message=f'''Hi {request.user.username},
 
 Your order #{order.id} has been placed successfully!
@@ -406,9 +406,9 @@ Total: ₹{order.total_amount}
 Address: {order.address}
 Payment: {serializer.validated_data["payment_method"].upper()}
 
-We will notify you when your order is ready. 🍕
+We will notify you when your order is ready.
 
-Thank you for ordering with FoodDelivery!
+Thank you for ordering with Savor!
                 ''',
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[request.user.email],
@@ -569,7 +569,7 @@ def download_invoice(request, order_id):
 
     # Title
     story.append(Paragraph(
-        '🍕 FoodDelivery - Order Invoice',
+        'Savor - Order Invoice',
         styles['Title']
     ))
     story.append(Spacer(1, 0.2 * inch))
@@ -636,7 +636,7 @@ def download_invoice(request, order_id):
     story.append(table)
     story.append(Spacer(1, 0.3 * inch))
     story.append(Paragraph(
-        'Thank you for ordering with FoodDelivery! 🍕',
+        'Thank you for ordering with Savor!',
         styles['Normal']
     ))
 

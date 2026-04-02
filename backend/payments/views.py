@@ -134,15 +134,15 @@ def verify_payment(request):
         from django.core.mail import send_mail
         try:
             send_mail(
-                subject=f'Order #{payment.order.id} Payment Confirmed! 🎉',
+                subject=f'Order #{payment.order.id} Payment Confirmed!',
                 message=f'''
 Hi {payment.order.user.username},
 
 Your payment of ₹{payment.order.total_amount} for Order #{payment.order.id} has been confirmed!
 
-Your food is being prepared. 🍕
+Your food is being prepared.
 
-Thank you for ordering with FoodDelivery!
+Thank you for ordering with Savor!
                 ''',
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[payment.order.user.email],

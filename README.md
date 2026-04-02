@@ -1,4 +1,4 @@
-# 🍔 FoodDelivery | High-End Multi-Tenant Platform
+# Savor | Premium High-End Multi-Tenant Platform
 
 [![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen?style=for-the-badge)](https://food-delivery-seven-bice.vercel.app)
 [![Backend API](https://img.shields.io/badge/Backend-API-blue?style=for-the-badge)](https://food-delivery-backend-c4pe.onrender.com/api)
@@ -181,4 +181,4 @@ npm run dev
 ---
 
 ## 📄 License
-This project is for educational/internship purposes. Developed for **FoodDelivery High-End Implementation**.
+This project is for educational/internship purposes. Developed for **Savor High-End Implementation**.
