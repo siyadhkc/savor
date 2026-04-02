@@ -129,18 +129,29 @@ const CustomerNavbar = () => {
                         /* ── LOGGED IN ─────────────────────────────────── */
                         <>
                             {/* Cart icon with badge */}
-                            <Link
-                                to="/cart"
-                                className="relative p-2 text-white/50 hover:text-white transition-colors rounded-lg hover:bg-white/[0.06]"
-                                aria-label={`Cart${cartCount > 0 ? `, ${cartCount} items` : ''}`}
-                            >
-                                <ShoppingCart size={20} />
-                                {cartCount > 0 && (
-                                    <span className="absolute -top-0.5 -right-0.5 w-4.5 h-4.5 bg-primary-500 text-white text-[10px] font-black rounded-full flex items-center justify-center shadow-sm" style={{ width: 18, height: 18 }}>
-                                        {cartCount > 9 ? '9+' : cartCount}
-                                    </span>
-                                )}
-                            </Link>
+                            <div className="flex items-center gap-1 sm:gap-2">
+                                <Link
+                                    to="/cart"
+                                    className="relative p-2 text-white/50 hover:text-white transition-colors rounded-lg hover:bg-white/[0.06] flex items-center gap-2"
+                                    aria-label={`Cart${cartCount > 0 ? `, ${cartCount} items` : ''}`}
+                                >
+                                    <ShoppingCart size={20} />
+                                    {cartCount > 0 && (
+                                        <span className="absolute top-1.5 left-5 w-4.5 h-4.5 bg-primary-500 text-white text-[10px] font-black rounded-full flex items-center justify-center shadow-sm" style={{ width: 18, height: 18 }}>
+                                            {cartCount > 9 ? '9+' : cartCount}
+                                        </span>
+                                    )}
+                                    <span className="hidden lg:block text-sm font-medium">Cart</span>
+                                </Link>
+
+                                <Link
+                                    to="/orders"
+                                    className={`p-2 transition-colors rounded-lg hover:bg-white/[0.06] flex items-center gap-2 ${location.pathname === '/orders' ? 'text-white bg-white/[0.06]' : 'text-white/50 hover:text-white'}`}
+                                >
+                                    <Clock size={20} />
+                                    <span className="hidden lg:block text-sm font-medium">Orders</span>
+                                </Link>
+                            </div>
 
                             {/* User avatar dropdown */}
                             <div className="relative" ref={dropdownRef}>
@@ -202,13 +213,6 @@ const CustomerNavbar = () => {
                                             {/* Standard links */}
                                             <div className="py-1.5">
                                                 <Link
-                                                    to="/orders"
-                                                    className="flex items-center gap-2.5 px-4 py-2.5 text-slate-700 hover:bg-slate-50 text-sm font-semibold transition-colors"
-                                                >
-                                                    <Clock size={16} className="text-slate-400" />
-                                                    My Orders
-                                                </Link>
-                                                <Link
                                                     to="/profile"
                                                     className="flex items-center gap-2.5 px-4 py-2.5 text-slate-700 hover:bg-slate-50 text-sm font-semibold transition-colors"
                                                 >
@@ -256,20 +260,28 @@ const CustomerNavbar = () => {
                 {/* ── Mobile: Right-side ────────────────────────────────── */}
                 <div className="flex md:hidden items-center gap-1">
                     {user ? (
-                        /* Logged in mobile: cart badge + hamburger */
+                        /* Logged in mobile: cart badge + orders + hamburger */
                         <>
-                            <Link
-                                to="/cart"
-                                className="relative p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-all"
-                                aria-label={`Cart${cartCount > 0 ? `, ${cartCount} items` : ''}`}
-                            >
-                                <ShoppingCart size={22} />
-                                {cartCount > 0 && (
-                                    <span className="absolute -top-0.5 -right-0.5 w-4.5 h-4.5 bg-rose-500 text-white text-[10px] font-black rounded-full flex items-center justify-center shadow-sm w-[18px] h-[18px]">
-                                        {cartCount > 9 ? '9+' : cartCount}
-                                    </span>
-                                )}
-                            </Link>
+                            <div className="flex items-center gap-1">
+                                <Link
+                                    to="/cart"
+                                    className="relative p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-all"
+                                    aria-label={`Cart${cartCount > 0 ? `, ${cartCount} items` : ''}`}
+                                >
+                                    <ShoppingCart size={22} />
+                                    {cartCount > 0 && (
+                                        <span className="absolute top-1 right-1 w-4.5 h-4.5 bg-rose-500 text-white text-[10px] font-black rounded-full flex items-center justify-center shadow-sm w-[18px] h-[18px]">
+                                            {cartCount > 9 ? '9+' : cartCount}
+                                        </span>
+                                    )}
+                                </Link>
+                                <Link
+                                    to="/orders"
+                                    className={`p-2 rounded-xl transition-all ${location.pathname === '/orders' ? 'text-white bg-white/10' : 'text-white/80 hover:text-white hover:bg-white/10'}`}
+                                >
+                                    <Clock size={22} />
+                                </Link>
+                            </div>
                             <button
                                 onClick={() => setIsDrawerOpen((v) => !v)}
                                 className="p-2 text-white hover:bg-white/10 rounded-xl transition-colors"
@@ -419,7 +431,6 @@ const CustomerNavbar = () => {
                                 <ul className="space-y-1">
                                     {[
                                         { to: '/cart', label: 'Cart', icon: ShoppingCart, badge: cartCount },
-                                        { to: '/orders', label: 'My Orders', icon: Clock },
                                         { to: '/profile', label: 'Profile', icon: User },
                                     ].map(({ to, label, icon: Icon, badge }) => (
                                         <li key={to}>

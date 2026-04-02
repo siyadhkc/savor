@@ -109,36 +109,47 @@ const Navbar = () => {
                     </div>
                 </Link>
 
-                {/* Desktop Menu */}
-                <div className="hidden md:flex items-center gap-2">
-                    {/* Admin Links */}
-                    {user && isAdmin && (
-                        <>
-                            <NavLink to="/admin" icon={LayoutDashboard} label="Dashboard" />
-                            <NavLink to="/admin/restaurants" icon={Store} label="Restaurants" />
-                            <NavLink to="/admin/menu" icon={Utensils} label="Menu" />
-                            <NavLink to="/admin/categories" icon={Folder} label="Categories" />
-                            <NavLink to="/admin/orders" icon={Package} label="Orders" />
-                        </>
-                    )}
+                {/* Menu & Actions Container */}
+                <div className="flex items-center gap-2 md:gap-4">
+                    {/* Desktop Menu Items (Hidden on Mobile) */}
+                    <div className="hidden md:flex items-center gap-2">
+                        {/* Admin Links */}
+                        {user && isAdmin && (
+                            <>
+                                <NavLink to="/admin" icon={LayoutDashboard} label="Dashboard" />
+                                <NavLink to="/admin/restaurants" icon={Store} label="Restaurants" />
+                                <NavLink to="/admin/menu" icon={Utensils} label="Menu" />
+                                <NavLink to="/admin/categories" icon={Folder} label="Categories" />
+                                <NavLink to="/admin/orders" icon={Package} label="Orders" />
+                            </>
+                        )}
 
-                    {/* Delivery Links */}
-                    {user && isDelivery && (
-                        <>
-                            <NavLink to="/delivery/dashboard" icon={LayoutDashboard} label="Delivery Hub" />
-                            <NavLink to="/delivery/profile" icon={UserIcon} label="Profile" />
-                        </>
-                    )}
+                        {/* Delivery Links */}
+                        {user && isDelivery && (
+                            <>
+                                <NavLink to="/delivery/dashboard" icon={LayoutDashboard} label="Delivery Hub" />
+                                <NavLink to="/delivery/profile" icon={UserIcon} label="Profile" />
+                            </>
+                        )}
 
-                    {/* Customer Links */}
-                    {user && !isAdmin && !isDelivery && (
-                        <>
-                            <NavLink to="/" icon={Home} label="Home" />
+                        {/* Guest / General Links */}
+                        <NavLink to="/" icon={Home} label="Home" />
+                        {!user && (
+                            <Link to="/login" className="px-5 py-2 text-sm font-black text-slate-600 hover:text-slate-900 transition-colors">
+                                Sign In
+                            </Link>
+                        )}
+                        {user && !isAdmin && !isDelivery && (
                             <NavLink to="/restaurants" icon={Store} label="Restaurants" />
-                            <NavLink to="/orders" icon={History} label="Orders" />
+                        )}
+                    </div>
+
+                    {/* Persistent Actions (Visible on Mobile & Desktop) */}
+                    {user && !isAdmin && !isDelivery && (
+                        <div className="flex items-center gap-1 md:gap-2 mr-2 md:mr-0">
                             <Link 
                                 to="/cart" 
-                                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all relative group ${
+                                className={`flex items-center gap-2 px-3 md:px-4 py-2 rounded-xl text-sm font-bold transition-all relative group ${
                                     isActive('/cart') 
                                         ? 'text-primary-600 bg-primary-50/50' 
                                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
@@ -152,30 +163,26 @@ const Navbar = () => {
                                         </div>
                                     )}
                                 </div>
-                                Cart
+                                <span className="hidden sm:block">Cart</span>
                             </Link>
-                        </>
+                            <NavLink to="/orders" icon={History} label="Orders" />
+                        </div>
                     )}
 
-                    {/* Guest Links */}
                     {!user && (
-                        <>
-                            <NavLink to="/" icon={Home} label="Home" />
-                            <Link to="/login" className="px-5 py-2 text-sm font-black text-slate-600 hover:text-slate-900 transition-colors">
-                                Sign In
-                            </Link>
+                        <div className="hidden md:block">
                             <Link 
                                 to="/register" 
                                 className="px-6 py-2.5 bg-slate-900 text-white text-sm font-black rounded-xl hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10 active:scale-95"
                             >
                                 Register
                             </Link>
-                        </>
+                        </div>
                     )}
 
-                    {/* Auth User Profile Trigger */}
+                    {/* Auth Profile Section (Desktop Only) */}
                     {user && (
-                        <div className="flex items-center gap-4 ml-2 pl-4 border-l border-slate-200">
+                        <div className="hidden md:flex items-center gap-4 ml-2 pl-4 border-l border-slate-200">
                              {isDelivery && (
                                  <div className="hidden lg:flex flex-col items-end mr-2 px-3 py-1.5 bg-emerald-50 rounded-xl border border-emerald-100">
                                      <span className="text-[8px] font-black uppercase tracking-widest text-emerald-600">Earnings</span>
@@ -195,15 +202,15 @@ const Navbar = () => {
                              </button>
                         </div>
                     )}
-                </div>
 
-                {/* Mobile Menu Toggle */}
-                <button 
-                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                    className="md:hidden w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-600 shadow-sm"
-                >
-                    {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-                </button>
+                    {/* Mobile menu toggle */}
+                    <button 
+                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                        className="md:hidden w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-600 shadow-sm transition-all active:scale-95"
+                    >
+                        {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+                    </button>
+                </div>
             </div>
 
             {/* Mobile Menu Backdrop */}
@@ -236,8 +243,6 @@ const Navbar = () => {
                                 <>
                                     <NavLink to="/" icon={Home} label="Home" />
                                     <NavLink to="/restaurants" icon={Store} label="Restaurants" />
-                                    <NavLink to="/cart" icon={ShoppingBag} label="Cart" />
-                                    <NavLink to="/orders" icon={History} label="Orders" />
                                     <NavLink to="/profile" icon={UserIcon} label="Profile" />
                                 </>
                              )}
