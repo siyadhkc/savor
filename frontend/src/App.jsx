@@ -142,6 +142,9 @@ function App() {
                         <Route path="/restaurant-admin/menu" element={
                             <RestaurantRoute><RestaurantMenu /></RestaurantRoute>
                         } />
+                        <Route path="/restaurant-admin/categories" element={
+                            <RestaurantRoute><AdminCategories /></RestaurantRoute>
+                        } />
                         <Route path="/restaurant-admin/orders" element={
                             <RestaurantRoute><RestaurantOrders /></RestaurantRoute>
                         } />

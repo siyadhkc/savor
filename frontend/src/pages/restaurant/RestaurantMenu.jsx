@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import api from '../../api/axios'
 import { getImageUrl } from '../../utils/helpers'
 import { useAuth } from '../../context/AuthContext'
@@ -340,7 +341,12 @@ const RestaurantMenu = () => {
                             <form id="menuForm" onSubmit={handleSubmit} className="space-y-8">
                                 
                                 <div className="space-y-3">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Collection Segment</label>
+                                    <div className="flex justify-between items-center px-1">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Collection Segment</label>
+                                        <Link to="/restaurant-admin/categories" className="text-[9px] font-black uppercase tracking-widest text-primary-500 hover:text-primary-600 transition-colors">
+                                            Manage Categories +
+                                        </Link>
+                                    </div>
                                     <select
                                         name="category"
                                         value={formData.category}

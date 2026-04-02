@@ -5,22 +5,6 @@ from .models import Category, MenuItem
 from .serializers import CategorySerializer, MenuItemSerializer
 
 
-class CategoryViewSet(viewsets.ModelViewSet):
-    """
-    Categories are admin-only to create/edit/delete.
-    But anyone can view them to browse the menu.
-    """
-    queryset = Category.objects.all()
-    serializer_class = CategorySerializer
-
-    def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
-            permission_classes = [AllowAny]
-        else:
-            permission_classes = [IsAdminUser]
-        return [permission() for permission in permission_classes]
-
-
 from rest_framework import permissions
 
 class IsAdminOrRestaurantOwner(permissions.BasePermission):
@@ -37,8 +21,27 @@ class IsAdminOrRestaurantOwner(permissions.BasePermission):
         if request.user.is_staff:
             return True
         if hasattr(request.user, 'restaurant'):
+            # Some objects (like Category) might not have a restaurant field.
+            # In those cases, the global has_permission (above) is sufficient.
+            if not hasattr(obj, 'restaurant'):
+                return True
             return obj.restaurant == request.user.restaurant
         return False
+
+class CategoryViewSet(viewsets.ModelViewSet):
+    """
+    Categories are admin/partner-managed to create/edit/delete.
+    But anyone can view them to browse the menu.
+    """
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            permission_classes = [AllowAny]
+        else:
+            permission_classes = [IsAdminOrRestaurantOwner]
+        return [permission() for permission in permission_classes]
 
 class MenuItemViewSet(viewsets.ModelViewSet):
     """

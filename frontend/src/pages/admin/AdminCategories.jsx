@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import api from '../../api/axios'
 import toast from 'react-hot-toast'
-import { Plus, Image as ImageIcon, FolderOpen, Pencil, Trash2, X, AlertCircle, Search, Filter, Activity, CheckCircle2, Loader2, Grid3X3 } from 'lucide-react'
+import { Plus, Image as ImageIcon, FolderOpen, Pencil, Trash2, X, AlertCircle, Search, Filter, Activity, CheckCircle2, Loader2, Grid3X3, ArrowUpRight } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const AdminCategories = () => {

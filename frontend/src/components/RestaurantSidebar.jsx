@@ -8,6 +8,7 @@ import {
     LogOut,
     Store as StoreIcon,
     UserCog,
+    Layers,
     X
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -33,6 +34,7 @@ const RestaurantSidebar = ({ isOpen, setIsOpen }) => {
             label: 'MANAGE',
             links: [
                 { to: '/restaurant-admin/menu', label: 'My Menu', icon: Pizza },
+                { to: '/restaurant-admin/categories', label: 'Categories', icon: Layers },
             ]
         },
         {
