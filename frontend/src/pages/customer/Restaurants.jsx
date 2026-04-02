@@ -28,6 +28,14 @@ const Restaurants = () => {
 
     const [inputValue, setInputValue] = useState(search)
     const topRef = useRef(null)
+    const catScrollRef = useRef(null)
+
+    const scrollCategories = (dir) => {
+        if (catScrollRef.current) {
+            const amount = dir === 'left' ? -400 : 400
+            catScrollRef.current.scrollBy({ left: amount, behavior: 'smooth' })
+        }
+    }
 
     const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE)
 
@@ -177,48 +185,73 @@ const Restaurants = () => {
                         <h2 className="text-xl font-black text-slate-900 tracking-tight mb-8">
                             What's on your mind?
                         </h2>
-                        <div className="flex gap-8 overflow-x-auto pb-4 scrollbar-hide -mx-2 px-2 mask-fade-right">
-                            {catLoading ? (
-                                Array.from({ length: 8 }).map((_, i) => (
-                                    <div key={i} className="flex flex-col items-center gap-3 shrink-0">
-                                        <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-full bg-slate-100 animate-pulse" />
-                                        <div className="w-14 h-3 bg-slate-100 rounded-full animate-pulse" />
-                                    </div>
-                                ))
-                            ) : (
-                                categories.map((cat) => (
-                                    <button
-                                        key={cat.id}
-                                        onClick={() => handleCategorySelect(String(cat.id))}
-                                        className="flex flex-col items-center gap-2 sm:gap-3 group shrink-0 transition-transform active:scale-95"
-                                    >
-                                        <div className={`w-20 h-20 sm:w-28 sm:h-28 rounded-full overflow-hidden border-2 p-1 transition-all duration-500 ${
-                                            categoryId === String(cat.id)
-                                                ? 'border-primary-500 bg-primary-50 ring-4 ring-primary-500/10'
-                                                : 'border-transparent bg-white shadow-sm group-hover:shadow-md'
-                                        }`}>
-                                            <div className="w-full h-full rounded-full bg-slate-50 overflow-hidden relative">
-                                                {cat.image ? (
-                                                    <img
-                                                        src={`${import.meta.env.VITE_API_URL?.replace('/api', '') || ''}${cat.image}`}
-                                                        alt={cat.name}
-                                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                                                    />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center text-slate-300">
-                                                        <Utensils size={32} strokeWidth={1} />
-                                                    </div>
-                                                )}
-                                            </div>
+                        
+                        <div className="relative group/carousel">
+                            {/* Navigation Arrows */}
+                            <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6 z-20 opacity-0 group-hover/carousel:opacity-100 transition-opacity hidden sm:block">
+                                <button 
+                                    onClick={() => scrollCategories('left')}
+                                    className="w-12 h-12 rounded-full bg-white shadow-xl border border-slate-100 flex items-center justify-center text-slate-800 hover:bg-slate-50 active:scale-90 transition-all"
+                                >
+                                    <ChevronLeft size={24} strokeWidth={2.5} />
+                                </button>
+                            </div>
+
+                            <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-6 z-20 opacity-0 group-hover/carousel:opacity-100 transition-opacity hidden sm:block">
+                                <button 
+                                    onClick={() => scrollCategories('right')}
+                                    className="w-12 h-12 rounded-full bg-white shadow-xl border border-slate-100 flex items-center justify-center text-slate-800 hover:bg-slate-50 active:scale-90 transition-all"
+                                >
+                                    <ChevronRight size={24} strokeWidth={2.5} />
+                                </button>
+                            </div>
+
+                            <div 
+                                ref={catScrollRef}
+                                className="flex gap-8 overflow-x-auto pb-4 scrollbar-hide -mx-2 px-2 mask-fade-right snap-x"
+                            >
+                                {catLoading ? (
+                                    Array.from({ length: 8 }).map((_, i) => (
+                                        <div key={i} className="flex flex-col items-center gap-3 shrink-0">
+                                            <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-full bg-slate-100 animate-pulse" />
+                                            <div className="w-14 h-3 bg-slate-100 rounded-full animate-pulse" />
                                         </div>
-                                        <span className={`text-[12px] sm:text-sm font-black tracking-tight transition-colors ${
-                                            categoryId === String(cat.id) ? 'text-primary-600' : 'text-slate-600 group-hover:text-slate-900'
-                                        }`}>
-                                            {cat.name}
-                                        </span>
-                                    </button>
-                                ))
-                            )}
+                                    ))
+                                ) : (
+                                    categories.map((cat) => (
+                                        <button
+                                            key={cat.id}
+                                            onClick={() => handleCategorySelect(String(cat.id))}
+                                            className="flex flex-col items-center gap-2 sm:gap-3 group shrink-0 transition-transform active:scale-95 snap-start"
+                                        >
+                                            <div className={`w-20 h-20 sm:w-28 sm:h-28 rounded-full overflow-hidden border-2 p-1 transition-all duration-500 ${
+                                                categoryId === String(cat.id)
+                                                    ? 'border-primary-500 bg-primary-50 ring-4 ring-primary-500/10'
+                                                    : 'border-transparent bg-white shadow-sm group-hover:shadow-md'
+                                            }`}>
+                                                <div className="w-full h-full rounded-full bg-slate-50 overflow-hidden relative">
+                                                    {cat.image ? (
+                                                        <img
+                                                            src={`${import.meta.env.VITE_API_URL?.replace('/api', '') || ''}${cat.image}`}
+                                                            alt={cat.name}
+                                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center text-slate-300">
+                                                            <Utensils size={32} strokeWidth={1} />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <span className={`text-[12px] sm:text-sm font-black tracking-tight transition-colors ${
+                                                categoryId === String(cat.id) ? 'text-primary-600' : 'text-slate-600 group-hover:text-slate-900'
+                                            }`}>
+                                                {cat.name}
+                                            </span>
+                                        </button>
+                                    ))
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>

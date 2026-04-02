@@ -131,7 +131,7 @@ const Footer = () => {
                                     <MapPin size={18} className="text-primary-500" />
                                 </div>
                                 <p className="text-slate-500 text-sm font-bold leading-relaxed">
-                                    Savor HQ, MG Road, Kochi<br />Kerala — 682016
+                                    Savor HQ, Beach Road, Kozhikode<br />Kerala — 673001
                                 </p>
                             </div>
                             <div className="flex items-start gap-4">

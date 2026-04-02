@@ -1,20 +1,19 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../../api/axios'
 import Footer from '../../components/Footer'
-import burgerImg from '../../assets/images/burger.png'
 import qrImg from '../../assets/images/qr.png'
 import pizzaImg from '../../assets/images/pizza.png'
-import { Search, MapPin, ArrowRight, Utensils, Loader2, ChevronRight, Star, Clock, Heart, TrendingUp, CheckCircle2 } from 'lucide-react'
+import { Search, MapPin, ArrowRight, Utensils, Loader2, ChevronRight, Star, Clock, Heart, TrendingUp, CheckCircle2, ChefHat, ChevronLeft } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 const KERALA_CITIES = [
     { name: 'Kochi',       desc: 'Commercial Capital' },
-    { name: 'Kannur',      desc: ''      },
+    { name: 'Kannur',      desc: 'City of Looms & Lores' },
     { name: 'Kozhikode',   desc: 'City of Spices'     },
-    { name: 'Thrissur',    desc: 'Cultural Capital'   },
     { name: 'Trivandrum',  desc: 'State Capital'     },
-    { name: 'Palakkad',    desc: 'Gateway to Kerala'  },
+    { name: 'Alappuzha',   desc: 'Venice of the East' },
+    { name: 'Wayanad',     desc: 'Nature Boutique'    },
 ]
 
 const Home = () => {
@@ -22,6 +21,14 @@ const Home = () => {
     const [categories,  setCategories]  = useState([])
     const [catLoading,  setCatLoading]  = useState(true)
     const [searchInput, setSearchInput] = useState('')
+    const scrollRef = useRef(null)
+
+    const scrollCarousel = (dir) => {
+        if (scrollRef.current) {
+            const scrollAmount = dir === 'left' ? -400 : 400
+            scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' })
+        }
+    }
 
     useEffect(() => {
         api.get('/menu/categories/')
@@ -57,9 +64,9 @@ const Home = () => {
                         {/* Left Content */}
                         <div className="flex-1 text-center lg:text-left pt-10 lg:pt-0 max-w-2xl mx-auto lg:mx-0">
                             <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
-                                <h1 className="text-slate-900 text-5xl sm:text-6xl lg:text-7xl font-black tracking-tighter leading-[1.05] mb-6">
+                                <h1 className="text-slate-900 text-5xl sm:text-6xl lg:text-7xl font-display font-black tracking-tighter leading-[1.05] mb-6">
                                     Your favourite food,<br />
-                                    <span className="text-primary-600">delivered fast.</span>
+                                    <span className="text-primary-600 font-display">delivered fast.</span>
                                 </h1>
 
                                 <p className="text-slate-600 text-lg sm:text-xl font-medium mb-10 leading-relaxed">
@@ -120,48 +127,73 @@ const Home = () => {
                                     initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
                                     className="absolute inset-0 bg-white rounded-[32px] border border-slate-200/80 shadow-[0_20px_50px_rgba(0,0,0,0.06)] overflow-hidden flex flex-col z-10"
                                 >
-                                    <div className="h-44 bg-slate-50 relative overflow-hidden flex items-center justify-center">
+                                    <div className="h-64 bg-slate-50 relative overflow-hidden flex items-center justify-center">
+                                        {/* Abstract background elements */}
                                         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,#86efac_0%,transparent_60%)] opacity-40" />
-                                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,#16a34a_0%,transparent_60%)] opacity-30" />
+                                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,#10b981_0%,transparent_60%)] opacity-10" />
                                         
-                                        {/* Real Generated Image */}
-                                        <motion.img 
-                                            src={burgerImg}
-                                            alt="Gourmet Farmhouse Burger"
-                                            initial={{ scale: 0.95, rotate: -2 }} animate={{ scale: 1.02, rotate: 2 }} transition={{ repeat: Infinity, duration: 5, ease: "easeInOut", repeatType: "reverse" }}
-                                            className="w-56 h-auto object-contain z-10 translate-y-[15%] mix-blend-multiply opacity-95"
-                                        />
+                                        {/* Icon Composition */}
+                                        <motion.div 
+                                            initial={{ scale: 0.8, opacity: 0 }}
+                                            animate={{ scale: 1, opacity: 1 }}
+                                            transition={{ duration: 1, ease: "easeOut" }}
+                                            className="relative flex items-center justify-center w-32 h-32"
+                                        >
+                                            <div className="absolute inset-0 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
+                                            <div className="bg-gradient-to-br from-blue-500 to-blue-700 p-8 rounded-[32px] shadow-[0_20px_50px_rgba(37,99,235,0.3)] relative z-10 group-hover:rotate-6 transition-transform duration-500">
+                                                <ChefHat size={48} className="text-white" strokeWidth={2.5} />
+                                            </div>
+                                            
+                                            {/* Floating mini-icons */}
+                                            <motion.div 
+                                                animate={{ y: [0, -10, 0], x: [0, 5, 0] }}
+                                                transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+                                                className="absolute -top-4 -right-4 w-12 h-12 bg-white rounded-2xl shadow-lg border border-slate-100 flex items-center justify-center text-blue-600 z-20"
+                                            >
+                                                <Star size={20} fill="currentColor" />
+                                            </motion.div>
+                                            <motion.div 
+                                                animate={{ y: [0, 10, 0], x: [0, -5, 0] }}
+                                                transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }}
+                                                className="absolute -bottom-6 -left-6 w-14 h-14 bg-white rounded-2xl shadow-lg border border-slate-100 flex items-center justify-center text-blue-500 z-20"
+                                            >
+                                                <Clock size={24} strokeWidth={2.5} />
+                                            </motion.div>
+                                        </motion.div>
                                     </div>
                                     <div className="flex-1 p-6 pb-7 flex flex-col">
                                         <div className="flex justify-between items-start mb-4">
                                             <div>
-                                                <h3 className="text-xl lg:text-2xl font-black text-slate-800 tracking-tight">Farmhouse Burger</h3>
-                                                <p className="text-slate-500 text-sm font-medium mt-1">American Gourmet • ₹299</p>
+                                                <h3 className="text-xl lg:text-2xl font-display font-black text-slate-800 tracking-tight">Saudi Shawaya</h3>
+                                                <p className="text-slate-500 text-sm font-medium mt-1">Arabic Gourmet • Trending</p>
                                             </div>
                                             <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 shadow-sm">
                                                 <Heart size={18} className="text-rose-500 fill-rose-500" />
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-4 mb-8">
-                                            <div className="flex items-center gap-1.5 bg-green-50 px-2.5 py-1.5 rounded-lg border border-green-100">
-                                                <Star size={14} className="text-green-600 fill-green-600" />
-                                                <span className="text-green-700 text-xs font-bold">4.9</span>
+                                            <div className="flex items-center gap-1.5 bg-blue-50 px-2.5 py-1.5 rounded-lg border border-blue-100">
+                                                <Star size={14} className="text-blue-600 fill-blue-600" />
+                                                <span className="text-blue-700 text-xs font-bold">4.9</span>
                                             </div>
                                             <div className="flex items-center gap-2 text-slate-400 text-xs font-semibold uppercase tracking-wider">
                                                 <Clock size={14} className="text-slate-300" />
-                                                <span>20-25 min</span>
+                                                <span>Fast Delivery</span>
                                             </div>
                                         </div>
-                                        <div className="mt-auto h-14 w-full bg-slate-900 rounded-[16px] flex items-center justify-center shadow-[0_8px_20px_rgba(0,0,0,0.15)] hover:bg-slate-800 transition-colors cursor-pointer group">
-                                            <span className="text-white font-bold text-sm tracking-wide group-hover:scale-105 transition-transform">Add to Order</span>
+                                        <div 
+                                            onClick={() => goToRestaurants()}
+                                            className="mt-auto h-14 w-full bg-slate-900 rounded-[16px] flex items-center justify-center shadow-[0_8px_20px_rgba(0,0,0,0.15)] hover:bg-slate-800 transition-colors cursor-pointer group"
+                                        >
+                                            <span className="text-white font-bold text-sm tracking-wide group-hover:scale-105 transition-transform">Explore Menu</span>
                                         </div>
                                     </div>
                                 </motion.div>
 
                                 {/* Top Right Floating Stat */}
                                 <motion.div 
-                                    initial={{ opacity: 0, x: 20, y: -20 }} animate={{ opacity: 1, x: 0, y: 0 }} transition={{ duration: 0.8, delay: 0.3 }}
-                                    className="absolute top-6 -right-12 lg:-right-16 w-48 bg-white/90 backdrop-blur-xl rounded-2xl border border-white shadow-[0_20px_40px_rgba(0,0,0,0.08)] p-4 z-20"
+                                    initial={{ opacity: 0, x: 20, y: -10 }} animate={{ opacity: 1, x: 0, y: 0 }} transition={{ duration: 0.8, delay: 0.3 }}
+                                    className="absolute top-12 -right-16 lg:-right-20 w-48 bg-white/95 backdrop-blur-xl rounded-2xl border border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.1)] p-4 z-20"
                                 >
                                     <div className="flex items-center gap-3">
                                         <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
@@ -169,17 +201,17 @@ const Home = () => {
                                         </div>
                                         <div>
                                             <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-0.5">Trending</p>
-                                            <p className="text-sm font-black text-slate-800">#1 in Kochi</p>
+                                            <p className="text-sm font-black text-slate-800">#1 in Kannur</p>
                                         </div>
                                     </div>
                                 </motion.div>
 
                                 {/* Bottom Left Floating Promo */}
                                 <motion.div 
-                                    initial={{ opacity: 0, x: -20, y: 20 }} animate={{ opacity: 1, x: 0, y: 0 }} transition={{ duration: 0.8, delay: 0.5 }}
-                                    className="absolute -bottom-6 -left-12 lg:-left-16 w-56 bg-white/90 backdrop-blur-xl rounded-2xl border border-white shadow-[0_20px_40px_rgba(22,163,74,0.15)] p-4 z-20 flex items-center gap-4"
+                                    initial={{ opacity: 0, x: -20, y: 10 }} animate={{ opacity: 1, x: 0, y: 0 }} transition={{ duration: 0.8, delay: 0.5 }}
+                                    className="absolute bottom-16 -left-16 lg:-left-20 w-56 bg-white/95 backdrop-blur-xl rounded-2xl border border-white/20 shadow-[0_20px_50px_rgba(37,99,235,0.15)] p-4 z-20 flex items-center gap-4"
                                 >
-                                    <div className="w-12 h-12 rounded-[14px] bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shrink-0 shadow-inner">
+                                    <div className="w-12 h-12 rounded-[14px] bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shrink-0 shadow-inner">
                                         <span className="text-white font-black text-xl">%</span>
                                     </div>
                                     <div>
@@ -189,7 +221,7 @@ const Home = () => {
                                 </motion.div>
                                 
                                 {/* Background Decorative Circle */}
-                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[110%] h-[110%] bg-primary-100 rounded-full blur-[80px] opacity-70 -z-10 pointer-events-none" />
+                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[110%] h-[110%] bg-blue-100 rounded-full blur-[80px] opacity-70 -z-10 pointer-events-none" />
                             </div>
                         </div>
                     </div>
@@ -229,7 +261,7 @@ const Home = () => {
                     <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10 sm:mb-14">
                         <div>
                             <p className="text-primary-600 text-xs font-bold uppercase tracking-[0.2em] mb-2">Categories</p>
-                            <h2 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
+                            <h2 className="text-2xl sm:text-4xl font-display font-black text-slate-900 tracking-tight">
                                 What are you craving?
                             </h2>
                         </div>
@@ -249,36 +281,60 @@ const Home = () => {
                     ) : categories.length === 0 ? (
                         <p className="text-center text-slate-400 py-12 font-medium">No categories available yet.</p>
                     ) : (
-                        <div className="flex sm:grid sm:grid-cols-4 md:grid-cols-6 gap-4 sm:gap-6 overflow-x-auto sm:overflow-visible pb-2 sm:pb-0 -mx-4 sm:mx-0 px-4 sm:px-0 scrollbar-hide">
-                            {categories.map((cat, idx) => (
-                                <motion.button
-                                    key={cat.id}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    whileInView={{ opacity: 1, y: 0 }}
-                                    viewport={{ once: true }}
-                                    transition={{ delay: Math.min(idx * 0.05, 0.35) }}
-                                    onClick={() => goToRestaurants(cat.name)}
-                                    className="group flex flex-col items-center gap-3 focus:outline-none shrink-0 sm:shrink"
-                                    style={{ minWidth: '80px' }}
+                        <div className="relative group/carousel">
+                            {/* Navigation Arrows */}
+                            <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6 z-20 opacity-0 group-hover/carousel:opacity-100 transition-opacity hidden sm:block">
+                                <button 
+                                    onClick={() => scrollCarousel('left')}
+                                    className="w-12 h-12 rounded-full bg-white shadow-xl border border-slate-100 flex items-center justify-center text-slate-800 hover:bg-slate-50 active:scale-90 transition-all"
                                 >
-                                    <div className="w-[76px] h-[76px] sm:w-24 sm:h-24 rounded-[20px] overflow-hidden bg-slate-50 border border-slate-200/60 shadow-[0_4px_20px_rgb(0,0,0,0.02)] group-hover:border-primary-200 group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] group-hover:-translate-y-1 transition-all duration-500 shrink-0">
-                                        {cat.image ? (
-                                            <img
-                                                src={`${import.meta.env.VITE_API_URL?.replace('/api', '') || ''}${cat.image}`}
-                                                alt={cat.name}
-                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                            />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-slate-300">
-                                                <Utensils size={28} strokeWidth={1.5} />
-                                            </div>
-                                        )}
-                                    </div>
-                                    <span className="text-xs font-semibold text-slate-600 group-hover:text-primary-600 transition-colors text-center line-clamp-1 w-full tracking-wide">
-                                        {cat.name}
-                                    </span>
-                                </motion.button>
-                            ))}
+                                    <ChevronLeft size={24} strokeWidth={2.5} />
+                                </button>
+                            </div>
+
+                            <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-6 z-20 opacity-0 group-hover/carousel:opacity-100 transition-opacity hidden sm:block">
+                                <button 
+                                    onClick={() => scrollCarousel('right')}
+                                    className="w-12 h-12 rounded-full bg-white shadow-xl border border-slate-100 flex items-center justify-center text-slate-800 hover:bg-slate-50 active:scale-90 transition-all"
+                                >
+                                    <ChevronRight size={24} strokeWidth={2.5} />
+                                </button>
+                            </div>
+
+                            <div 
+                                ref={scrollRef}
+                                className="flex items-center gap-6 sm:gap-10 overflow-x-auto pb-4 pt-2 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide snap-x transition-all duration-300"
+                            >
+                                {categories.map((cat, idx) => (
+                                    <motion.button
+                                        key={idx}
+                                        initial={{ opacity: 0, x: 20 }}
+                                        whileInView={{ opacity: 1, x: 0 }}
+                                        viewport={{ once: true }}
+                                        transition={{ delay: Math.min(idx * 0.05, 0.4) }}
+                                        onClick={() => goToRestaurants(cat.name)}
+                                        className="group/item flex flex-col items-center gap-3 focus:outline-none shrink-0 snap-start"
+                                        style={{ minWidth: '90px' }}
+                                    >
+                                        <div className="w-[84px] h-[84px] sm:w-28 sm:h-28 rounded-full overflow-hidden bg-slate-50 border border-slate-200/60 shadow-[0_4px_20px_rgb(0,0,0,0.02)] group-hover/item:border-blue-400 group-hover/item:shadow-[0_8px_30px_rgba(37,99,235,0.08)] group-hover/item:-translate-y-1 transition-all duration-500 shrink-0">
+                                            {cat.image ? (
+                                                <img
+                                                    src={`${import.meta.env.VITE_API_URL?.replace('/api', '') || ''}${cat.image}`}
+                                                    alt={cat.name}
+                                                    className="w-full h-full object-cover group-hover/item:scale-110 transition-transform duration-500"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-slate-300">
+                                                    <Utensils size={32} strokeWidth={1.5} />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <span className="text-[11px] sm:text-xs font-bold text-slate-700 group-hover/item:text-blue-600 transition-colors text-center line-clamp-1 w-full tracking-tight font-display">
+                                            {cat.name}
+                                        </span>
+                                    </motion.button>
+                                ))}
+                            </div>
                         </div>
                     )}
                 </div>
@@ -293,9 +349,9 @@ const Home = () => {
                         
                         {/* Left */}
                         <div className="flex-1 relative z-10 text-center lg:text-left max-w-2xl mx-auto lg:mx-0">
-                            <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tighter mb-6 leading-[1.1]">
+                            <h2 className="text-3xl sm:text-5xl lg:text-6xl font-display font-black text-white tracking-tighter mb-6 leading-[1.1]">
                                 Supercharge your<br/>
-                                <span className="text-primary-500">food experience.</span>
+                                <span className="text-primary-500 font-display">food experience.</span>
                             </h2>
                             <p className="text-slate-400 text-lg font-medium mb-10 leading-relaxed max-w-lg mx-auto lg:mx-0 lg:border-l-2 lg:border-primary-500/30 lg:pl-5">
                                 Personalised recommendations, exclusive offers, and live GPS tracking. Download the Savor app to discover what you've been missing.
@@ -444,9 +500,9 @@ const Home = () => {
                         {/* Content */}
                         <div className="flex-1 text-center lg:text-left">
                             <p className="text-primary-600 text-xs font-bold uppercase tracking-[0.2em] mb-3">Work with Savor</p>
-                            <h2 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight mb-5 leading-tight">
+                            <h2 className="text-3xl sm:text-5xl font-display font-black text-slate-900 tracking-tight mb-5 leading-tight">
                                 Join our fleet.<br />
-                                <span className="text-primary-500 font-normal text-2xl sm:text-3xl italic">Earn on your own schedule.</span>
+                                <span className="text-primary-500 font-normal text-2xl sm:text-3xl italic font-display">Earn on your own schedule.</span>
                             </h2>
                             <p className="text-slate-500 text-base font-medium mb-8 leading-relaxed max-w-md mx-auto lg:mx-0">
                                 Become a delivery partner and enjoy the freedom of being your own boss. Competitive earnings, flexible hours, and a supportive community wait for you.

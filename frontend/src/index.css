@@ -12,8 +12,8 @@
   --color-primary-800: #065f46;
   --color-primary-900: #064e3b;
   --color-primary-950: #022c22;
-
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-display: "Outfit", sans-serif;
 }
 
 body {
@@ -69,6 +69,15 @@ body {
   /* Responsive Table Wrapper */
   .table-responsive {
     @apply overflow-x-auto -mx-5 px-5 md:mx-0 md:px-0;
+  }
+
+  /* Utility to hide scrollbars while maintaining functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
   }
 }
 
