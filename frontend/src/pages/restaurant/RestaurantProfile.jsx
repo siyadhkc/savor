@@ -15,7 +15,8 @@ import {
     ShieldCheck,
     Briefcase,
     Activity,
-    ArrowUpRight
+    ArrowUpRight,
+    Pencil
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 

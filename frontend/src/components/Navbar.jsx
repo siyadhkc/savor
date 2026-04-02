@@ -30,6 +30,10 @@ const Navbar = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const [cartCount, setCartCount] = useState(0)
 
+    const isAdmin = user?.is_staff || user?.role === 'admin'
+    const isDelivery = user?.role === 'delivery'
+    const isActive = (path) => location.pathname === path
+
     useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY > 20)
         window.addEventListener('scroll', handleScroll)
@@ -61,10 +65,6 @@ const Navbar = () => {
         navigate('/login')
     }
 
-    const isAdmin = user?.is_staff || user?.role === 'admin'
-    const isDelivery = user?.role === 'delivery'
-    const isActive = (path) => location.pathname === path
-
     const NavLink = ({ to, icon: Icon, label }) => (
         <Link 
             to={to} 
@@ -95,7 +95,7 @@ const Navbar = () => {
                 
                 {/* Logo */}
                 <Link 
-                    to={isAdmin ? '/admin' : '/'} 
+                    to={isAdmin ? '/admin' : (isDelivery ? '/delivery/dashboard' : '/')} 
                     className="flex items-center gap-3 group"
                 >
                     <div className="bg-primary-600 text-white p-2 rounded-xl group-hover:rotate-12 transition-transform shadow-lg shadow-primary-600/20">
@@ -124,13 +124,8 @@ const Navbar = () => {
                             </>
                         )}
 
-                        {/* Delivery Links */}
-                        {user && isDelivery && (
-                            <>
-                                <NavLink to="/delivery/dashboard" icon={LayoutDashboard} label="Delivery Hub" />
-                                <NavLink to="/delivery/profile" icon={UserIcon} label="Profile" />
-                            </>
-                        )}
+                        {/* Delivery Links - Removed for minimalism (links available in dashboard) */}
+
 
                         {/* Guest / General Links */}
                         <NavLink to="/" icon={Home} label="Home" />
@@ -233,12 +228,8 @@ const Navbar = () => {
                                     <NavLink to="/admin/orders" icon={Package} label="Orders" />
                                 </>
                              )}
-                             {user && isDelivery && (
-                                <>
-                                    <NavLink to="/delivery/dashboard" icon={LayoutDashboard} label="Delivery Hub" />
-                                    <NavLink to="/delivery/profile" icon={UserIcon} label="Profile" />
-                                </>
-                             )}
+                             {/* Delivery Links - Removed for minimalism */}
+
                              {user && !isAdmin && !isDelivery && (
                                 <>
                                     <NavLink to="/" icon={Home} label="Home" />

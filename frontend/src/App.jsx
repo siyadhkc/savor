@@ -36,6 +36,7 @@ import RestaurantProfile from './pages/restaurant/RestaurantProfile'
 // Delivery Pages
 import DeliveryDashboard from './pages/delivery/DeliveryDashboard'
 import DeliveryProfile from './pages/delivery/DeliveryProfile'
+import DeliveryHistory from './pages/delivery/DeliveryHistory'
 
 // Route Guards
 import CustomerRoute from './components/CustomerRoute'
@@ -158,6 +159,9 @@ function App() {
                     } />
                     <Route path="/delivery/profile" element={
                         <DeliveryRoute><DeliveryProfile /></DeliveryRoute>
+                    } />
+                    <Route path="/delivery/history" element={
+                        <DeliveryRoute><DeliveryHistory /></DeliveryRoute>
                     } />
 
                     {/* Catch all */}

@@ -2,11 +2,12 @@ import React, { useState, useEffect, useRef } from 'react'
 import api from '../../api/axios'
 import toast from 'react-hot-toast'
 import { listOrders, updateDeliveryLocation } from '../../api/orders'
-import { MapPin, Truck, CheckCircle2, Navigation, Package, Clock, ShieldCheck, Map, ArrowRight, DollarSign, Activity, ExternalLink, Power, LogOut, User } from 'lucide-react'
+import { MapPin, Truck, CheckCircle2, Navigation, Package, Clock, ShieldCheck, Map, ArrowRight, DollarSign, Activity, ExternalLink, Power, LogOut, User, History } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { formatDate, formatOrderId } from '../../utils/helpers'
 import { useAuth } from '../../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
+import Navbar from '../../components/Navbar'
 
 const DeliveryDashboard = () => {
     const { user, fetchUser, logout } = useAuth()
@@ -150,8 +151,9 @@ const DeliveryDashboard = () => {
     }
 
     return (
-        <div className="min-h-screen bg-slate-900 pb-20 pt-32">
-            <div className="max-w-4xl mx-auto px-5">
+        <div className="min-h-screen bg-slate-900 pb-20">
+            <Navbar />
+            <div className="max-w-4xl mx-auto px-5 pt-32">
                 
                 {/* Header Area */}
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
@@ -171,6 +173,14 @@ const DeliveryDashboard = () => {
                         >
                             <Power size={14} />
                             {isAvailable ? 'Status: ONLINE' : 'Status: OFFLINE'}
+                        </button>
+
+                        <button 
+                            onClick={() => navigate('/delivery/history')}
+                            className="flex items-center justify-center w-12 h-12 rounded-2xl bg-white/5 border border-white/5 text-white/40 hover:text-primary-400 hover:bg-primary-500/10 hover:border-primary-500/20 transition-all active:scale-95 group"
+                            title="Fulfillment History"
+                        >
+                            <History size={18} className="group-hover:scale-110 transition-transform" />
                         </button>
 
                         <button 
