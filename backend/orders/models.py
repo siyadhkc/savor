@@ -79,13 +79,13 @@ class Order(models.Model):
         OUT_FOR_DELIVERY = 'out_for_delivery', 'Out for Delivery'
         DELIVERED = 'delivered', 'Delivered'
         CANCELLED = 'cancelled', 'Cancelled'
-    """
-    WHY TextChoices for status?
-    Orders move through a lifecycle. TextChoices ensures
-    only valid statuses are stored. This is called a
-    "state machine" pattern — very common in real apps.
-    The admin updates this status as the order progresses.
-    """
+
+    class DeliveryStatus(models.TextChoices):
+        ASSIGNED = 'assigned', 'Assigned'
+        ACCEPTED = 'accepted', 'Accepted'
+        PICKED = 'picked', 'Picked'
+        DELIVERING = 'delivering', 'Delivering'
+        DELIVERED = 'delivered', 'Delivered'
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -97,13 +97,30 @@ class Order(models.Model):
         on_delete=models.CASCADE,
         related_name='orders'
     )
+    delivery_agent = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='delivery_orders'
+    )
     status = models.CharField(
         max_length=20,
         choices=Status.choices,
         default=Status.PENDING
     )
+    delivery_status = models.CharField(
+        max_length=20,
+        choices=DeliveryStatus.choices,
+        default=DeliveryStatus.ASSIGNED,
+        blank=True,
+        null=True
+    )
+    delivery_lat = models.FloatField(null=True, blank=True)
+    delivery_lng = models.FloatField(null=True, blank=True)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     address = models.TextField()
+    accepted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     """

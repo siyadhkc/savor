@@ -62,6 +62,7 @@ const Navbar = () => {
     }
 
     const isAdmin = user?.is_staff || user?.role === 'admin'
+    const isDelivery = user?.role === 'delivery'
     const isActive = (path) => location.pathname === path
 
     const NavLink = ({ to, icon: Icon, label }) => (
@@ -121,8 +122,16 @@ const Navbar = () => {
                         </>
                     )}
 
+                    {/* Delivery Links */}
+                    {user && isDelivery && (
+                        <>
+                            <NavLink to="/delivery/dashboard" icon={LayoutDashboard} label="Delivery Hub" />
+                            <NavLink to="/delivery/profile" icon={UserIcon} label="Profile" />
+                        </>
+                    )}
+
                     {/* Customer Links */}
-                    {user && !isAdmin && (
+                    {user && !isAdmin && !isDelivery && (
                         <>
                             <NavLink to="/" icon={Home} label="Home" />
                             <NavLink to="/restaurants" icon={Store} label="Restaurants" />
@@ -167,6 +176,12 @@ const Navbar = () => {
                     {/* Auth User Profile Trigger */}
                     {user && (
                         <div className="flex items-center gap-4 ml-2 pl-4 border-l border-slate-200">
+                             {isDelivery && (
+                                 <div className="hidden lg:flex flex-col items-end mr-2 px-3 py-1.5 bg-emerald-50 rounded-xl border border-emerald-100">
+                                     <span className="text-[8px] font-black uppercase tracking-widest text-emerald-600">Earnings</span>
+                                     <span className="text-sm font-black text-emerald-700">₹{parseFloat(user.earnings || 0).toFixed(2)}</span>
+                                 </div>
+                             )}
                              <div className="flex flex-col items-end">
                                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Welcome</span>
                                 <span className="text-sm font-black text-slate-800 leading-none">{user.username}</span>
@@ -211,7 +226,13 @@ const Navbar = () => {
                                     <NavLink to="/admin/orders" icon={Package} label="Orders" />
                                 </>
                              )}
-                             {user && !isAdmin && (
+                             {user && isDelivery && (
+                                <>
+                                    <NavLink to="/delivery/dashboard" icon={LayoutDashboard} label="Delivery Hub" />
+                                    <NavLink to="/delivery/profile" icon={UserIcon} label="Profile" />
+                                </>
+                             )}
+                             {user && !isAdmin && !isDelivery && (
                                 <>
                                     <NavLink to="/" icon={Home} label="Home" />
                                     <NavLink to="/restaurants" icon={Store} label="Restaurants" />

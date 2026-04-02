@@ -4,7 +4,12 @@ from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import CustomUser
-from .serializers import RegisterSerializer, UserSerializer, RestaurantRegisterSerializer
+from .serializers import (
+    RegisterSerializer,
+    UserSerializer,
+    RestaurantRegisterSerializer,
+    DeliveryAgentOptionSerializer,
+)
 
 class RegisterRestaurantView(generics.CreateAPIView):
     queryset = CustomUser.objects.all()
@@ -71,6 +76,20 @@ class UserListView(generics.ListAPIView):
     """
     queryset = CustomUser.objects.all().order_by('-date_joined')
     serializer_class = UserSerializer
+    permission_classes = [IsAdminUser]
+
+
+class DeliveryAgentListView(generics.ListAPIView):
+    """
+    List of all users with role='delivery'.
+    Used by admins to assign agents to orders.
+    """
+    queryset = (
+        CustomUser.objects
+        .filter(role=CustomUser.Role.DELIVERY, is_active=True)
+        .order_by('-is_available', 'username')
+    )
+    serializer_class = DeliveryAgentOptionSerializer
     permission_classes = [IsAdminUser]
 
 

@@ -30,6 +30,9 @@ const RoleRedirect = ({ children }) => {
         if (user.role === 'restaurant') {
             return <Navigate to="/restaurant-admin" replace />
         }
+        if (user.role === 'delivery') {
+            return <Navigate to="/delivery/dashboard" replace />
+        }
         // If it's a regular customer, just let them through!
         // Don't redirect to "/" because that creates a loop if they are already there.
         return children

@@ -27,6 +27,7 @@ urlpatterns = [
     # User management
     path('profile/', views.UserProfileView.as_view(), name='profile'),
     path('all/', views.UserListView.as_view(), name='user_list'),
+    path('delivery-agents/', views.DeliveryAgentListView.as_view(), name='delivery_agent_list'),
     path('<int:pk>/block/', views.block_user, name='block_user'),
     path('<int:pk>/delete/', views.DeleteUserView.as_view(), name='delete_user'),
 ]

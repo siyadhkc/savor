@@ -1,8 +1,14 @@
 import React, { useState, useEffect, Fragment } from 'react'
-import api from '../../api/axios'
 import toast from 'react-hot-toast'
+import {
+    assignDeliveryAgent,
+    downloadInvoice,
+    getDeliveryAgents,
+    listOrders,
+    updateOrderStatus,
+} from '../../api/orders'
 import { formatDate, formatOrderId } from '../../utils/helpers'
-import { ChevronDown, Package, Store, Calendar, CreditCard, Activity, Search, Filter, ArrowUpRight, CheckCircle2, Clock, Truck, XCircle } from 'lucide-react'
+import { ChevronDown, Package, Store, Calendar, CreditCard, Activity, Search, Filter, ArrowUpRight, CheckCircle2, Clock, Truck, XCircle, Users } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const STATUS_OPTIONS = [
@@ -25,20 +31,69 @@ const AdminOrders = () => {
     const [updatingOrder, setUpdatingOrder] = useState(null)
     const [expandedOrders, setExpandedOrders] = useState([])
     const [searchQuery, setSearchQuery] = useState('')
+    const [agents, setAgents] = useState([])
+    const [assigningOrder, setAssigningOrder] = useState(null)
+    const [downloadingOrder, setDownloadingOrder] = useState(null)
 
     useEffect(() => {
         fetchOrders()
+        fetchAgents()
     }, [])
+
+    const fetchAgents = async () => {
+        try {
+            const agentData = await getDeliveryAgents()
+            setAgents(Array.isArray(agentData) ? agentData : [])
+        } catch (error) {
+            console.error('Failed to load agents:', error)
+            setAgents([])
+        }
+    }
+
+    const handleAssignAgent = async (orderId, agentId) => {
+        if (!agentId) return
+        setAssigningOrder(orderId)
+        try {
+            const updatedOrder = await assignDeliveryAgent(orderId, agentId)
+            setOrders(orders.map(order =>
+                order.id === orderId ? updatedOrder : order
+            ))
+            toast.success('Delivery agent assigned successfully.')
+        } catch (error) {
+            toast.error(error.response?.data?.error || 'Assignment failed.')
+        } finally {
+            setAssigningOrder(null)
+        }
+    }
 
     const fetchOrders = async () => {
         try {
-            const response = await api.get('/orders/orders/')
-            setOrders(response.data.results)
+            const orderList = await listOrders()
+            setOrders(orderList)
         } catch (error) {
             console.error('Failed to load admin orders:', error)
             toast.error('Failed to load orders.')
         } finally {
             setLoading(false)
+        }
+    }
+
+    const handleDownloadInvoice = async (orderId) => {
+        setDownloadingOrder(orderId)
+        try {
+            const response = await downloadInvoice(orderId)
+            const url = window.URL.createObjectURL(new Blob([response.data]))
+            const link = document.body.appendChild(document.createElement('a'))
+            link.href = url
+            link.download = `ADMIN_INV_${orderId}.pdf`
+            link.click()
+            link.remove()
+            window.URL.revokeObjectURL(url)
+            toast.success('Invoice exported successfully.')
+        } catch (error) {
+            toast.error('Failed to export invoice.')
+        } finally {
+            setDownloadingOrder(null)
         }
     }
 
@@ -53,9 +108,7 @@ const AdminOrders = () => {
     const handleStatusUpdate = async (orderId, newStatus) => {
         setUpdatingOrder(orderId)
         try {
-            await api.post(`/orders/orders/${orderId}/update_status/`, {
-                status: newStatus,
-            })
+            await updateOrderStatus(orderId, newStatus)
             setOrders(orders.map(order =>
                 order.id === orderId
                     ? { ...order, status: newStatus }
@@ -287,8 +340,13 @@ const AdminOrders = () => {
                                                                                 <div className="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded text-[9px] font-black uppercase tracking-widest">Gross</div>
                                                                              </div>
                                                                         </div>
-                                                                        <button className="flex items-center gap-2 text-[10px] font-black text-primary-600 uppercase tracking-widest hover:gap-3 transition-all underline underline-offset-8">
-                                                                            Generate Invoice <ArrowUpRight size={14} />
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleDownloadInvoice(order.id)}
+                                                                            disabled={downloadingOrder === order.id}
+                                                                            className="flex items-center gap-2 text-[10px] font-black text-primary-600 uppercase tracking-widest hover:gap-3 transition-all underline underline-offset-8 disabled:opacity-50"
+                                                                        >
+                                                                            {downloadingOrder === order.id ? 'Exporting Invoice' : 'Generate Invoice'} <ArrowUpRight size={14} />
                                                                         </button>
                                                                     </div>
                                                                 </div>
@@ -316,13 +374,10 @@ const AdminOrders = () => {
                                                                                 <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2"><Calendar size={12} className="text-primary-500" /> Payment Linkage</span>
                                                                                 <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100">
                                                                                     <CreditCard size={18} className="text-slate-400" />
-                                                                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Encrypted Gateway Token</span>
                                                                                 </div>
                                                                             </div>
                                                                         </div>
-                                                                    </div>
-
-                                                                    <div className="bg-slate-900 rounded-[32px] p-8 shadow-xl shadow-slate-900/10 text-white flex flex-col">
+                                                                        <div className="bg-slate-900 rounded-[32px] p-8 shadow-xl shadow-slate-900/10 text-white flex flex-col">
                                                                         <div className="flex items-center gap-3 mb-4">
                                                                             <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-primary-400">
                                                                                 <Truck size={16} />
@@ -330,10 +385,62 @@ const AdminOrders = () => {
                                                                             <span className="text-[10px] font-black uppercase tracking-widest text-white/50">Delivery Protocol</span>
                                                                         </div>
                                                                         <h4 className="text-lg font-black tracking-tight mb-2">Primary Destination</h4>
-                                                                        <p className="text-sm font-medium text-white/70 leading-relaxed italic border-l-2 border-primary-500/50 pl-4">
+                                                                        <p className="text-sm font-medium text-white/70 leading-relaxed italic border-l-2 border-primary-500/50 pl-4 mb-6">
                                                                              {order.address}
                                                                         </p>
+
+                                                                        <div className="pt-6 border-t border-white/5">
+                                                                            <span className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-3 block">Field Agent Assignment</span>
+                                                                            <div className="space-y-3">
+                                                                                {order.delivery_agent && (
+                                                                                    <div className="flex items-center gap-3 p-4 bg-white/5 rounded-2xl border border-white/5 mb-3">
+                                                                                        <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                                                                                            <Users size={14} />
+                                                                                        </div>
+                                                                                        <div className="flex flex-col">
+                                                                                            <span className="text-xs font-black">{order.delivery_agent_name}</span>
+                                                                                            <span className="text-[9px] text-white/40 font-bold uppercase tracking-widest">Assigned Dispatcher</span>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                )}
+                                                                                
+                                                                                {!order.delivery_agent && order.status !== 'delivered' && (
+                                                                                    <>
+                                                                                        <select
+                                                                                            value={order.delivery_agent || ''}
+                                                                                            onChange={(e) => handleAssignAgent(order.id, e.target.value)}
+                                                                                            disabled={assigningOrder === order.id}
+                                                                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs font-bold text-white focus:outline-none focus:ring-2 focus:ring-primary-500 appearance-none"
+                                                                                        >
+                                                                                            <option value="" className="bg-slate-900 text-white">
+                                                                                                Select Delivery Agent...
+                                                                                            </option>
+                                                                                            {agents.map(agent => (
+                                                                                                <option
+                                                                                                    key={agent.id}
+                                                                                                    value={agent.id}
+                                                                                                    disabled={!agent.is_available}
+                                                                                                    className="bg-slate-900 text-white"
+                                                                                                >
+                                                                                                    {agent.username}{agent.is_available ? '' : ' (Offline)'}
+                                                                                                </option>
+                                                                                            ))}
+                                                                                        </select>
+                                                                                        <p className="text-[9px] text-white/30 font-medium italic">
+                                                                                            Assign an available agent to unlock live GPS tracking.
+                                                                                        </p>
+                                                                                    </>
+                                                                                )}
+
+                                                                                {order.delivery_agent && (
+                                                                                    <p className="text-[9px] text-emerald-300/80 font-medium italic">
+                                                                                        This order is locked to its assigned delivery agent.
+                                                                                    </p>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
                                                                     </div>
+</div>
                                                                 </div>
                                                             </div>
                                                         </motion.div>

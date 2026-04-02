@@ -33,10 +33,15 @@ import RestaurantMenu from './pages/restaurant/RestaurantMenu'
 import RestaurantOrders from './pages/restaurant/RestaurantOrders'
 import RestaurantProfile from './pages/restaurant/RestaurantProfile'
 
+// Delivery Pages
+import DeliveryDashboard from './pages/delivery/DeliveryDashboard'
+import DeliveryProfile from './pages/delivery/DeliveryProfile'
+
 // Route Guards
 import CustomerRoute from './components/CustomerRoute'
 import AdminRoute from './components/AdminRoute'
 import RestaurantRoute from './components/RestaurantRoute'
+import DeliveryRoute from './components/DeliveryRoute'
 import RoleRedirect from './components/RoleRedirect'
 
 /*
@@ -143,6 +148,17 @@ function App() {
                             <RestaurantRoute><RestaurantProfile /></RestaurantRoute>
                         } />
                     </Route>
+
+                    {/* ================================
+                        DELIVERY PROTECTED ROUTES
+                        Must be logged in + is delivery
+                    ================================ */}
+                    <Route path="/delivery/dashboard" element={
+                        <DeliveryRoute><DeliveryDashboard /></DeliveryRoute>
+                    } />
+                    <Route path="/delivery/profile" element={
+                        <DeliveryRoute><DeliveryProfile /></DeliveryRoute>
+                    } />
 
                     {/* Catch all */}
                     <Route path="*" element={<Navigate to="/" replace />} />

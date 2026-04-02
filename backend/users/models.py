@@ -7,6 +7,7 @@ class CustomUser(AbstractUser):
         CUSTOMER = 'customer', 'Customer'
         ADMIN = 'admin', 'Admin'
         RESTAURANT = 'restaurant', 'Restaurant'
+        DELIVERY = 'delivery', 'Delivery Agent'
 
     email = models.EmailField(unique=True)
     """
@@ -33,6 +34,8 @@ class CustomUser(AbstractUser):
         default=Role.CUSTOMER
     )
     is_active = models.BooleanField(default=True)
+    is_available = models.BooleanField(default=True)
+    earnings = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     created_at = models.DateTimeField(auto_now_add=True)
 
     USERNAME_FIELD = 'email'

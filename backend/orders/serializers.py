@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Cart, CartItem, Order, OrderItem
 from menu.models import MenuItem
+from users.models import CustomUser
 
 
 class CartItemSerializer(serializers.ModelSerializer):
@@ -102,16 +103,115 @@ class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
     user_email = serializers.CharField(source='user.email', read_only=True)
     restaurant_name = serializers.CharField(source='restaurant.name', read_only=True)
+    restaurant_address = serializers.CharField(source='restaurant.address', read_only=True)
+    delivery_agent_name = serializers.CharField(
+        source='delivery_agent.username',
+        read_only=True,
+        allow_null=True,
+    )
+    delivery_agent_phone = serializers.CharField(
+        source='delivery_agent.phone',
+        read_only=True,
+        allow_null=True,
+    )
 
     class Meta:
         model = Order
         fields = [
             'id', 'user', 'user_email',
-            'restaurant', 'restaurant_name',
+            'restaurant', 'restaurant_name', 'restaurant_address',
             'status', 'total_amount', 'address',
-            'items', 'created_at', 'updated_at'
+            'items', 'created_at', 'updated_at',
+            'delivery_agent', 'delivery_agent_name',
+            'delivery_agent_phone',
+            'delivery_status', 'delivery_lat', 'delivery_lng',
+            'accepted_at',
         ]
         read_only_fields = ['id', 'user', 'created_at', 'updated_at']
+
+
+class OrderLocationSerializer(serializers.ModelSerializer):
+    """
+    WHY a separate location serializer?
+    GPS updates happen every 5-10 seconds. We want a
+    super-slim payload — just lat/lng and status.
+    Sending the full Order objects during polling
+    would be a waste of bandwidth and database IO.
+    """
+    delivery_agent_name = serializers.CharField(
+        source='delivery_agent.username',
+        read_only=True,
+        allow_null=True,
+    )
+    last_updated_at = serializers.DateTimeField(source='updated_at', read_only=True)
+
+    class Meta:
+        model = Order
+        fields = [
+            'delivery_lat',
+            'delivery_lng',
+            'delivery_status',
+            'delivery_agent_name',
+            'last_updated_at',
+        ]
+
+
+class AssignDeliveryAgentSerializer(serializers.Serializer):
+    delivery_agent_id = serializers.PrimaryKeyRelatedField(
+        queryset=CustomUser.objects.filter(
+            role=CustomUser.Role.DELIVERY,
+            is_active=True,
+        ),
+        write_only=True,
+    )
+
+    def validate_delivery_agent_id(self, agent):
+        if not agent.is_available:
+            raise serializers.ValidationError(
+                'The selected delivery agent is currently offline.'
+            )
+        return agent
+
+
+class UpdateOrderStatusSerializer(serializers.Serializer):
+    status = serializers.ChoiceField(choices=Order.Status.choices)
+
+
+class UpdateDeliveryLocationSerializer(serializers.Serializer):
+    delivery_lat = serializers.FloatField(
+        required=False,
+        min_value=-90,
+        max_value=90,
+    )
+    delivery_lng = serializers.FloatField(
+        required=False,
+        min_value=-180,
+        max_value=180,
+    )
+    delivery_status = serializers.ChoiceField(
+        choices=[
+            Order.DeliveryStatus.ACCEPTED,
+            Order.DeliveryStatus.PICKED,
+            Order.DeliveryStatus.DELIVERING,
+            Order.DeliveryStatus.DELIVERED,
+        ],
+        required=False,
+    )
+
+    def validate(self, attrs):
+        if not attrs:
+            raise serializers.ValidationError(
+                'Provide delivery coordinates or a delivery status update.'
+            )
+
+        has_lat = 'delivery_lat' in attrs
+        has_lng = 'delivery_lng' in attrs
+        if has_lat != has_lng:
+            raise serializers.ValidationError(
+                'delivery_lat and delivery_lng must be sent together.'
+            )
+
+        return attrs
 
 
 class CreateOrderSerializer(serializers.Serializer):

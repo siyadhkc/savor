@@ -5,7 +5,7 @@ import Footer from '../../components/Footer'
 import burgerImg from '../../assets/images/burger.png'
 import qrImg from '../../assets/images/qr.png'
 import pizzaImg from '../../assets/images/pizza.png'
-import { Search, MapPin, ArrowRight, Utensils, Loader2, ChevronRight, Star, Clock, Heart, TrendingUp } from 'lucide-react'
+import { Search, MapPin, ArrowRight, Utensils, Loader2, ChevronRight, Star, Clock, Heart, TrendingUp, CheckCircle2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 const KERALA_CITIES = [
@@ -416,7 +416,81 @@ const Home = () => {
                 </div>
             </section>
 
-            {/* ── PARTNER WITH US ───────────────────────────────────────────── */}
+            {/* ── JOIN OUR FLEET (DELIVERY) ────────────────────────────────── */}
+            <section className="py-16 sm:py-24 bg-slate-50/50 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary-500/5 blur-[100px] rounded-full -mr-20 -mt-20" />
+                
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
+                    <div className="flex flex-col lg:flex-row-reverse gap-12 lg:gap-20 items-center">
+                        
+                        {/* Image/Graphic */}
+                        <div className="flex-1 w-full max-w-md lg:max-w-none">
+                            <div className="relative aspect-[4/3] rounded-[40px] overflow-hidden shadow-2xl group">
+                                <img 
+                                    src="https://images.unsplash.com/photo-1617347454431-f49d7ff5c3b1?q=80&w=2015&auto=format&fit=crop" 
+                                    alt="Delivery Agent" 
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent" />
+                                <div className="absolute bottom-8 left-8">
+                                    <div className="bg-white/90 backdrop-blur-md rounded-2xl p-4 shadow-xl border border-white/20">
+                                        <p className="text-primary-600 font-black text-lg leading-none">500+</p>
+                                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Active Riders</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 text-center lg:text-left">
+                            <p className="text-primary-600 text-xs font-bold uppercase tracking-[0.2em] mb-3">Work with Savor</p>
+                            <h2 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight mb-5 leading-tight">
+                                Join our fleet.<br />
+                                <span className="text-primary-500 font-normal text-2xl sm:text-3xl italic">Earn on your own schedule.</span>
+                            </h2>
+                            <p className="text-slate-500 text-base font-medium mb-8 leading-relaxed max-w-md mx-auto lg:mx-0">
+                                Become a delivery partner and enjoy the freedom of being your own boss. Competitive earnings, flexible hours, and a supportive community wait for you.
+                            </p>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-9 max-w-sm mx-auto lg:mx-0">
+                                {[
+                                    { title: 'Flexible Hours', desc: 'Work when you want' },
+                                    { title: 'Fast Payouts', desc: 'Weekly earnings transit' },
+                                    { title: 'Support Hub', desc: '24/7 dispatcher help' },
+                                    { title: 'Growth', desc: 'Referral bonus tokens' },
+                                ].map(item => (
+                                    <div key={item.title} className="flex items-start gap-3">
+                                        <div className="w-5 h-5 rounded-full bg-primary-100 flex items-center justify-center shrink-0 mt-0.5">
+                                            <CheckCircle2 size={12} className="text-primary-600" />
+                                        </div>
+                                        <div className="text-left">
+                                            <p className="text-xs font-black text-slate-800 leading-none">{item.title}</p>
+                                            <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-tighter">{item.desc}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
+                                <Link
+                                    to="/register?mode=delivery"
+                                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 bg-primary-600 text-white font-black text-sm uppercase tracking-widest rounded-2xl hover:bg-primary-700 active:scale-95 transition-all shadow-xl shadow-primary-600/20"
+                                >
+                                    Register as Agent
+                                    <ArrowRight size={16} strokeWidth={3} />
+                                </Link>
+                                <Link
+                                    to="/login"
+                                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 bg-white border border-slate-200 text-slate-900 font-black text-sm uppercase tracking-widest rounded-2xl hover:bg-slate-50 active:scale-95 transition-all"
+                                >
+                                    Agent Login
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <section className="py-16 sm:py-32 bg-white">
                 <div className="max-w-6xl mx-auto px-4 sm:px-6">
                     <div className="flex flex-col lg:flex-row gap-12 lg:gap-20 items-center">

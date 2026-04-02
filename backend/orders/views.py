@@ -1,18 +1,183 @@
+from decimal import Decimal
+from django.conf import settings
+from django.core.mail import send_mail
+from django.db import transaction
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.units import inch
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 from rest_framework import viewsets, status
 from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
-from django.shortcuts import get_object_or_404
+from rest_framework.views import APIView
 from .models import Cart, CartItem, Order, OrderItem
 from .serializers import (
     CartSerializer, CartItemSerializer,
-    OrderSerializer, CreateOrderSerializer
+    OrderSerializer, CreateOrderSerializer,
+    OrderLocationSerializer,
+    AssignDeliveryAgentSerializer,
+    UpdateOrderStatusSerializer,
+    UpdateDeliveryLocationSerializer,
 )
+from users.models import CustomUser
 from menu.models import MenuItem
 from payments.models import Payment
 
-from django.core.mail import send_mail
-from django.conf import settings
+DELIVERY_STATUS_TRANSITIONS = {
+    None: {
+        Order.DeliveryStatus.ACCEPTED,
+        Order.DeliveryStatus.PICKED,
+        Order.DeliveryStatus.DELIVERING,
+    },
+    Order.DeliveryStatus.ASSIGNED: {
+        Order.DeliveryStatus.ACCEPTED,
+        Order.DeliveryStatus.PICKED,
+        Order.DeliveryStatus.DELIVERING,
+    },
+    Order.DeliveryStatus.ACCEPTED: {
+        Order.DeliveryStatus.PICKED,
+        Order.DeliveryStatus.DELIVERING,
+    },
+    Order.DeliveryStatus.PICKED: {
+        Order.DeliveryStatus.DELIVERING,
+        Order.DeliveryStatus.DELIVERED,
+    },
+    Order.DeliveryStatus.DELIVERING: {
+        Order.DeliveryStatus.DELIVERED,
+    },
+    Order.DeliveryStatus.DELIVERED: set(),
+}
+
+
+def get_order_queryset():
+    return (
+        Order.objects
+        .select_related('user', 'restaurant', 'delivery_agent')
+        .prefetch_related('items__menu_item')
+        .order_by('-created_at')
+    )
+
+
+def is_restaurant_owner(user, order):
+    return hasattr(user, 'restaurant') and order.restaurant_id == user.restaurant.id
+
+
+def ensure_admin_or_restaurant_owner(user, order):
+    if user.is_staff or is_restaurant_owner(user, order):
+        return
+    raise PermissionDenied('Only admins or the restaurant owner can update this order.')
+
+
+def ensure_assigned_delivery_agent(user, order):
+    if user.role != CustomUser.Role.DELIVERY or order.delivery_agent_id != user.id:
+        raise PermissionDenied('You are not assigned to this order.')
+
+
+def ensure_location_access(user, order):
+    if user.is_staff or order.user_id == user.id or order.delivery_agent_id == user.id:
+        if order.status in {Order.Status.DELIVERED, Order.Status.CANCELLED}:
+            raise PermissionDenied('Tracking is disabled for completed or cancelled orders.')
+        return
+    raise PermissionDenied('You do not have permission to view this delivery.')
+
+
+def update_order_status(order, new_status):
+    if order.status == new_status:
+        return order
+
+    order.status = new_status
+    order.save(update_fields=['status', 'updated_at'])
+    return order
+
+
+def assign_delivery_agent(order, agent):
+    if order.status in {Order.Status.CANCELLED, Order.Status.DELIVERED}:
+        raise ValidationError('This order can no longer be assigned.')
+    if order.delivery_agent_id:
+        raise ValidationError('A delivery agent is already assigned to this order.')
+
+    order.delivery_agent = agent
+    order.delivery_status = Order.DeliveryStatus.ASSIGNED
+    order.delivery_lat = None
+    order.delivery_lng = None
+    order.accepted_at = None
+    order.save(
+        update_fields=[
+            'delivery_agent',
+            'delivery_status',
+            'delivery_lat',
+            'delivery_lng',
+            'accepted_at',
+            'updated_at',
+        ]
+    )
+    return order
+
+
+def validate_delivery_status_transition(order, new_status):
+    current_status = order.delivery_status
+    if not new_status or new_status == current_status:
+        return
+
+    allowed_statuses = DELIVERY_STATUS_TRANSITIONS.get(current_status, set())
+    if new_status not in allowed_statuses:
+        raise ValidationError(
+            {'delivery_status': 'Invalid delivery status transition.'}
+        )
+
+
+def apply_delivery_update(order, validated_data):
+    if order.status in {Order.Status.CANCELLED, Order.Status.DELIVERED}:
+        raise ValidationError('Completed or cancelled orders can no longer receive GPS updates.')
+
+    new_status = validated_data.get('delivery_status')
+    validate_delivery_status_transition(order, new_status)
+
+    if 'delivery_lat' in validated_data:
+        order.delivery_lat = validated_data['delivery_lat']
+        order.delivery_lng = validated_data['delivery_lng']
+
+    previous_status = order.delivery_status
+
+    if new_status:
+        order.delivery_status = new_status
+
+    if order.delivery_status in {
+        Order.DeliveryStatus.ACCEPTED,
+        Order.DeliveryStatus.PICKED,
+        Order.DeliveryStatus.DELIVERING,
+    }:
+        order.status = Order.Status.OUT_FOR_DELIVERY
+
+    if (
+        order.delivery_status == Order.DeliveryStatus.ACCEPTED
+        and order.accepted_at is None
+    ):
+        order.accepted_at = timezone.now()
+
+    delivery_completed_now = (
+        previous_status != Order.DeliveryStatus.DELIVERED
+        and order.delivery_status == Order.DeliveryStatus.DELIVERED
+    )
+    if delivery_completed_now:
+        order.status = Order.Status.DELIVERED
+
+    order.save()
+
+    if delivery_completed_now and order.delivery_agent:
+        agent = order.delivery_agent
+        agent.earnings += Decimal('50.00')
+        agent.save(update_fields=['earnings'])
+
+    return order
+
+
 class CartViewSet(viewsets.GenericViewSet):
     """
     WHY GenericViewSet instead of ModelViewSet?
@@ -141,6 +306,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     Orders need standard CRUD — list, retrieve, update status.
     But we override create() for our custom order placement logic.
     """
+    http_method_names = ['get', 'post', 'head', 'options']
     serializer_class = OrderSerializer
     permission_classes = [IsAuthenticated]
 
@@ -155,11 +321,14 @@ class OrderViewSet(viewsets.ModelViewSet):
         for everyone — exposes all order data to any user.
         """
         user = self.request.user
+        queryset = get_order_queryset()
         if user.is_staff:
-            return Order.objects.all().order_by('-created_at')
+            return queryset
         if hasattr(user, 'restaurant'):
-            return Order.objects.filter(restaurant=user.restaurant).order_by('-created_at')
-        return Order.objects.filter(user=user).order_by('-created_at')
+            return queryset.filter(restaurant=user.restaurant)
+        if user.role == CustomUser.Role.DELIVERY:
+            return queryset.filter(delivery_agent=user)
+        return queryset.filter(user=user)
 
     def create(self, request):
         """
@@ -177,51 +346,54 @@ class OrderViewSet(viewsets.ModelViewSet):
         serializer = CreateOrderSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        # Get user's cart
-        cart = get_object_or_404(Cart, user=request.user)
-        cart_items = cart.items.all()
+        cart = get_object_or_404(
+            Cart.objects.prefetch_related('items__menu_item__restaurant'),
+            user=request.user,
+        )
+        cart_items = list(cart.items.all())
 
-        if not cart_items.exists():
+        if not cart_items:
             return Response(
                 {'error': 'Your cart is empty.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Get restaurant from first cart item
-        restaurant = cart_items.first().menu_item.restaurant
-
-        # Calculate total
-        total_amount = sum(item.total_price for item in cart_items)
-
-        # Create order
-        order = Order.objects.create(
-            user=request.user,
-            restaurant=restaurant,
-            address=serializer.validated_data['address'],
-            total_amount=total_amount,
-            status=Order.Status.PENDING
-        )
-
-        # Create order items (price snapshot)
-        for cart_item in cart_items:
-            # WHY use menu_item.price here?
-            # We snapshot the CURRENT price at order time.
-            # If restaurant changes price tomorrow,
-            # this order still shows what customer paid.
-            # This is financial data integrity.
-            OrderItem.objects.create(
-                order=order,
-                menu_item=cart_item.menu_item,
-                quantity=cart_item.quantity,
-                price=cart_item.menu_item.price
+        restaurant_ids = {item.menu_item.restaurant_id for item in cart_items}
+        if len(restaurant_ids) != 1:
+            return Response(
+                {'error': 'Please place separate orders for different restaurants.'},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Create payment record
-        Payment.objects.create(
-            order=order,
-            method=serializer.validated_data['payment_method'],
-            status='pending'
-        )
+        restaurant = cart_items[0].menu_item.restaurant
+        total_amount = sum(item.total_price for item in cart_items)
+
+        with transaction.atomic():
+            order = Order.objects.create(
+                user=request.user,
+                restaurant=restaurant,
+                address=serializer.validated_data['address'],
+                total_amount=total_amount,
+                status=Order.Status.PENDING,
+                delivery_status=None,
+            )
+
+            for cart_item in cart_items:
+                OrderItem.objects.create(
+                    order=order,
+                    menu_item=cart_item.menu_item,
+                    quantity=cart_item.quantity,
+                    price=cart_item.menu_item.price
+                )
+
+            Payment.objects.create(
+                order=order,
+                method=serializer.validated_data['payment_method'],
+                status='pending'
+            )
+
+            cart.items.all().delete()
+
         try:
             send_mail(
                 subject=f'Order #{order.id} Placed Successfully! 🎉',
@@ -245,9 +417,6 @@ Thank you for ordering with FoodDelivery!
         except Exception:
             pass
 
-        # Clear cart after order placed
-        cart_items.delete()
-
         return Response(
             OrderSerializer(order).data,
             status=status.HTTP_201_CREATED
@@ -261,32 +430,96 @@ Thank you for ordering with FoodDelivery!
         Admin and restaurant owner only. Customers cannot change their own order status.
         """
         order = self.get_object()
-        
-        # Check permission: MUST be admin or the owner of the restaurant for this order
-        is_admin = request.user.is_staff
-        is_owner = hasattr(request.user, 'restaurant') and order.restaurant == request.user.restaurant
-        if not (is_admin or is_owner):
-            return Response({'error': 'Permission denied.'}, status=status.HTTP_403_FORBIDDEN)
-
-        new_status = request.data.get('status')
-
-        if new_status not in dict(Order.Status.choices):
-            return Response(
-                {'error': 'Invalid status.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        order.status = new_status
-        order.save()
+        ensure_admin_or_restaurant_owner(request.user, order)
+        serializer = UpdateOrderStatusSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        update_order_status(order, serializer.validated_data['status'])
         return Response(OrderSerializer(order).data)
-    
 
-from django.http import HttpResponse
-from reportlab.lib.pagesizes import A4
-from reportlab.lib import colors
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.lib.units import inch
+    @action(detail=True, methods=['post'], permission_classes=[IsAdminUser])
+    def assign_delivery(self, request, pk=None):
+        """
+        POST /api/orders/orders/1/assign_delivery/
+        Body: { "delivery_agent_id": 5 }
+        Assigns a delivery agent to an order. Admin only.
+        """
+        order = self.get_object()
+        serializer = AssignDeliveryAgentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        assign_delivery_agent(order, serializer.validated_data['delivery_agent_id'])
+        return Response(OrderSerializer(order).data)
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def update_location(self, request, pk=None):
+        """
+        POST /api/orders/orders/1/update_location/
+        Body: { "delivery_lat": 12.97, "delivery_lng": 77.59, "delivery_status": "delivering" }
+        Only the assigned delivery agent can update their location.
+        """
+        order = self.get_object()
+        ensure_assigned_delivery_agent(request.user, order)
+        serializer = UpdateDeliveryLocationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        apply_delivery_update(order, serializer.validated_data)
+        return Response(OrderLocationSerializer(order).data)
+
+    @action(detail=True, methods=['get'], permission_classes=[IsAuthenticated])
+    def location(self, request, pk=None):
+        """
+        GET /api/orders/orders/1/location/
+        Retrieves the current location of the delivery agent.
+        Available to: Customer (owner), Agent (assigned), Admin.
+        """
+        order = self.get_object()
+        ensure_location_access(request.user, order)
+        serializer = OrderLocationSerializer(order)
+        return Response(serializer.data)
+
+
+class OrderActionAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_order(self, order_id):
+        return get_object_or_404(get_order_queryset(), id=order_id)
+
+
+class UpdateOrderStatusView(OrderActionAPIView):
+    def post(self, request, order_id):
+        order = self.get_order(order_id)
+        ensure_admin_or_restaurant_owner(request.user, order)
+        serializer = UpdateOrderStatusSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        update_order_status(order, serializer.validated_data['status'])
+        return Response(OrderSerializer(order).data)
+
+
+class AssignDeliveryAgentView(OrderActionAPIView):
+    permission_classes = [IsAdminUser]
+
+    def post(self, request, order_id):
+        order = self.get_order(order_id)
+        serializer = AssignDeliveryAgentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        assign_delivery_agent(order, serializer.validated_data['delivery_agent_id'])
+        return Response(OrderSerializer(order).data)
+
+
+class UpdateOrderLocationView(OrderActionAPIView):
+    def post(self, request, order_id):
+        order = self.get_order(order_id)
+        ensure_assigned_delivery_agent(request.user, order)
+        serializer = UpdateDeliveryLocationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        apply_delivery_update(order, serializer.validated_data)
+        return Response(OrderLocationSerializer(order).data)
+
+
+class OrderLocationView(OrderActionAPIView):
+    def get(self, request, order_id):
+        order = self.get_order(order_id)
+        ensure_location_access(request.user, order)
+        serializer = OrderLocationSerializer(order)
+        return Response(serializer.data)
 
 
 @api_view(['GET'])
@@ -301,11 +534,21 @@ def download_invoice(request, order_id):
     no HTML to PDF conversion needed.
     """
     try:
-        order = Order.objects.get(id=order_id, user=request.user)
+        order = get_order_queryset().get(id=order_id)
     except Order.DoesNotExist:
         return Response(
             {'error': 'Order not found.'},
             status=status.HTTP_404_NOT_FOUND
+        )
+
+    if not (
+        request.user.is_staff
+        or order.user_id == request.user.id
+        or is_restaurant_owner(request.user, order)
+    ):
+        return Response(
+            {'error': 'Permission denied.'},
+            status=status.HTTP_403_FORBIDDEN,
         )
 
     # Create HTTP response with PDF headers

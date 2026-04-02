@@ -16,6 +16,7 @@ class Category(models.Model):
 
     class Meta:
         verbose_name_plural = 'Categories'
+        ordering = ['name']
         """
         WHY verbose_name_plural?
         Django Admin would show "Categorys" (wrong English).

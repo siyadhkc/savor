@@ -10,7 +10,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 
 const Register = () => {
     const [searchParams] = useSearchParams()
-    const isRestaurantMode = searchParams.get('mode') === 'restaurant'
+    const mode = searchParams.get('mode')
+    const isRestaurantMode = mode === 'restaurant'
+    const isDeliveryMode = mode === 'delivery'
 
     const [formData, setFormData] = useState({
         email: '', username: '', phone: '',
@@ -42,7 +44,9 @@ const Register = () => {
                 await registerRestaurant(formData)
                 toast.success('Restaurant registered! Sign in to continue.')
             } else {
-                await register(formData)
+                const payload = { ...formData }
+                if (isDeliveryMode) payload.role = 'delivery'
+                await register(payload)
                 toast.success('Account created! Sign in to continue.')
             }
             navigate('/login')
@@ -84,6 +88,8 @@ const Register = () => {
                         <h1 className="text-5xl font-black text-white leading-tight mb-5 tracking-tight">
                             {isRestaurantMode ? (
                                 <>Join Kerala&apos;s largest <br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-emerald-400">food network.</span></>
+                            ) : isDeliveryMode ? (
+                                <>Join our fleet and <br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-emerald-400">earn on demand.</span></>
                             ) : (
                                 <>Taste the best of <br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-orange-400">Kerala.</span></>
                             )}
@@ -91,6 +97,8 @@ const Register = () => {
                         <p className="text-slate-400 text-lg font-medium max-w-sm">
                             {isRestaurantMode
                                 ? 'Register your restaurant and start reaching thousands of hungry customers across Kerala.'
+                                : isDeliveryMode
+                                ? 'Become a delivery partner and enjoy freedom, competitive pay, and flexible hours.'
                                 : 'Create your account to unlock premium restaurants, lightning-fast delivery, and live order tracking.'}
                         </p>
                     </motion.div>
@@ -122,14 +130,16 @@ const Register = () => {
                             {/* Heading */}
                             <div className="mb-9 text-center sm:text-left">
                                 <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight mb-3">
-                                    {isRestaurantMode ? 'Partner With Us' : 'Create Account'}
+                                    {isRestaurantMode ? 'Partner With Us' : isDeliveryMode ? 'Join Our Fleet' : 'Create Account'}
                                 </h1>
                                 <p className="text-slate-500 font-medium text-sm sm:text-base leading-relaxed max-w-sm mx-auto sm:mx-0">
                                     {isRestaurantMode
                                         ? 'Set up your restaurant and start reaching customers.'
+                                        : isDeliveryMode
+                                        ? 'Register as a delivery agent and start earning today.'
                                         : 'Join Savor and start ordering from Kerala\'s best restaurants.'}
                                 </p>
-                                {isRestaurantMode && (
+                                {(isRestaurantMode || isDeliveryMode) && (
                                     <Link
                                         to="/register"
                                         className="inline-flex items-center gap-1.5 mt-3 text-sm text-primary-600 font-semibold hover:text-primary-700 transition-colors"
@@ -296,7 +306,7 @@ const Register = () => {
                                     ) : (
                                         <>
                                             <UserPlus size={18} strokeWidth={2.5} />
-                                            {isRestaurantMode ? 'Create Restaurant Account' : 'Create Account'}
+                                            {isRestaurantMode ? 'Create Restaurant Account' : isDeliveryMode ? 'Register as Agent' : 'Create Account'}
                                         </>
                                     )}
                                 </button>

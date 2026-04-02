@@ -82,7 +82,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ['id', 'email', 'username', 'phone', 'password', 'password2']
+        fields = ['id', 'email', 'username', 'phone', 'password', 'password2', 'role']
         """
         WHY explicitly list fields?
         Never use fields = '__all__' for user serializers.
@@ -90,6 +90,17 @@ class RegisterSerializer(serializers.ModelSerializer):
         other sensitive fields in your API response.
         Always explicitly list only what you need.
         """
+
+    def validate_role(self, value):
+        allowed_roles = {
+            CustomUser.Role.CUSTOMER,
+            CustomUser.Role.DELIVERY,
+        }
+        if value not in allowed_roles:
+            raise serializers.ValidationError(
+                'You can only self-register as a customer or delivery agent.'
+            )
+        return value
 
     def validate(self, attrs):
         """
@@ -122,11 +133,13 @@ class RegisterSerializer(serializers.ModelSerializer):
         and Django will throw an error.
         """
         validated_data.pop('password2')
+        role = validated_data.pop('role', CustomUser.Role.CUSTOMER)
         user = CustomUser.objects.create_user(
             email=validated_data['email'],
             username=validated_data['username'],
             phone=validated_data.get('phone', ''),
-            password=validated_data['password']
+            password=validated_data['password'],
+            role=role
         )
         return user
 
@@ -146,9 +159,9 @@ class UserSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'email', 'username', 'phone', 'role', 
             'is_active', 'is_staff', 'created_at', 
-            'restaurant_id', 'restaurant'
+            'restaurant_id', 'restaurant', 'earnings', 'is_available'
         ]
-        read_only_fields = ['id', 'created_at', 'role', 'is_staff', 'restaurant_id']
+        read_only_fields = ['id', 'created_at', 'role', 'is_staff', 'restaurant_id', 'earnings']
 
     def get_restaurant_id(self, obj):
         if hasattr(obj, 'restaurant'):
@@ -177,4 +190,19 @@ class UserSerializer(serializers.ModelSerializer):
                 setattr(restaurant, attr, value)
             restaurant.save()
 
-        return instance
+        return instance
+
+
+class DeliveryAgentOptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = [
+            'id',
+            'username',
+            'email',
+            'phone',
+            'is_available',
+            'is_active',
+            'earnings',
+        ]
+        read_only_fields = fields

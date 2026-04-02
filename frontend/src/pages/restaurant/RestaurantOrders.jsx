@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Fragment } from 'react'
-import api from '../../api/axios'
 import toast from 'react-hot-toast'
+import { listOrders, updateOrderStatus } from '../../api/orders'
 import { formatDate, formatOrderId } from '../../utils/helpers'
 import { 
     CheckCircle2, 
@@ -47,8 +47,8 @@ const RestaurantOrders = () => {
 
     const fetchOrders = async () => {
         try {
-            const response = await api.get('/orders/orders/')
-            setOrders(response.data.results)
+            const orderList = await listOrders()
+            setOrders(orderList)
         } catch (error) {
             console.error('Failed to load orders:', error)
             toast.error('Manifest sync failed.')
@@ -68,9 +68,7 @@ const RestaurantOrders = () => {
     const handleStatusUpdate = async (orderId, newStatus) => {
         setUpdatingOrder(orderId)
         try {
-            await api.post(`/orders/orders/${orderId}/update_status/`, {
-                status: newStatus,
-            })
+            await updateOrderStatus(orderId, newStatus)
             setOrders(orders.map(order =>
                 order.id === orderId
                     ? { ...order, status: newStatus }

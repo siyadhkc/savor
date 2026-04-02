@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import api from '../../api/axios'
 import toast from 'react-hot-toast'
+import { createOrder } from '../../api/orders'
 import { MapPin, CreditCard, Banknote, ShieldCheck, Lock, ChevronLeft, ReceiptText, Loader2, Target, CheckCircle2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 
@@ -61,8 +62,7 @@ const Checkout = () => {
 
         setPlacing(true)
         try {
-            const orderRes = await api.post('/orders/orders/', formData)
-            const order = orderRes.data
+            const order = await createOrder(formData)
 
             if (formData.payment_method === 'cod') {
                 toast.success('Order placed. We are preparing it now.')

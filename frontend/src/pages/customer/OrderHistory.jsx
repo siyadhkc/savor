@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import api from '../../api/axios'
 import toast from 'react-hot-toast'
+import { downloadInvoice, listOrders } from '../../api/orders'
 import { formatOrderId, formatDate } from '../../utils/helpers'
 import {
     Clock, 
@@ -22,6 +22,7 @@ import {
     Search
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import LiveTracking from './LiveTracking'
 
 const STATUS_CONFIG = {
     pending: {
@@ -84,8 +85,8 @@ const OrderHistory = () => {
 
     const fetchOrders = async () => {
         try {
-            const response = await api.get('/orders/orders/')
-            setOrders(response.data.results)
+            const orderList = await listOrders()
+            setOrders(orderList)
         } catch {
             toast.error('Failed to sync transactional manifest.')
         } finally {
@@ -96,10 +97,7 @@ const OrderHistory = () => {
     const handleDownloadInvoice = async (orderId) => {
         setDownloading(orderId)
         try {
-            const response = await api.get(
-                `/orders/orders/${orderId}/invoice/`,
-                { responseType: 'blob' }
-            )
+            const response = await downloadInvoice(orderId)
             const url = window.URL.createObjectURL(new Blob([response.data]))
             const link = document.body.appendChild(document.createElement('a'))
             link.href = url
@@ -271,6 +269,17 @@ const OrderHistory = () => {
                                                                     </div>
                                                                 ))}
                                                             </div>
+
+                                                            {/* Tracking Section */}
+                                                            {order.delivery_agent && !['delivered', 'cancelled'].includes(order.status) && (
+                                                                <div className="mt-10">
+                                                                    <div className="flex items-center gap-2 mb-6">
+                                                                        <Activity size={14} className="text-emerald-500" />
+                                                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tactical Tracking Map</span>
+                                                                    </div>
+                                                                    <LiveTracking orderId={order.id} />
+                                                                </div>
+                                                            )}
                                                         </div>
 
                                                         {/* Metadata Section */}
@@ -284,6 +293,21 @@ const OrderHistory = () => {
                                                                     {order.address}
                                                                 </div>
                                                             </div>
+
+                                                            {order.delivery_agent_name && (
+                                                                <div>
+                                                                    <div className="flex items-center gap-2 mb-4">
+                                                                        <Truck size={14} className="text-violet-500" />
+                                                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Assigned Delivery Agent</span>
+                                                                    </div>
+                                                                    <div className="bg-white p-6 rounded-3xl border border-slate-200/50 shadow-sm">
+                                                                        <p className="text-sm font-black text-slate-900">{order.delivery_agent_name}</p>
+                                                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-2">
+                                                                            {order.delivery_status ? order.delivery_status.replace(/_/g, ' ') : 'Awaiting dispatch'}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            )}
 
                                                             <div className="flex gap-4">
                                                                 <button

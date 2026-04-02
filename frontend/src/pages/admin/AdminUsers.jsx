@@ -8,6 +8,7 @@ import { useAuth } from '../../context/AuthContext'
 const ROLE_STYLE = {
     admin: 'bg-amber-50 text-amber-600 border-amber-100/50',
     restaurant: 'bg-primary-50 text-primary-600 border-primary-100/50',
+    delivery: 'bg-violet-50 text-violet-600 border-violet-100/50',
     customer: 'bg-slate-50 text-slate-500 border-slate-100',
 }
 

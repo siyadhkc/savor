@@ -27,6 +27,8 @@ const Login = () => {
                 navigate('/admin')
             } else if (loggedInUser.role === 'restaurant') {
                 navigate('/restaurant-admin')
+            } else if (loggedInUser.role === 'delivery') {
+                navigate('/delivery/dashboard')
             } else {
                 navigate('/')
             }
@@ -194,6 +196,13 @@ const Login = () => {
                                     className="text-xs text-slate-400 hover:text-primary-600 font-semibold transition-colors flex items-center justify-center gap-1.5"
                                 >
                                     Register your restaurant 
+                                    <ArrowRight size={12} />
+                                </Link>
+                                <Link
+                                    to="/register?mode=delivery"
+                                    className="text-xs text-slate-400 hover:text-emerald-600 font-semibold transition-colors flex items-center justify-center gap-1.5 mt-2"
+                                >
+                                    Become a Delivery Partner 
                                     <ArrowRight size={12} />
                                 </Link>
                             </div>
