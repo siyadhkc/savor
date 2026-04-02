@@ -12,7 +12,21 @@ email = os.environ.get('DJANGO_SUPERUSER_EMAIL', 'admin@gmail.com')
 username = os.environ.get('DJANGO_SUPERUSER_USERNAME', 'admin')
 password = os.environ.get('DJANGO_SUPERUSER_PASSWORD', 'Admin@1234')
 
-if not CustomUser.objects.filter(email=email).exists():
+user = CustomUser.objects.filter(email=email).first()
+
+if user:
+    user.is_active = True
+    user.is_staff = True
+    user.is_superuser = True
+    
+    # If you have custom block field
+    if hasattr(user, 'is_blocked'):
+        user.is_blocked = False
+
+    user.set_password(password)
+    user.save()
+    print('Admin restored!')
+else:
     CustomUser.objects.create_superuser(
         email=email,
         username=username,
@@ -20,8 +34,6 @@ if not CustomUser.objects.filter(email=email).exists():
         role='admin',
     )
     print('Superuser created!')
-else:
-    print('Superuser already exists.')
 "
 
 # > 💡 **WHY build.sh?**
