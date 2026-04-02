@@ -1,10 +1,15 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import api from '../../api/axios'
 import { useAuth } from '../../context/AuthContext'
 import { getImageUrl } from '../../utils/helpers'
 import toast from 'react-hot-toast'
-import { MapPin, Phone, CheckCircle2, AlertCircle, Search, UtensilsCrossed, ShoppingBag, Loader2, ArrowLeft } from 'lucide-react'
+import { 
+    MapPin, Phone, AlertCircle, Search, 
+    UtensilsCrossed, ShoppingBag, Loader2, 
+    ArrowLeft, Star, Clock, Dot, ChevronRight
+} from 'lucide-react'
+import FloatingCart from '../../components/FloatingCart'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const RestaurantDetail = () => {
@@ -20,7 +25,18 @@ const RestaurantDetail = () => {
     const [loading, setLoading] = useState(true)
     const [addingItem, setAddingItem] = useState(null)
 
+    // Deterministic mock data for consistency
+    const getMockData = (resId) => {
+        const seed = resId * 12345
+        const rating = (4 + (seed % 10) / 10).toFixed(1)
+        const reviews = 100 + (seed % 900)
+        const time = 20 + (seed % 25)
+        const price = 200 + (seed % 400)
+        return { rating, reviews, time, price }
+    }
+
     useEffect(() => {
+        window.scrollTo(0, 0)
         fetchRestaurantData()
     }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -41,7 +57,7 @@ const RestaurantDetail = () => {
         } catch (error) {
             console.error('Failed to load restaurant:', error)
             toast.error('Failed to load restaurant.')
-            navigate('/')
+            navigate('/restaurants')
         } finally {
             setLoading(false)
         }
@@ -62,7 +78,6 @@ const RestaurantDetail = () => {
             })
             toast.success(`${menuItem.name} added to cart!`)
         } catch (error) {
-            console.error('Failed to add item to cart:', error)
             toast.error('Failed to add item to cart.')
         } finally {
             setAddingItem(null)
@@ -79,239 +94,242 @@ const RestaurantDetail = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center text-primary-600">
-                <Loader2 className="animate-spin mb-4" size={48} />
-                <p className="text-lg font-semibold text-slate-600">Loading menu...</p>
+            <div className="min-h-screen bg-white flex flex-col items-center justify-center">
+                <Loader2 className="animate-spin text-primary-500 mb-4" size={48} />
+                <p className="text-sm font-black text-slate-400 uppercase tracking-[0.2em]">Crafting the menu…</p>
             </div>
         )
     }
 
-    if (!restaurant) {
-        return (
-            <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center py-60 text-slate-500">
-                <AlertCircle size={64} className="mb-4 text-slate-300" />
-                <p className="text-xl font-bold text-slate-700">Restaurant not found</p>
-                <button onClick={() => navigate('/')} className="mt-6 px-6 py-2 bg-white rounded-full shadow-sm text-slate-800 font-bold hover:shadow-md transition-shadow">Go Back</button>
-            </div>
-        )
-    }
+    if (!restaurant) return null
+
+    const { rating, reviews, time, price } = getMockData(restaurant.id)
 
     return (
-        <div className="min-h-screen bg-slate-50 selection:bg-primary-500/30">
+        <div className="min-h-screen bg-white selection:bg-primary-500/30">
+            
+            {/* ── HEADER SECTION ────────────────────────────────────────────── */}
+            <header className="bg-white pt-6 pb-12 border-b border-slate-100">
+                <div className="max-w-4xl mx-auto px-5">
+                    {/* Breadcrumbs */}
+                    <nav className="flex items-center gap-2 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-8">
+                        <Link to="/" className="hover:text-primary-600 transition-colors">Home</Link>
+                        <ChevronRight size={10} />
+                        <Link to="/restaurants" className="hover:text-primary-600 transition-colors">Restaurants</Link>
+                        <ChevronRight size={10} />
+                        <span className="text-slate-800">{restaurant.name}</span>
+                    </nav>
 
-            {/* Restaurant Hero Header */}
-            <div className="relative bg-slate-950 border-b border-white/[0.06] overflow-hidden">
-                <div
-                    className="absolute inset-0 opacity-[0.04]"
-                    style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,.3) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.3) 1px, transparent 1px)', backgroundSize: '60px 60px' }}
-                />
-                <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary-500/10 blur-[120px] rounded-full pointer-events-none" />
+                    <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] border border-slate-200 shadow-[0_15px_40px_rgba(0,0,0,0.03)] p-5 sm:p-8 relative overflow-hidden group">
+                         {/* Subtle Background Pattern */}
+                         <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/5 blur-[80px] rounded-full -mr-20 -mt-20 pointer-events-none" />
+                         
+                         <div className="relative flex flex-col md:flex-row justify-between gap-6 sm:gap-8">
+                            <div className="flex-1">
+                                <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tighter mb-3 sm:mb-4 leading-tight sm:leading-none">
+                                    {restaurant.name}
+                                </h1>
+                                <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-slate-500 font-bold text-[13px] sm:text-sm tracking-tight mb-5 sm:mb-6">
+                                    <span className="flex items-center gap-1.5 underline decoration-slate-200 underline-offset-4">
+                                        Bakery, Desserts, Snacks
+                                    </span>
+                                    <Dot size={20} className="text-slate-300 hidden sm:block" />
+                                    <span className="flex items-center gap-1.5 w-full sm:w-auto">
+                                        <MapPin size={14} className="text-primary-500 shrink-0" />
+                                        <span className="truncate">{restaurant.address}</span>
+                                    </span>
+                                </div>
 
-                <div className="absolute inset-0 overflow-hidden z-0">
-                    {restaurant.logo ? (
-                        <>
-                            <img src={getImageUrl(restaurant.logo)} alt={restaurant.name} className="w-full h-full object-cover blur-2xl opacity-20 scale-110" />
-                            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent" />
-                        </>
-                    ) : (
-                        <div className="absolute inset-0 bg-slate-950/50" />
-                    )}
-                </div>
-
-                <div className="relative max-w-7xl mx-auto px-6 py-12 md:py-20 flex flex-col md:flex-row items-end md:items-center gap-8">
-                    {restaurant.logo ? (
-                        <motion.img
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                            src={getImageUrl(restaurant.logo)}
-                            alt={restaurant.name}
-                            className="w-32 h-32 md:w-48 md:h-48 rounded-3xl object-cover border-4 border-white/10 shadow-2xl flex-shrink-0 bg-slate-800"
-                        />
-                    ) : (
-                        <div className="w-32 h-32 md:w-48 md:h-48 rounded-3xl bg-primary-600/50 border-4 border-white/10 flex items-center justify-center shadow-2xl backdrop-blur-md">
-                            <UtensilsCrossed size={64} className="text-white/80" />
-                        </div>
-                    )}
-                    
-                    <motion.div 
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.2 }}
-                        className="flex-1 text-white"
-                    >
-                        <button onClick={() => navigate('/')} className="flex items-center gap-2 text-white/50 hover:text-white mb-4 transition-colors font-medium text-sm group">
-                            <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> Back to Restaurants
-                        </button>
-                        <h1 className="text-4xl md:text-6xl font-black mb-4 tracking-tight leading-tight mix-blend-plus-lighter">{restaurant.name}</h1>
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 opacity-90 font-medium mb-6">
-                            <p className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10 backdrop-blur-sm text-sm">
-                                <MapPin size={16} className="text-primary-400" /> {restaurant.address}
-                            </p>
-                            <p className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10 backdrop-blur-sm text-sm">
-                                <Phone size={16} className="text-primary-400" /> {restaurant.phone}
-                            </p>
-                        </div>
-                        <div className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg inline-flex backdrop-blur-sm">
-                            <div className={`w-2 h-2 rounded-full ${restaurant.is_active ? 'bg-emerald-400' : 'bg-rose-400'}`} />
-                            <span className="text-xs font-bold uppercase tracking-widest text-white/80">
-                                {restaurant.is_active ? 'Currently Open' : 'Closed'}
-                            </span>
-                        </div>
-                    </motion.div>
-                </div>
-            </div>
-
-            <div className="sticky top-[64px] z-30 bg-white/80 backdrop-blur-lg border-b border-slate-200 shadow-sm -mt-0.5">
-                <div className="max-w-7xl mx-auto px-5 sm:px-6 py-4 flex flex-col md:flex-row gap-4 items-center justify-between">
-                    {/* Search Input */}
-                    <div className="w-full md:w-80 flex items-center bg-slate-50 rounded-xl px-4 py-2 border border-slate-200 focus-within:ring-2 focus-within:ring-primary-500/20 focus-within:border-primary-400 transition-all">
-                        <Search size={16} className="text-slate-400 shrink-0" />
-                        <input
-                            type="text"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Search the menu..."
-                            className="w-full px-3 py-1.5 bg-transparent text-slate-800 font-medium placeholder:text-slate-400 outline-none text-sm min-w-0"
-                            style={{ fontSize: '16px' }}
-                        />
-                    </div>
-
-                    {/* Category Filters */}
-                    <div className="w-full md:w-auto overflow-x-auto scrollbar-hide -mx-5 px-5 md:mx-0 md:px-0">
-                        <div className="flex gap-2 items-center min-w-max">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mr-2 hidden sm:block">Categories</span>
-                            <button
-                                onClick={() => setSelectedCategory('all')}
-                                className={`px-4 py-1.5 rounded-lg font-bold text-sm transition-all focus:outline-none ${
-                                    selectedCategory === 'all'
-                                        ? 'bg-slate-900 text-white shadow-sm'
-                                        : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200 hover:border-slate-300'
-                                }`}
-                            >
-                                All Items
-                            </button>
-                            {categories.map(category => (
-                                <button
-                                    key={category.id}
-                                    onClick={() => setSelectedCategory(String(category.id))}
-                                    className={`px-4 py-1.5 rounded-lg font-bold text-sm transition-all focus:outline-none ${
-                                        selectedCategory === String(category.id)
-                                            ? 'bg-slate-900 text-white shadow-sm'
-                                            : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200 hover:border-slate-300'
-                                    }`}
-                                >
-                                    {category.name}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div className="max-w-7xl mx-auto px-5 sm:px-6 py-8 relative z-20">
-
-                {/* Menu Items */}
-                <div className="flex items-baseline justify-between mb-8">
-                    <h2 className="text-3xl font-black text-slate-800 tracking-tight">
-                        The Menu
-                    </h2>
-                    <span className="text-slate-400 font-semibold">{filteredItems.length} items available</span>
-                </div>
-
-                {filteredItems.length === 0 ? (
-                    <motion.div 
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="flex flex-col items-center justify-center text-center py-20 bg-white rounded-3xl border border-slate-100 border-dashed"
-                    >
-                        <Search size={48} className="text-slate-300 mb-4" />
-                        <p className="text-xl font-bold text-slate-700">Nothing caught our eye.</p>
-                        <p className="text-slate-500 font-medium mt-1">Try another category or adjust your search.</p>
-                    </motion.div>
-                ) : (
-                    <motion.div 
-                        variants={{ show: { transition: { staggerChildren: 0.1 } } }}
-                        initial="hidden"
-                        animate="show"
-                        className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-8"
-                    >
-                        <AnimatePresence>
-                            {filteredItems.map(item => (
-                                <motion.div 
-                                    variants={{
-                                        hidden: { opacity: 0, y: 20 },
-                                        show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
-                                    }}
-                                    layout
-                                    exit={{ opacity: 0, scale: 0.9 }}
-                                    key={item.id} 
-                                    className="bg-white rounded-[24px] shadow-[0_4px_20px_rgb(0,0,0,0.02)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] border border-slate-200/60 hover:border-primary-200 transition-all duration-500 overflow-hidden group flex flex-col"
-                                >
-                                    {/* Item Image */}
-                                    <div className="relative h-44 bg-slate-100 overflow-hidden">
-                                        {item.image ? (
-                                            <>
-                                                <img
-                                                    src={getImageUrl(item.image)}
-                                                    alt={item.name}
-                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                                                />
-                                                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                                            </>
-                                        ) : (
-                                            <div className="w-full h-full flex flex-col items-center justify-center text-primary-200 bg-primary-50">
-                                                <UtensilsCrossed size={40} strokeWidth={1.5} />
-                                            </div>
-                                        )}
-                                        {!item.is_available && (
-                                            <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-[2px] flex items-center justify-center text-white font-black tracking-widest uppercase text-lg z-10">
-                                                Sold Out
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Item Info */}
-                                    <div className="p-5 flex flex-col flex-1">
-                                        <h3 className="text-lg font-black mb-1.5 text-slate-900 tracking-tight group-hover:text-primary-600 transition-colors line-clamp-1">{item.name}</h3>
-                                        <p className="text-slate-500 text-xs mb-5 leading-relaxed flex-1 font-medium line-clamp-2">
-                                            {item.description}
-                                        </p>
-                                        <div className="flex justify-between items-center pt-4 border-t border-slate-100">
-                                            <span className="text-2xl font-black text-slate-800">
-                                                ₹{item.price}
-                                            </span>
-                                            <button
-                                                onClick={() => handleAddToCart(item)}
-                                                disabled={!item.is_available || addingItem === item.id}
-                                                className={`relative overflow-hidden flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm transition-all focus:outline-none focus:ring-4 focus:ring-primary-500/30 ${
-                                                    !item.is_available
-                                                        ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                                                        : addingItem === item.id
-                                                            ? 'bg-amber-400 text-white cursor-wait shadow-md'
-                                                            : 'bg-primary-600 text-white shadow-md shadow-primary-600/20 hover:bg-primary-700 active:scale-95'
-                                                }`}
-                                            >
-                                                {addingItem === item.id ? (
-                                                    <>
-                                                        <Loader2 size={16} className="animate-spin" />
-                                                        <span>Adding...</span>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <ShoppingBag size={16} strokeWidth={2.5} />
-                                                        <span>Add to Cart</span>
-                                                    </>
-                                                )}
-                                            </button>
+                                <div className="flex items-center gap-4 sm:gap-6 overflow-x-auto scrollbar-hide -mx-1 px-1">
+                                    <div className="flex flex-col shrink-0">
+                                        <div className="flex items-center gap-1 text-slate-900 font-black text-base sm:text-lg">
+                                            <Star size={16} fill="#059669" className="text-emerald-600" />
+                                            {rating}
+                                        </div>
+                                        <div className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mt-1">
+                                            {reviews}+ ratings
                                         </div>
                                     </div>
+                                    <div className="w-px h-8 sm:h-10 bg-slate-100 shrink-0" />
+                                    <div className="flex flex-col shrink-0">
+                                        <div className="flex items-center gap-1 text-slate-900 font-black text-base sm:text-lg">
+                                            <Clock size={16} className="text-primary-600" />
+                                            {time}-{time+5} mins
+                                        </div>
+                                        <div className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mt-1">
+                                            Delivery Time
+                                        </div>
+                                    </div>
+                                    <div className="w-px h-8 sm:h-10 bg-slate-100 shrink-0" />
+                                    <div className="flex flex-col shrink-0">
+                                        <div className="flex items-center gap-1 text-slate-900 font-black text-base sm:text-lg">
+                                            ₹{price}
+                                        </div>
+                                        <div className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mt-1">
+                                            Cost for two
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Status Badge */}
+                            <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-start gap-4 sm:gap-3 shrink-0 pt-4 md:pt-0 border-t md:border-0 border-slate-100">
+                                <div className={`px-4 py-2 rounded-[1rem] border flex items-center gap-2 shadow-sm ${
+                                    restaurant.is_active 
+                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-100' 
+                                        : 'bg-slate-50 text-slate-500 border-slate-200'
+                                }`}>
+                                    <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${restaurant.is_active ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                                    <span className="text-[10px] font-black uppercase tracking-widest">
+                                        {restaurant.is_active ? 'Orders Open' : 'Closed Now'}
+                                    </span>
+                                </div>
+                                {restaurant.logo && (
+                                    <img 
+                                        src={getImageUrl(restaurant.logo)} 
+                                        alt="" 
+                                        className="w-16 h-16 sm:w-20 sm:h-20 rounded-[1rem] sm:rounded-2xl object-cover border border-slate-100 shadow-sm"
+                                    />
+                                )}
+                            </div>
+                         </div>
+                    </div>
+                </div>
+            </header>
+
+            {/* ── STICKY CATEGORY NAV ─────────────────────────────────────── */}
+            <nav className="sticky top-[72px] z-40 bg-white/90 backdrop-blur-xl border-b border-slate-100 overflow-x-auto scrollbar-hide py-3">
+                <div className="max-w-4xl mx-auto px-5 flex items-center gap-2">
+                    <button
+                        onClick={() => setSelectedCategory('all')}
+                        className={`px-5 py-2.5 rounded-xl text-sm font-black tracking-tight transition-all shrink-0 border ${
+                            selectedCategory === 'all'
+                                ? 'bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-900/10'
+                                : 'bg-white text-slate-500 border-transparent hover:bg-slate-50'
+                        }`}
+                    >
+                        Full Menu
+                    </button>
+                    {categories.map(cat => (
+                        <button
+                            key={cat.id}
+                            onClick={() => setSelectedCategory(String(cat.id))}
+                            className={`px-5 py-2.5 rounded-xl text-sm font-black tracking-tight transition-all shrink-0 border ${
+                                selectedCategory === String(cat.id)
+                                    ? 'bg-primary-600 text-white border-primary-600 shadow-lg shadow-primary-600/10'
+                                    : 'bg-white text-slate-500 border-transparent hover:bg-slate-50'
+                            }`}
+                        >
+                            {cat.name}
+                        </button>
+                    ))}
+
+                    <div className="ml-auto hidden md:flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 w-64 focus-within:ring-4 focus-within:ring-primary-500/10 focus-within:border-primary-500 transition-all">
+                        <Search size={14} className="text-slate-400" />
+                        <input 
+                            type="text" 
+                            placeholder="Search in menu..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="bg-transparent text-sm font-bold text-slate-800 placeholder:text-slate-400 outline-none w-full"
+                        />
+                    </div>
+                </div>
+            </nav>
+
+            {/* ── MENU LIST ────────────────────────────────────────────────── */}
+            <main className="max-w-4xl mx-auto px-5 py-12">
+                <div className="flex items-center justify-between mb-8">
+                    <h2 className="text-2xl font-black text-slate-900 tracking-tighter">
+                        Menu ({filteredItems.length})
+                    </h2>
+                </div>
+
+                <div className="divide-y divide-slate-100">
+                    <AnimatePresence mode="popLayout">
+                        {filteredItems.map((item, idx) => {
+                            // Mock Veg/Non-Veg
+                            const isVeg = (item.id + idx) % 2 === 0
+                            
+                            return (
+                                <motion.div 
+                                    layout
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, scale: 0.95 }}
+                                    key={item.id}
+                                    className="py-8 sm:py-10 flex gap-4 sm:gap-8 group"
+                                >
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 mb-1.5 sm:mb-2">
+                                            <div className={`w-3.5 h-3.5 sm:w-4 sm:h-4 border-2 p-0.5 rounded-sm flex items-center justify-center ${isVeg ? 'border-emerald-500' : 'border-rose-500'}`}>
+                                                <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${isVeg ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                                            </div>
+                                            {(item.id + idx) % 5 === 0 && (
+                                                <span className="text-[9px] sm:text-[10px] font-black text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-md uppercase tracking-wider">
+                                                    Bestseller
+                                                </span>
+                                            )}
+                                        </div>
+                                        <h3 className="text-lg sm:text-xl font-black text-slate-900 mb-0.5 sm:mb-1 group-hover:text-primary-600 transition-colors leading-tight sm:leading-snug">{item.name}</h3>
+                                        <div className="text-slate-950 font-black text-base sm:text-lg mb-2 sm:mb-3">₹{item.price}</div>
+                                        <p className="text-slate-400 text-[12px] sm:text-sm font-medium leading-relaxed max-w-xl line-clamp-2 sm:line-clamp-none">
+                                            {item.description || "Freshly prepared with handpicked ingredients and a secret blend of spices."}
+                                        </p>
+                                    </div>
+
+                                    <div className="w-28 sm:w-40 flex flex-col items-center shrink-0">
+                                        <div className="relative w-full h-24 sm:h-32 rounded-xl sm:rounded-2xl overflow-hidden bg-slate-50 border border-slate-100 shadow-sm mb-[-12px] sm:mb-[-20px] group-hover:scale-[1.02] transition-transform duration-500">
+                                            {item.image ? (
+                                                <img 
+                                                    src={getImageUrl(item.image)} 
+                                                    alt={item.name} 
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex flex-col items-center justify-center text-slate-200">
+                                                    <UtensilsCrossed size={24} sm:size={36} strokeWidth={1} />
+                                                </div>
+                                            )}
+                                            {!item.is_available && (
+                                                <div className="absolute inset-0 bg-white/80 backdrop-blur-[2px] flex items-center justify-center text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                                    Out of Stock
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <button
+                                            onClick={() => handleAddToCart(item)}
+                                            disabled={!item.is_available || addingItem === item.id}
+                                            className="relative z-10 w-24 sm:w-28 py-2 sm:py-2.5 bg-white border border-slate-200 rounded-lg sm:rounded-xl shadow-[0_4px_16px_rgba(0,0,0,0.08)] text-primary-600 font-black uppercase text-[10px] sm:text-[11px] tracking-widest hover:bg-slate-50 hover:shadow-lg transition-all active:scale-95 disabled:opacity-50"
+                                        >
+                                            {addingItem === item.id ? (
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <Loader2 size={10} className="animate-spin" />
+                                                    <span>...</span>
+                                                </div>
+                                            ) : (
+                                                "Add"
+                                            )}
+                                        </button>
+                                    </div>
                                 </motion.div>
-                            ))}
-                        </AnimatePresence>
-                    </motion.div>
+                            )
+                        })}
+                    </AnimatePresence>
+                </div>
+
+                {filteredItems.length === 0 && (
+                    <div className="text-center py-24 bg-slate-50 rounded-[3rem] border border-slate-100">
+                        <div className="inline-flex w-24 h-24 bg-white rounded-full items-center justify-center shadow-inner mb-6">
+                            <UtensilsCrossed size={40} className="text-slate-200" />
+                        </div>
+                        <h3 className="text-xl font-black text-slate-800 mb-2">No menu items found</h3>
+                        <p className="text-slate-400 font-medium">Try searching for something else or browse categories.</p>
+                    </div>
                 )}
-            </div>
+            </main>
+            <FloatingCart />
         </div>
     )
 }

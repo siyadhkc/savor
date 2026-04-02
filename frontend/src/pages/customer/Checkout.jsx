@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import api from '../../api/axios'
 import toast from 'react-hot-toast'
-import { MapPin, CreditCard, Banknote, ShieldCheck, Lock, ChevronLeft, ReceiptText, Loader2, Target } from 'lucide-react'
+import { MapPin, CreditCard, Banknote, ShieldCheck, Lock, ChevronLeft, ReceiptText, Loader2, Target, CheckCircle2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 const Checkout = () => {
@@ -84,7 +84,7 @@ const Checkout = () => {
                 key: razorRes.data.key,
                 amount: razorRes.data.amount,
                 currency: razorRes.data.currency,
-                name: 'FoodDelivery',
+                name: 'Savor',
                 description: `Order #${order.id}`,
                 order_id: razorRes.data.razorpay_order_id,
                 handler: async (paymentResponse) => {
@@ -106,7 +106,7 @@ const Checkout = () => {
                     name: cart?.user || '',
                     email: '',
                 },
-                theme: { color: '#f97316' }, // matching primary-500
+                theme: { color: '#16a34a' }, // matching primary-600
                 modal: {
                     ondismiss: () => {
                         toast.error('Payment cancelled.')
@@ -128,204 +128,246 @@ const Checkout = () => {
 
     if (loading) {
         return (
-            <div className="min-h-[80vh] bg-slate-50 flex flex-col items-center justify-center text-primary-600">
-                <Loader2 className="animate-spin mb-4" size={48} />
-                <p className="text-lg font-semibold text-slate-600">Preparing checkout...</p>
+            <div className="min-h-screen flex flex-col items-center justify-center bg-white">
+                <div className="w-12 h-12 border-4 border-slate-100 border-t-primary-500 rounded-full animate-spin mb-6"></div>
+                <p className="text-sm font-black uppercase tracking-widest text-slate-400">Securing your session...</p>
             </div>
         )
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-20 selection:bg-primary-500/30">
-            {/* Header Area */}
-            <div className="relative bg-slate-950 overflow-hidden pt-10 pb-20 px-6">
-                <div
-                    className="absolute inset-0 opacity-[0.03]"
-                    style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.5) 1px, transparent 1px)', backgroundSize: '60px 60px' }}
-                />
-                <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary-500/10 blur-[100px] rounded-full pointer-events-none" />
-                <div className="relative z-10 max-w-6xl mx-auto">
-                    <button onClick={() => navigate('/cart')} className="flex items-center gap-2 text-white/40 hover:text-white font-bold mb-6 transition-colors group text-xs uppercase tracking-widest">
-                        <ChevronLeft size={18} className="group-hover:-translate-x-1 transition-transform" /> Return to Cart
-                    </button>
-                    <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight flex items-center gap-4">
-                        <Target className="text-primary-400" size={36} strokeWidth={2.5} />
-                        Checkout
-                    </h1>
+        <div className="min-h-screen bg-slate-50/50 pb-20">
+            {/* ── Page Header ──────────────────────────────────────────────── */}
+            <div className="bg-white border-b border-slate-100 pt-32 pb-16">
+                <div className="max-w-7xl mx-auto px-5">
+                    <div className="flex items-center gap-2 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-4">
+                        <Link to="/cart" className="hover:text-primary-600 transition-colors flex items-center gap-1">
+                            <ChevronLeft size={10} /> Back to Bag
+                        </Link>
+                        <span>/</span>
+                        <span className="text-slate-800">Checkout</span>
+                    </div>
+                    
+                    <div>
+                        <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tighter text-slate-900 mb-3 flex items-center gap-4">
+                            Finalize <span className="text-primary-600 font-light italic">Order</span>
+                        </h1>
+                        <p className="text-slate-500 font-medium text-lg">
+                            Review and authorize your premium selection.
+                        </p>
+                    </div>
                 </div>
             </div>
 
-            <div className="max-w-6xl mx-auto px-6 -mt-10 relative z-10">
-                <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-8 xl:gap-12 items-start">
+            <main className="max-w-7xl mx-auto px-5 py-12 relative z-10 w-full">
+                <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-10 items-start">
 
                     {/* Left Column — Delivery + Payment Forms */}
-                    <motion.div 
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="flex flex-col gap-6"
-                    >
+                    <div className="space-y-8">
                         {/* Delivery Address Card */}
-                        <div className="bg-white rounded-[32px] shadow-xl shadow-slate-200/50 p-8 md:p-10 border border-white">
-                            <h2 className="text-2xl font-black text-slate-800 flex items-center gap-3 mb-6 tracking-tight">
-                                <MapPin className="text-primary-500" size={28} />
-                                Delivery Destination
-                            </h2>
-                            <div className="relative">
+                        <motion.div 
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="bg-white rounded-[40px] shadow-sm border border-slate-100 p-8 md:p-12"
+                        >
+                            <div className="flex items-center gap-4 mb-10">
+                                <div className="w-12 h-12 bg-primary-50 rounded-2xl flex items-center justify-center text-primary-600 shadow-inner">
+                                    <MapPin size={24} strokeWidth={2.5} />
+                                </div>
+                                <div>
+                                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">Delivery Logistics</h2>
+                                    <p className="text-slate-400 font-medium text-sm">Where should we bring your feast?</p>
+                                </div>
+                            </div>
+
+                            <div className="relative group">
                                 <textarea
                                     name="address"
                                     value={formData.address}
                                     onChange={handleChange}
-                                    placeholder="Enter your complete delivery address, including flat number, street, and landmarks..."
-                                    className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 font-medium placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 transition-all resize-y min-h-[140px] shadow-inner"
+                                    placeholder="Complete delivery address including floor, landmark..."
+                                    className="w-full px-6 py-5 bg-slate-50 border border-slate-200 rounded-[24px] text-slate-800 font-bold placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all resize-none min-h-[160px] text-lg shadow-inner"
                                     required
                                 />
-                                <div className="absolute top-4 right-4 text-slate-300">
-                                    <MapPin size={24} />
-                                </div>
                             </div>
-                        </div>
+                        </motion.div>
 
                         {/* Payment Method Card */}
-                        <div className="bg-white rounded-[32px] shadow-xl shadow-slate-200/50 p-8 md:p-10 border border-white mb-6 lg:mb-0">
-                            <h2 className="text-2xl font-black text-slate-800 flex items-center gap-3 mb-6 tracking-tight">
-                                <CreditCard className="text-primary-500" size={28} />
-                                Payment Method
-                            </h2>
-                            
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {/* COD Option */}
-                                <div
-                                    onClick={() => setFormData({ ...formData, payment_method: 'cod' })}
-                                    className={`relative p-6 rounded-[24px] cursor-pointer transition-all duration-300 border-2 overflow-hidden ${
-                                        formData.payment_method === 'cod'
-                                            ? 'border-primary-500 bg-primary-50/50 shadow-md shadow-primary-500/10'
-                                            : 'border-slate-100 bg-white hover:border-slate-300 hover:bg-slate-50'
-                                    }`}
-                                >
-                                    {formData.payment_method === 'cod' && (
-                                        <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-primary-500 to-primary-400 rounded-bl-full flex items-start justify-end p-3">
-                                            <ShieldCheck size={20} className="text-white" />
-                                        </div>
-                                    )}
-                                    <Banknote size={32} className={`mb-4 ${formData.payment_method === 'cod' ? 'text-primary-600' : 'text-slate-400'}`} strokeWidth={1.5} />
-                                    <h3 className={`text-lg font-bold mb-1 ${formData.payment_method === 'cod' ? 'text-primary-800' : 'text-slate-700'}`}>
-                                        Cash on Delivery
-                                    </h3>
-                                    <p className={`text-sm font-medium ${formData.payment_method === 'cod' ? 'text-primary-600/80' : 'text-slate-500'}`}>
-                                        Pay at your doorstep
-                                    </p>
+                        <motion.div 
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.1 }}
+                            className="bg-white rounded-[40px] shadow-sm border border-slate-100 p-8 md:p-12 mb-6 lg:mb-0"
+                        >
+                            <div className="flex items-center gap-4 mb-10">
+                                <div className="w-12 h-12 bg-primary-50 rounded-2xl flex items-center justify-center text-primary-600 shadow-inner">
+                                    <CreditCard size={24} strokeWidth={2.5} />
                                 </div>
-
-                                {/* Razorpay Option */}
-                                <div
-                                    onClick={() => setFormData({ ...formData, payment_method: 'razorpay' })}
-                                    className={`relative p-6 rounded-[24px] cursor-pointer transition-all duration-300 border-2 overflow-hidden ${
-                                        formData.payment_method === 'razorpay'
-                                            ? 'border-primary-500 bg-primary-50/50 shadow-md shadow-primary-500/10'
-                                            : 'border-slate-100 bg-white hover:border-slate-300 hover:bg-slate-50'
-                                    }`}
-                                >
-                                    {formData.payment_method === 'razorpay' && (
-                                        <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-primary-500 to-primary-400 rounded-bl-full flex items-start justify-end p-3">
-                                            <ShieldCheck size={20} className="text-white" />
-                                        </div>
-                                    )}
-                                    <CreditCard size={32} className={`mb-4 ${formData.payment_method === 'razorpay' ? 'text-primary-600' : 'text-slate-400'}`} strokeWidth={1.5} />
-                                    <h3 className={`text-lg font-bold mb-1 ${formData.payment_method === 'razorpay' ? 'text-primary-800' : 'text-slate-700'}`}>
-                                        Pay Online
-                                    </h3>
-                                    <p className={`text-sm font-medium ${formData.payment_method === 'razorpay' ? 'text-primary-600/80' : 'text-slate-500'}`}>
-                                        UPI, Cards, Net Banking
-                                    </p>
+                                <div>
+                                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">Method of Payment</h2>
+                                    <p className="text-slate-400 font-medium text-sm">Select your preferred gateway.</p>
                                 </div>
                             </div>
-                        </div>
-                    </motion.div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* COD Option */}
+                                <label
+                                    className={`relative p-6 rounded-[32px] cursor-pointer transition-all duration-500 border-2 flex flex-col gap-4 group overflow-hidden ${
+                                        formData.payment_method === 'cod'
+                                            ? 'border-primary-600 bg-primary-50/30'
+                                            : 'border-slate-100 bg-slate-50/50 hover:bg-slate-50'
+                                    }`}
+                                >
+                                    <input 
+                                        type="radio" 
+                                        name="payment_method" 
+                                        value="cod" 
+                                        checked={formData.payment_method === 'cod'}
+                                        onChange={handleChange}
+                                        className="hidden"
+                                    />
+                                    <div className="flex justify-between items-start">
+                                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${
+                                            formData.payment_method === 'cod' ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/30' : 'bg-white text-slate-400'
+                                        }`}>
+                                            <Banknote size={24} strokeWidth={2.5} />
+                                        </div>
+                                        {formData.payment_method === 'cod' && (
+                                            <CheckCircle2 size={24} className="text-primary-600" />
+                                        ) }
+                                    </div>
+                                    <div>
+                                        <h3 className="font-black text-slate-900">Cash on Delivery</h3>
+                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Pay at Doorstep</p>
+                                    </div>
+                                </label>
+
+                                {/* Razorpay Option */}
+                                <label
+                                    className={`relative p-6 rounded-[32px] cursor-pointer transition-all duration-500 border-2 flex flex-col gap-4 group overflow-hidden ${
+                                        formData.payment_method === 'razorpay'
+                                            ? 'border-primary-600 bg-primary-50/30'
+                                            : 'border-slate-100 bg-slate-50/50 hover:bg-slate-50'
+                                    }`}
+                                >
+                                    <input 
+                                        type="radio" 
+                                        name="payment_method" 
+                                        value="razorpay" 
+                                        checked={formData.payment_method === 'razorpay'}
+                                        onChange={handleChange}
+                                        className="hidden"
+                                    />
+                                    <div className="flex justify-between items-start">
+                                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${
+                                            formData.payment_method === 'razorpay' ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/30' : 'bg-white text-slate-400'
+                                        }`}>
+                                            <CreditCard size={24} strokeWidth={2.5} />
+                                        </div>
+                                        {formData.payment_method === 'razorpay' && (
+                                            <CheckCircle2 size={24} className="text-primary-600" />
+                                        ) }
+                                    </div>
+                                    <div>
+                                        <h3 className="font-black text-slate-900">Pay Online</h3>
+                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">UPI, Cards, Net Banking</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </motion.div>
+                    </div>
 
                     {/* Right Column — Deep Order Summary */}
                     <motion.div 
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.1 }}
-                        className="bg-white/90 backdrop-blur-xl rounded-[32px] shadow-2xl shadow-slate-200/50 p-8 border border-white sticky top-24"
+                        transition={{ delay: 0.2 }}
+                        className="bg-slate-900 rounded-[40px] shadow-2xl shadow-slate-900/40 p-8 sm:p-10 border border-white/5 sticky top-32 text-white"
                     >
-                        <h2 className="text-2xl font-black text-slate-800 mb-6 tracking-tight flex items-center gap-3">
-                            <ReceiptText className="text-slate-400" />
-                            Final Review
-                        </h2>
+                        <h2 className="text-2xl font-black text-white tracking-tight mb-8">Review & Pay</h2>
 
                         {/* Condensed Cart Items */}
-                        <div className="max-h-[300px] overflow-y-auto pr-2 mb-6 space-y-4 custom-scrollbar">
+                        <div className="max-h-[280px] overflow-y-auto pr-2 mb-8 space-y-5 custom-scrollbar">
                             {cart?.items.map(item => (
-                                <div key={item.id} className="flex justify-between items-start text-sm py-2 border-b border-slate-50 last:border-0 last:pb-0">
-                                    <span className="text-slate-700 font-bold flex-1 pr-4 leading-tight">
-                                        {item.menu_item_name}
-                                        <span className="text-slate-400 ml-2 font-medium bg-slate-100 px-1.5 py-0.5 rounded-md text-xs">
-                                            x{item.quantity}
+                                <div key={item.id} className="flex justify-between items-start text-sm py-1">
+                                    <div className="flex-1 pr-6 flex flex-col">
+                                        <span className="text-white font-black leading-tight mb-1">
+                                            {item.menu_item_name}
                                         </span>
-                                    </span>
-                                    <span className="font-black text-slate-800">
+                                        <span className="text-white/40 text-[10px] font-black uppercase tracking-widest">
+                                            Quantity: {item.quantity}
+                                        </span>
+                                    </div>
+                                    <span className="font-black text-primary-400">
                                         ₹{item.total_price}
                                     </span>
                                 </div>
                             ))}
                         </div>
 
-                        <div className="h-px bg-slate-200 mb-6 w-full" />
+                        <div className="h-px bg-white/5 mb-8 w-full" />
 
                         {/* Calculations */}
-                        <div className="space-y-4 mb-6">
-                            <div className="flex justify-between font-medium text-slate-600 tracking-wide">
+                        <div className="space-y-4 mb-10">
+                            <div className="flex justify-between font-bold text-white/50 text-sm italic">
                                 <span>Subtotal</span>
-                                <span className="font-bold text-slate-800">₹{cart?.total_amount}</span>
+                                <span className="text-white">₹{cart?.total_amount}</span>
                             </div>
-                            <div className="flex justify-between font-medium text-slate-600 tracking-wide">
+                            <div className="flex justify-between font-bold text-white/50 text-sm italic">
                                 <span>Delivery Fee</span>
-                                <span className="font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">FREE</span>
+                                <span className="text-emerald-400 uppercase tracking-widest text-[10px] font-black">Complimentary</span>
                             </div>
                         </div>
 
-                        <div className="h-px bg-slate-200 mb-6 w-full" />
+                        <div className="h-px bg-white/5 mb-10 w-full" />
 
                         {/* Big Total */}
-                        <div className="flex items-end justify-between mb-8">
-                            <span className="font-bold text-slate-500 uppercase tracking-widest text-sm mb-1">Total Due</span>
-                            <span className="text-4xl font-black text-primary-600 tracking-tight">
-                                ₹{cart?.total_amount}
-                            </span>
+                        <div className="flex flex-col gap-1 mb-10">
+                             <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Authorized Transaction</p>
+                             <div className="flex items-end justify-between">
+                                 <span className="text-5xl font-black tracking-tighter text-white">
+                                     ₹{cart?.total_amount}
+                                 </span>
+                                 <span className="text-[10px] font-black text-white/30 uppercase tracking-widest pb-1">INR Total</span>
+                             </div>
                         </div>
 
                         {/* Place Order CTA */}
                         <button
                             onClick={handlePlaceOrder}
                             disabled={placing}
-                            className={`w-full py-4 rounded-full font-black text-lg transition-all flex items-center justify-center gap-3 shadow-xl ${
+                            className={`w-full py-5 rounded-[24px] font-black text-base uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-2xl ${
                                 placing
-                                    ? 'bg-slate-200 text-slate-500 cursor-wait shadow-none'
+                                    ? 'bg-white/10 text-white/30 cursor-wait shadow-none'
                                     : 'bg-primary-600 text-white shadow-primary-600/30 hover:bg-primary-700 active:scale-95'
                             }`}
                         >
                             {placing ? (
                                 <>
-                                    <div className="w-5 h-5 border-2 border-slate-500/30 border-t-slate-500 rounded-full animate-spin"></div>
-                                    <span>Processing...</span>
+                                    <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                                    <span>Authorizing...</span>
                                 </>
                             ) : (
                                 <>
-                                    <Lock size={20} className="text-white/80" />
-                                    <span>Authorize Payment</span>
+                                    <Lock size={18} className="text-white/80" strokeWidth={3} />
+                                    <span>Place Order</span>
                                 </>
                             )}
                         </button>
 
-                        <div className="mt-6 flex items-center gap-2 justify-center text-slate-400 text-xs font-medium">
-                            <ShieldCheck size={14} />
-                            <span>Payments are 256-bit encrypted and completely secure.</span>
+                        <div className="mt-8 flex flex-col items-center gap-4 text-white/20 text-center">
+                            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                                <ShieldCheck size={14} />
+                                256-Bit SSL Encryption
+                            </div>
+                            <p className="text-[9px] font-bold leading-relaxed max-w-[200px]">
+                                Your payment is processed through encrypted secure gateways. Savor does not store credentials.
+                            </p>
                         </div>
                     </motion.div>
 
                 </div>
-            </div>
+            </main>
         </div>
     )
 }

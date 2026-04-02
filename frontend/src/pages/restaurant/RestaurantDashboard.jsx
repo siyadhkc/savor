@@ -6,12 +6,12 @@ import {
     Cell, Legend
 } from 'recharts'
 import { formatOrderId } from '../../utils/helpers'
-import { Package, IndianRupee, TrendingUp, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { Package, IndianRupee, TrendingUp, Activity, CheckCircle2, ArrowUpRight, Store, Clock, UtensilsCrossed } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 const STATUS_COLORS = {
     pending: '#f59e0b',       // amber-500
-    preparing: '#3b82f6',     // blue-500
+    preparing: '#0ea5e9',     // sky-500
     out_for_delivery: '#8b5cf6', // violet-500
     delivered: '#10b981',     // emerald-500
     cancelled: '#ef4444',     // red-500
@@ -32,11 +32,8 @@ const RestaurantDashboard = () => {
 
     const fetchStats = async () => {
         try {
-            const [ordersRes] = await Promise.all([
-                api.get('/orders/orders/')
-            ])
-
-            const orders = ordersRes.data.results
+            const response = await api.get('/orders/orders/')
+            const orders = response.data.results
 
             const totalRevenue = orders
                 .filter(o => o.status === 'delivered')
@@ -52,9 +49,9 @@ const RestaurantDashboard = () => {
             )
 
             setStats({
-                totalOrders: ordersRes.data.count,
+                totalOrders: response.data.count,
                 totalRevenue: totalRevenue.toFixed(2),
-                recentOrders: orders.slice(0, 7),
+                recentOrders: orders.slice(0, 8),
                 ordersByStatus,
             })
         } catch (error) {
@@ -66,38 +63,45 @@ const RestaurantDashboard = () => {
 
     const statCards = [
         {
-            label: 'Total Revenue',
-            value: `₹${stats.totalRevenue}`,
+            label: 'Store Revenue',
+            value: `₹${parseFloat(stats.totalRevenue).toLocaleString()}`,
             icon: IndianRupee,
             colorClass: 'text-primary-600',
-            bgClass: 'bg-primary-50',
+            bgClass: 'bg-primary-50/50',
+            borderColor: 'border-primary-100/50',
             trend: '+12.5%'
         },
         {
-            label: 'Total Orders',
-            value: stats.totalOrders,
+            label: 'Total Fulfillments',
+            value: stats.totalOrders.toLocaleString(),
             icon: Package,
-            colorClass: 'text-blue-600',
-            bgClass: 'bg-blue-50',
+            colorClass: 'text-sky-600',
+            bgClass: 'bg-sky-50/50',
+            borderColor: 'border-sky-100/50',
             trend: '+5.2%'
         }
     ]
 
     const containerVariants = {
-        hidden: { opacity: 0, y: 20 },
+        hidden: { opacity: 0 },
         visible: {
             opacity: 1,
-            y: 0,
-            transition: {
-                duration: 0.5,
-                staggerChildren: 0.1
-            }
+            transition: { staggerChildren: 0.05 }
         }
     }
 
     const itemVariants = {
-        hidden: { opacity: 0, scale: 0.95 },
-        visible: { opacity: 1, scale: 1 }
+        hidden: { opacity: 0, y: 20 },
+        visible: { opacity: 1, y: 0 }
+    }
+
+    if (loading) {
+        return (
+            <div className="flex-1 flex flex-col items-center justify-center bg-white">
+                <div className="w-12 h-12 border-4 border-slate-100 border-t-primary-500 rounded-full animate-spin mb-6"></div>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Syncing store metrics...</p>
+            </div>
+        )
     }
 
     return (
@@ -105,173 +109,226 @@ const RestaurantDashboard = () => {
             initial="hidden"
             animate="visible"
             variants={containerVariants}
-            className="flex-1 px-4 md:px-8 py-6 md:py-10 bg-slate-50 overflow-y-auto"
+            className="flex-1 px-5 md:px-10 py-10 bg-slate-50/50 overflow-y-auto relative"
         >
-            <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 mb-8">
-                <div>
-                    <h1 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">Store Overview</h1>
-                    <p className="text-slate-500 font-medium mt-1">Monitor your restaurant performance in real-time.</p>
-                </div>
-                <div className="flex items-center self-start md:self-auto gap-2 px-4 py-2 bg-white rounded-full border border-slate-200 shadow-sm">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                    <span className="text-sm font-semibold text-slate-600">Live Updating</span>
-                </div>
+            {/* Background Glows */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary-600/5 blur-[120px] rounded-full -mr-64 -mt-64" />
+                <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-emerald-600/5 blur-[100px] rounded-full -ml-32 -mb-32" />
             </div>
 
-            {loading ? (
-                <div className="flex flex-col items-center justify-center p-20 md:p-32">
-                    <div className="w-10 h-10 border-4 border-slate-200 border-t-primary-500 rounded-full animate-spin mb-4"></div>
-                    <p className="text-slate-500 font-medium">Crunching the numbers...</p>
-                </div>
-            ) : (
-                <>
-                    {/* Stat Cards */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 mb-8">
-                        {statCards.map((card, idx) => {
-                            const Icon = card.icon;
-                            return (
-                                <motion.div 
-                                    key={idx} 
-                                    variants={itemVariants}
-                                    whileHover={{ y: -5 }}
-                                    className="bg-white rounded-[24px] p-6 border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-300 group"
-                                >
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center ${card.bgClass} ${card.colorClass} group-hover:rotate-6 transition-transform duration-300`}>
-                                            <Icon size={24} strokeWidth={2.5} />
-                                        </div>
-                                        <div className="flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">
-                                            <TrendingUp size={14} />
-                                            {card.trend}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <h3 className="text-3xl md:text-4xl font-black text-slate-800 tracking-tight mb-1">
-                                            {card.value}
-                                        </h3>
-                                        <p className="text-slate-500 font-medium text-sm">
-                                            {card.label}
-                                        </p>
-                                    </div>
-                                </motion.div>
-                            )
-                        })}
-                    </div>
-
-                    {/* Charts Row */}
-                    <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6 mb-8">
-                        {/* Bar Chart — Orders by Status */}
-                        <motion.div variants={itemVariants} className="bg-white rounded-[24px] p-6 border border-slate-100 shadow-sm overflow-hidden">
-                            <h2 className="text-xl font-bold text-slate-800 mb-6">Orders Pipeline</h2>
-                            <div className="h-[250px] md:h-[300px]">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={stats.ordersByStatus} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                                        <XAxis dataKey="status" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10}} dy={10} />
-                                        <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10}} />
-                                        <Tooltip 
-                                            cursor={{fill: '#f8fafc'}}
-                                            contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'}}
-                                        />
-                                        <Bar
-                                            dataKey="count"
-                                            radius={[6, 6, 0, 0]}
-                                        >
-                                            {stats.ordersByStatus.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={STATUS_COLORS[entry.status]} />
-                                            ))}
-                                        </Bar>
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </motion.div>
-
-                        {/* Pie Chart — Status Distribution */}
-                        <motion.div variants={itemVariants} className="bg-white rounded-[24px] p-6 border border-slate-100 shadow-sm flex flex-col">
-                            <h2 className="text-xl font-bold text-slate-800 mb-2">Distribution</h2>
-                            <div className="flex-1 min-h-[250px] md:min-h-[300px]">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <PieChart>
-                                        <Pie
-                                            data={stats.ordersByStatus}
-                                            dataKey="count"
-                                            nameKey="status"
-                                            cx="50%"
-                                            cy="50%"
-                                            innerRadius={60}
-                                            outerRadius={80}
-                                            paddingAngle={5}
-                                            stroke="none"
-                                        >
-                                            {stats.ordersByStatus.map((entry, index) => (
-                                                <Cell key={index} fill={STATUS_COLORS[entry.status] || '#cbd5e1'} />
-                                            ))}
-                                        </Pie>
-                                        <Tooltip 
-                                            contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'}}
-                                        />
-                                        <Legend iconType="circle" wrapperStyle={{fontSize: '11px'}} />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </motion.div>
-                    </div>
-
-                    {/* Recent Orders Table */}
-                    <motion.div variants={itemVariants} className="bg-white rounded-[24px] border border-slate-100 shadow-sm overflow-hidden mb-10">
-                        <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center">
-                            <h2 className="text-xl font-bold text-slate-800">Recent Orders</h2>
+            <div className="relative z-10">
+                {/* Header Section */}
+                <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-6 mb-12">
+                    <div>
+                        <div className="flex items-center gap-2 mb-2">
+                            <span className="w-2 h-2 rounded-full bg-primary-500 animate-pulse" />
+                            <span className="text-[10px] font-black uppercase tracking-widest text-primary-600">Partner Core Active</span>
                         </div>
-                        <div className="table-responsive">
-                            <table className="w-full text-left border-collapse min-w-[600px]">
-                                <thead>
-                                    <tr className="bg-slate-50/50">
-                                        <th className="px-6 py-4 text-slate-500 font-semibold text-sm border-b border-slate-100">Order ID</th>
-                                        <th className="px-6 py-4 text-slate-500 font-semibold text-sm border-b border-slate-100">Customer</th>
-                                        <th className="px-6 py-4 text-slate-500 font-semibold text-sm border-b border-slate-100 text-right">Amount</th>
-                                        <th className="px-6 py-4 text-slate-500 font-semibold text-sm border-b border-slate-100 text-center">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {stats.recentOrders.map(order => (
-                                        <tr key={order.id} className="hover:bg-slate-50/80 transition-colors group">
-                                            <td className="px-6 py-4 border-b border-slate-50">
-                                                <span className="font-mono text-sm font-semibold text-slate-700 bg-slate-100 px-2 py-1 rounded-md">
-                                                    {formatOrderId(order.id)}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 border-b border-slate-50 text-slate-600 font-medium text-sm">
-                                                {order.user_email}
-                                            </td>
-                                            <td className="px-6 py-4 border-b border-slate-50 text-slate-800 font-bold text-sm text-right">
-                                                ₹{order.total_amount}
-                                            </td>
-                                            <td className="px-6 py-4 border-b border-slate-50">
-                                                <div className="flex justify-center">
-                                                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
-                                                        order.status === 'pending' ? 'bg-amber-100 text-amber-700' :
-                                                        order.status === 'preparing' ? 'bg-blue-100 text-blue-700' :
-                                                        order.status === 'out_for_delivery' ? 'bg-violet-100 text-violet-700' :
-                                                        order.status === 'delivered' ? 'bg-emerald-100 text-emerald-700' :
-                                                        order.status === 'cancelled' ? 'bg-rose-100 text-rose-700' :
-                                                        'bg-slate-100 text-slate-700'
-                                                    }`}>
-                                                        {order.status === 'delivered' ? <CheckCircle2 size={12} strokeWidth={3} /> : <AlertCircle size={12} strokeWidth={3} />}
-                                                        <span className="capitalize">{order.status.replace(/_/g, ' ')}</span>
-                                                    </span>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                        <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter">Kitchen <span className="text-primary-600 font-light italic">Intelligence</span></h1>
+                        <p className="text-slate-500 font-medium mt-2 max-w-md">Optimize your culinary operations with real-time performance tracking.</p>
+                    </div>
+                    <div className="flex items-center gap-2 px-5 py-2.5 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                        <Clock size={16} className="text-slate-400" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Shift Started: 08:30 AM</span>
+                    </div>
+                </div>
+
+                {/* Stat Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                    {statCards.map((card, idx) => (
+                        <motion.div 
+                            key={idx} 
+                            variants={itemVariants}
+                            whileHover={{ y: -5 }}
+                            className={`bg-white rounded-[32px] p-8 border ${card.borderColor} shadow-sm hover:shadow-xl transition-all duration-500 group relative overflow-hidden`}
+                        >
+                            <div className="absolute top-0 right-0 p-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <ArrowUpRight size={24} className="text-slate-200" />
+                            </div>
+                            <div className="flex justify-between items-start mb-6">
+                                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${card.bgClass} ${card.colorClass} shadow-inner`}>
+                                    <card.icon size={32} strokeWidth={2.5} />
+                                </div>
+                                <div className="text-right">
+                                    <div className="flex items-center gap-1 text-[10px] font-black text-emerald-600 uppercase tracking-widest bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-100/50">
+                                        <TrendingUp size={12} strokeWidth={3} />
+                                        {card.trend}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="mt-4">
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2 leading-none">{card.label}</p>
+                                <h3 className="text-5xl font-black text-slate-900 tracking-tighter leading-none">
+                                    {card.value}
+                                </h3>
+                            </div>
+                        </motion.div>
+                    ))}
+                </div>
+
+                {/* Analytical Rows */}
+                <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-8 mb-10">
+                    {/* Performance Chart */}
+                    <motion.div variants={itemVariants} className="bg-white rounded-[40px] p-8 md:p-10 border border-slate-100 shadow-sm flex flex-col">
+                        <div className="flex items-center justify-between mb-10">
+                            <div>
+                                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Order Velocity</h2>
+                                <p className="text-slate-400 font-bold text-xs uppercase tracking-widest mt-1 italic">Real-time throughput baseline</p>
+                            </div>
+                            <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-xl">
+                                <Activity size={16} className="text-primary-500" />
+                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Live Intake</span>
+                            </div>
+                        </div>
+
+                        <div className="h-[300px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={stats.ordersByStatus} margin={{ top: 0, right: 0, left: -25, bottom: 0 }}>
+                                    <defs>
+                                        {Object.entries(STATUS_COLORS).map(([status, color]) => (
+                                            <linearGradient key={status} id={`rest-grad-${status}`} x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="0%" stopColor={color} stopOpacity={0.9}/>
+                                                <stop offset="100%" stopColor={color} stopOpacity={0.6}/>
+                                            </linearGradient>
+                                        ))}
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                    <XAxis 
+                                        dataKey="status" 
+                                        axisLine={false} 
+                                        tickLine={false} 
+                                        tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 900, textTransform: 'uppercase'}} 
+                                        dy={15}
+                                        tickFormatter={v => v.replace(/_/g, ' ')}
+                                    />
+                                    <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 900}} />
+                                    <Tooltip 
+                                        cursor={{fill: '#f8fafc'}}
+                                        contentStyle={{borderRadius: '24px', border: 'none', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', padding: '16px'}}
+                                        itemStyle={{fontWeight: 900, fontSize: '12px', textTransform: 'uppercase'}}
+                                    />
+                                    <Bar
+                                        dataKey="count"
+                                        radius={[12, 12, 4, 4]}
+                                        barSize={50}
+                                    >
+                                        {stats.ordersByStatus.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={`url(#rest-grad-${entry.status})`} />
+                                        ))}
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
                         </div>
                     </motion.div>
-                </>
-            )}
+
+                    {/* Status Distribution */}
+                    <motion.div variants={itemVariants} className="bg-white rounded-[40px] p-8 md:p-10 border border-slate-100 shadow-sm flex flex-col items-center">
+                        <div className="w-full mb-8">
+                             <h2 className="text-2xl font-black text-slate-900 tracking-tight">Status Saturation</h2>
+                             <p className="text-slate-400 font-bold text-xs uppercase tracking-widest mt-1 italic">Lifecycle distribution</p>
+                        </div>
+                        <div className="flex-1 w-full min-h-[300px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={stats.ordersByStatus}
+                                        dataKey="count"
+                                        nameKey="status"
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={70}
+                                        outerRadius={100}
+                                        paddingAngle={8}
+                                        stroke="none"
+                                    >
+                                        {stats.ordersByStatus.map((entry, index) => (
+                                            <Cell key={index} fill={STATUS_COLORS[entry.status] || '#cbd5e1'} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip 
+                                        contentStyle={{borderRadius: '24px', border: 'none', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', padding: '16px'}}
+                                    />
+                                    <Legend 
+                                        iconType="circle" 
+                                        wrapperStyle={{paddingTop: '20px', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em'}} 
+                                    />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </motion.div>
+                </div>
+
+                {/* Store Log Table */}
+                <motion.div variants={itemVariants} className="bg-white rounded-[40px] border border-slate-100 shadow-sm overflow-hidden mb-12">
+                    <div className="px-8 py-8 border-b border-slate-50 flex justify-between items-center bg-white">
+                        <div>
+                             <h2 className="text-2xl font-black text-slate-900 tracking-tight">Intake Sequence</h2>
+                             <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest mt-1 italic">Active production queue</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <div className="px-4 py-2 bg-slate-50 rounded-xl border border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                {stats.recentOrders.length} Entries in Queue
+                            </div>
+                        </div>
+                    </div>
+                    <div className="overflow-x-auto scrollbar-hide">
+                        <table className="w-full text-left border-collapse min-w-[800px]">
+                            <thead>
+                                <tr className="bg-slate-50/50">
+                                    <th className="px-8 py-5 text-slate-400 font-black text-[10px] uppercase tracking-widest border-b border-slate-100">Identity Tag</th>
+                                    <th className="px-8 py-5 text-slate-400 font-black text-[10px] uppercase tracking-widest border-b border-slate-100">Consumer</th>
+                                    <th className="px-8 py-5 text-slate-400 font-black text-[10px] uppercase tracking-widest border-b border-slate-100 text-right">Gross Amount</th>
+                                    <th className="px-8 py-5 text-slate-400 font-black text-[10px] uppercase tracking-widest border-b border-slate-100 text-center">Lifecycle Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {stats.recentOrders.map(order => (
+                                    <tr key={order.id} className="hover:bg-slate-50/80 transition-colors group">
+                                        <td className="px-8 py-6 border-b border-slate-50">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-lg bg-primary-50 text-primary-500 flex items-center justify-center">
+                                                    <UtensilsCrossed size={14} strokeWidth={3} />
+                                                </div>
+                                                <span className="font-mono text-sm font-black text-slate-900 bg-slate-900/5 px-2.5 py-1 rounded-lg">
+                                                    #{formatOrderId(order.id)}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-6 border-b border-slate-50">
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-black text-slate-900 tracking-tight leading-none mb-1.5">{order.user_email}</span>
+                                                <p className="text-[10px] font-bold text-slate-400 italic">Confirmed Protocol</p>
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-6 border-b border-slate-50 text-right">
+                                            <span className="text-lg font-black text-slate-900 tracking-tighter">₹{order.total_amount}</span>
+                                            <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest mt-0.5 leading-none">INR Valuation</p>
+                                        </td>
+                                        <td className="px-8 py-6 border-b border-slate-50">
+                                            <div className="flex justify-center">
+                                                <span className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all ${
+                                                    order.status === 'pending' ? 'bg-amber-50 text-amber-600 border-amber-100/50' :
+                                                    order.status === 'preparing' ? 'bg-sky-50 text-sky-600 border-sky-100/50' :
+                                                    order.status === 'out_for_delivery' ? 'bg-violet-50 text-violet-600 border-violet-100/50' :
+                                                    order.status === 'delivered' ? 'bg-emerald-50 text-emerald-600 border-emerald-100/50' :
+                                                    order.status === 'cancelled' ? 'bg-rose-50 text-rose-600 border-rose-100/50' :
+                                                    'bg-slate-50 text-slate-600 border-slate-100'
+                                                }`}>
+                                                    {order.status === 'delivered' ? <CheckCircle2 size={12} strokeWidth={3} /> : <Activity size={12} strokeWidth={3} />}
+                                                    {order.status.replace(/_/g, ' ')}
+                                                </span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </motion.div>
+            </div>
         </motion.div>
     )
 }
 
 export default RestaurantDashboard
-

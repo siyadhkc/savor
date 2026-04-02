@@ -45,10 +45,8 @@ const CustomerNavbar = () => {
 
     const fetchCartCount = async () => {
         try {
-            const res = await api.get('/orders/cart/')
-            const items = res.data?.items || []
-            const total = items.reduce((sum, item) => sum + (item.quantity || 1), 0)
-            setCartCount(total)
+            const res = await api.get('/orders/cart/my_cart/')
+            setCartCount(res.data.total_items)
         } catch {
             // Silent — cart badge is non-critical
         }

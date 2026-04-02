@@ -2,18 +2,25 @@ import { useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../api/axios'
 import toast from 'react-hot-toast'
-import { Mail, User, Phone, Shield, Edit2, Check, X, Loader2, ArrowLeft } from 'lucide-react'
+import { 
+    Mail, 
+    User, 
+    Phone, 
+    Shield, 
+    Pencil, 
+    CheckCircle2, 
+    X, 
+    Loader2, 
+    ArrowLeft,
+    Activity,
+    Lock,
+    ShieldCheck
+} from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 
-// Helper: initials from username or email
-const getInitials = (user) => {
-    const name = user?.username || user?.email || 'U'
-    return name.charAt(0).toUpperCase()
-}
-
 const Profile = () => {
-    const { user } = useAuth()
+    const { user, updateUser } = useAuth()
     const navigate = useNavigate()
     const [editing, setEditing] = useState(false)
     const [loading, setLoading] = useState(false)
@@ -30,11 +37,12 @@ const Profile = () => {
         e.preventDefault()
         setLoading(true)
         try {
-            await api.patch('/users/profile/', formData)
-            toast.success('Profile updated.')
+            const response = await api.patch('/users/profile/', formData)
+            updateUser(response.data)
+            toast.success('Identity protocols synchronized.')
             setEditing(false)
         } catch {
-            toast.error('Failed to update profile.')
+            toast.error('Sync failed: Check network latency.')
         } finally {
             setLoading(false)
         }
@@ -46,205 +54,184 @@ const Profile = () => {
     }
 
     const roleLabel = user?.role === 'admin' || user?.is_staff
-        ? 'Administrator'
+        ? 'Administrative Core'
         : user?.role === 'restaurant'
-        ? 'Restaurant Owner'
-        : 'Customer'
-
-    const roleDot = user?.role === 'admin' || user?.is_staff
-        ? 'bg-amber-400'
-        : user?.role === 'restaurant'
-        ? 'bg-primary-500'
-        : 'bg-emerald-400'
-
-    const infoFields = [
-        { icon: Mail, label: 'Email Address', value: user?.email || '—' },
-        { icon: User, label: 'Username', value: user?.username || '—' },
-        { icon: Phone, label: 'Phone', value: user?.phone || 'Not provided' },
-        { icon: Shield, label: 'Account Role', value: roleLabel },
-    ]
+        ? 'Platform Partner'
+        : 'Authenticated Consumer'
 
     return (
-        <div className="min-h-screen bg-[#FCFCFD] flex flex-col">
-
-            {/* ── Dark Hero Header ──────────────────────────────────────── */}
-            <div className="relative bg-slate-950 overflow-hidden pt-10 pb-28 px-6">
-                <div
-                    className="absolute inset-0 opacity-[0.03]"
-                    style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.5) 1px, transparent 1px)', backgroundSize: '60px 60px' }}
-                />
-                <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary-500/10 blur-[100px] rounded-full pointer-events-none" />
-
-                <div className="relative z-10 max-w-3xl mx-auto">
-                    <button
-                        onClick={() => navigate('/')}
-                        className="inline-flex items-center gap-2 text-white/40 hover:text-white text-xs font-bold uppercase tracking-widest mb-8 transition-colors group"
-                    >
-                        <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
-                        Back to Home
-                    </button>
-
-                    <div className="flex items-center gap-6">
-                        {/* Avatar */}
-                        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-[22px] bg-gradient-to-br from-primary-600 to-primary-400 text-white flex items-center justify-center font-black text-3xl sm:text-4xl shrink-0 shadow-2xl shadow-primary-600/30 border-4 border-white/10">
-                            {getInitials(user)}
-                        </div>
-
-                        {/* Info */}
-                        <div>
-                            <p className="text-primary-400 text-xs font-bold uppercase tracking-[0.2em] mb-1.5">My Profile</p>
-                            <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight leading-tight">
-                                {user?.username || 'User'}
-                            </h1>
-                            <div className="flex items-center gap-2 mt-2">
-                                <span className={`w-2 h-2 rounded-full ${roleDot}`} />
-                                <span className="text-white/50 text-sm font-medium">{roleLabel}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        <div className="flex-1 px-5 md:px-10 py-10 bg-slate-50/50 min-h-screen relative overflow-y-auto pt-24 md:pt-32">
+            {/* Background Glows */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary-600/5 blur-[100px] rounded-full -mr-32 -mt-32" />
+                <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-emerald-600/5 blur-[100px] rounded-full -ml-24 -mb-24" />
             </div>
 
-            {/* ── Card ─────────────────────────────────────────────────── */}
-            <div className="flex-1 max-w-3xl mx-auto w-full px-4 sm:px-6 -mt-14 pb-20 relative z-10">
-                <motion.div
-                    initial={{ opacity: 0, y: 16 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden"
-                >
-                    {/* Card header */}
-                    <div className="px-6 sm:px-8 py-5 border-b border-slate-100 flex items-center justify-between">
-                        <div>
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Account Details</p>
+            <div className="relative z-10 max-w-4xl mx-auto">
+                {/* Header Section */}
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
+                    <div>
+                        <button
+                            onClick={() => navigate('/')}
+                            className="flex items-center gap-2 text-slate-400 hover:text-primary-600 font-black text-[10px] uppercase tracking-widest mb-4 transition-all group"
+                        >
+                            <ArrowLeft size={12} className="group-hover:-translate-x-1 transition-transform" strokeWidth={3} />
+                            Exit to Discovery
+                        </button>
+                        <div className="flex items-center gap-2 mb-2">
+                             <div className="w-1.5 h-1.5 rounded-full bg-primary-500" />
+                             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 italic">Security Protocol Layer</span>
                         </div>
-                        {!editing && (
-                            <button
-                                onClick={() => setEditing(true)}
-                                className="flex items-center gap-2 px-4 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold text-sm rounded-xl transition-all"
-                            >
-                                <Edit2 size={14} />
-                                Edit Profile
-                            </button>
-                        )}
+                        <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter">Personal <span className="text-primary-600 font-light italic">Identity</span></h1>
+                        <p className="text-slate-500 font-medium mt-2">Manage your platform authorization and communication link.</p>
                     </div>
 
-                    <div className="px-6 sm:px-8 py-6">
-                        <AnimatePresence mode="wait">
-                            {!editing ? (
-                                /* ── View Mode ──────────────────────────────────── */
-                                <motion.div
-                                    key="view"
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
-                                    className="flex flex-col gap-1.5"
-                                >
-                                    {infoFields.map(({ icon: Icon, label, value }) => (
-                                        <div
-                                            key={label}
-                                            className="flex items-center gap-4 px-4 py-4 rounded-2xl hover:bg-slate-50 transition-colors group"
-                                        >
-                                            <div className="w-9 h-9 bg-slate-100 group-hover:bg-slate-200 rounded-xl flex items-center justify-center shrink-0 transition-colors">
-                                                <Icon size={16} className="text-slate-500" />
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">{label}</p>
-                                                <p className="text-slate-800 font-semibold text-sm truncate">{value}</p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </motion.div>
-                            ) : (
-                                /* ── Edit Mode ──────────────────────────────────── */
-                                <motion.form
-                                    key="edit"
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
-                                    onSubmit={handleUpdate}
-                                    className="flex flex-col gap-4"
-                                >
-                                    {/* Non-editable email */}
-                                    <div className="px-4 py-4 bg-slate-50 rounded-2xl border border-slate-100">
-                                        <div className="flex items-center gap-3">
-                                            <Mail size={16} className="text-slate-400 shrink-0" />
-                                            <div>
-                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Email Address</p>
-                                                <p className="text-slate-600 font-semibold text-sm">{user?.email}</p>
-                                            </div>
-                                        </div>
-                                    </div>
+                    {!editing && (
+                        <button 
+                            onClick={() => setEditing(true)}
+                            className="bg-slate-900 text-white px-8 py-3.5 rounded-[20px] font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-primary-600 active:scale-95 transition-all shadow-xl shadow-slate-900/10"
+                        >
+                            <Pencil size={16} strokeWidth={3} />
+                            Modify Node
+                        </button>
+                    )}
+                </div>
 
-                                    {/* Username */}
-                                    <div className="space-y-1.5">
-                                        <label htmlFor="profile-username" className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
-                                            Username
-                                        </label>
-                                        <div className="relative">
-                                            <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                            <input
-                                                id="profile-username"
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                    {/* Identity Avatar Card */}
+                    <div className="lg:col-span-4 lg:sticky lg:top-32 h-fit">
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="bg-white rounded-[40px] p-10 shadow-sm border border-slate-100 flex flex-col items-center text-center group overflow-hidden"
+                        >
+                            <div className="relative mb-8">
+                                <div className="w-32 h-32 rounded-[40px] bg-slate-900 flex items-center justify-center text-white text-4xl font-black shadow-2xl shadow-slate-900/20 border-8 border-white relative z-10 group-hover:rotate-3 transition-transform duration-500">
+                                    {user?.username?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase()}
+                                </div>
+                                <div className="absolute -inset-4 bg-primary-500/10 rounded-[50px] blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                            </div>
+
+                            <h2 className="text-3xl font-black text-slate-900 tracking-tighter leading-none mb-2">{user?.username}</h2>
+                            <div className="flex items-center gap-2 mb-8">
+                                <ShieldCheck size={14} className="text-emerald-500" />
+                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{roleLabel}</span>
+                            </div>
+
+                            <div className="w-full space-y-4 pt-8 border-t border-slate-50">
+                                <div className="p-4 bg-slate-50 rounded-3xl border border-slate-100 flex flex-col items-center">
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-300 mb-1">Authorization Sync</p>
+                                    <div className="flex items-center gap-2 text-emerald-600 font-black text-[10px] uppercase tracking-widest leading-none">
+                                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                                        Encrypted Link Live
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+
+                    {/* Operational Details Form */}
+                    <div className="lg:col-span-8">
+                        <motion.div 
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="bg-white rounded-[40px] shadow-sm border border-slate-100 overflow-hidden"
+                        >
+                            <div className="p-10 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white">
+                                        <Lock size={18} strokeWidth={2.5} />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <h3 className="text-lg font-black text-slate-900 tracking-tight leading-none mb-1">Identity Matrix</h3>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 italic">User metadata controls</p>
+                                    </div>
+                                </div>
+                                <Activity size={20} className="text-primary-500 animate-pulse" />
+                            </div>
+
+                            <form onSubmit={handleUpdate} className="p-10 space-y-10">
+                                {/* Email Entry (Read Only) */}
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Identity Reference (Immune)</label>
+                                    <div className="relative group/field">
+                                        <Mail className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-200" size={18} />
+                                        <input 
+                                            value={user?.email}
+                                            readOnly
+                                            className="w-full pl-16 pr-8 py-5 rounded-[24px] bg-slate-50 border border-slate-100 text-sm font-bold text-slate-400 cursor-not-allowed italic"
+                                        />
+                                    </div>
+                                    <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest ml-1">Universal ID cannot be altered post-registration.</p>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
+                                    {/* Username Field */}
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Discovery Name</label>
+                                        <div className="relative group/field">
+                                            <User className={`absolute left-6 top-1/2 -translate-y-1/2 transition-colors duration-300 ${editing ? 'text-primary-500' : 'text-slate-200'}`} size={18} />
+                                            <input 
                                                 name="username"
                                                 value={formData.username}
                                                 onChange={handleChange}
-                                                placeholder="Your username"
-                                                className="input-premium pl-10 pr-4 py-3.5"
-                                                required
+                                                disabled={!editing}
+                                                className={`w-full pl-16 pr-8 py-5 rounded-[24px] text-sm font-black tracking-tight focus:outline-none focus:ring-8 focus:ring-primary-500/5 transition-all border shadow-inner ${
+                                                    editing ? 'bg-white border-primary-500/20 text-slate-900' : 'bg-slate-50 border-slate-100 text-slate-400'
+                                                }`}
                                             />
                                         </div>
                                     </div>
 
-                                    {/* Phone */}
-                                    <div className="space-y-1.5">
-                                        <label htmlFor="profile-phone" className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
-                                            Phone <span className="text-slate-400 normal-case font-medium">(optional)</span>
-                                        </label>
-                                        <div className="relative">
-                                            <Phone size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                            <input
-                                                id="profile-phone"
+                                    {/* Phone Field */}
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Logistics Comms</label>
+                                        <div className="relative group/field">
+                                            <Phone className={`absolute left-6 top-1/2 -translate-y-1/2 transition-colors duration-300 ${editing ? 'text-emerald-500' : 'text-slate-200'}`} size={18} />
+                                            <input 
                                                 name="phone"
                                                 value={formData.phone}
                                                 onChange={handleChange}
-                                                placeholder="+91 9876 543 210"
-                                                className="input-premium pl-10 pr-4 py-3.5"
+                                                disabled={!editing}
+                                                className={`w-full pl-16 pr-8 py-5 rounded-[24px] text-sm font-black tracking-tight focus:outline-none focus:ring-8 focus:ring-emerald-500/5 transition-all border shadow-inner ${
+                                                    editing ? 'bg-white border-emerald-500/20 text-slate-900' : 'bg-slate-50 border-slate-100 text-slate-400'
+                                                }`}
                                             />
                                         </div>
                                     </div>
+                                </div>
 
-                                    {/* Actions */}
-                                    <div className="flex gap-3 pt-2">
-                                        <button
-                                            type="submit"
-                                            disabled={loading}
-                                            className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-sm transition-all ${
-                                                loading
-                                                    ? 'bg-slate-100 text-slate-400 cursor-wait'
-                                                    : 'bg-primary-600 text-white hover:bg-primary-700 active:scale-95 shadow-lg shadow-primary-600/20'
-                                            }`}
+                                <AnimatePresence>
+                                    {editing && (
+                                        <motion.div 
+                                            initial={{ opacity: 0, height: 0 }}
+                                            animate={{ opacity: 1, height: 'auto' }}
+                                            exit={{ opacity: 0, height: 0 }}
+                                            className="flex gap-4 pt-10"
                                         >
-                                            {loading ? (
-                                                <Loader2 size={16} className="animate-spin" />
-                                            ) : (
-                                                <Check size={16} strokeWidth={2.5} />
-                                            )}
-                                            {loading ? 'Saving…' : 'Save Changes'}
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            onClick={handleCancel}
-                                            className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-slate-50 border border-slate-200 text-slate-700 rounded-2xl font-bold text-sm hover:bg-slate-100 transition-all"
-                                        >
-                                            <X size={16} />
-                                            Cancel
-                                        </button>
-                                    </div>
-                                </motion.form>
-                            )}
-                        </AnimatePresence>
+                                            <button 
+                                                type="submit"
+                                                disabled={loading}
+                                                className="flex-1 bg-slate-900 text-white font-black py-4 rounded-[20px] shadow-2xl shadow-slate-900/10 hover:bg-primary-600 transition-all flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-50"
+                                            >
+                                                {loading ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle2 size={18} strokeWidth={3} />}
+                                                Sync Matrix
+                                            </button>
+                                            <button 
+                                                type="button"
+                                                onClick={handleCancel}
+                                                className="px-10 bg-white text-slate-400 font-black py-4 rounded-[20px] border border-slate-100 hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
+                                            >
+                                                <X size={18} strokeWidth={3} />
+                                                Revert
+                                            </button>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </form>
+                        </motion.div>
                     </div>
-                </motion.div>
+                </div>
             </div>
         </div>
     )

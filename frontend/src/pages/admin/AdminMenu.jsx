@@ -1,9 +1,23 @@
 import { useState, useEffect } from 'react'
-import AdminSidebar from '../../components/AdminSidebar'
 import api from '../../api/axios'
 import { getImageUrl } from '../../utils/helpers'
 import toast from 'react-hot-toast'
-import { UtensilsCrossed, Plus, Search, Filter, Pencil, Trash2, X, Image as ImageIcon, AlertCircle } from 'lucide-react'
+import { 
+    UtensilsCrossed, 
+    Plus, 
+    Search, 
+    Filter, 
+    Pencil, 
+    Trash2, 
+    X, 
+    Image as ImageIcon, 
+    Loader2,
+    Activity,
+    CheckCircle2,
+    Briefcase,
+    ArrowUpRight,
+    ChefHat
+} from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const AdminMenu = () => {
@@ -15,6 +29,7 @@ const AdminMenu = () => {
     const [editingItem, setEditingItem] = useState(null)
     const [imageFile, setImageFile] = useState(null)
     const [filterRestaurant, setFilterRestaurant] = useState('all')
+    const [searchQuery, setSearchQuery] = useState('')
     const [formData, setFormData] = useState({
         restaurant: '',
         category: '',
@@ -40,7 +55,7 @@ const AdminMenu = () => {
             setRestaurants(restRes.data.results)
             setCategories(catRes.data.results)
         } catch {
-            toast.error('Failed to load menu data.')
+            toast.error('Failed to sync menu cluster.')
         } finally {
             setLoading(false)
         }
@@ -98,20 +113,20 @@ const AdminMenu = () => {
                     data,
                     { headers: { 'Content-Type': 'multipart/form-data' } }
                 )
-                toast.success('Menu item updated')
+                toast.success('Formulation updated.')
             } else {
                 await api.post(
                     '/menu/items/',
                     data,
                     { headers: { 'Content-Type': 'multipart/form-data' } }
                 )
-                toast.success('Menu item created')
+                toast.success('Dish architecture established.')
             }
 
             setShowModal(false)
             fetchData()
         } catch (error) {
-            toast.error('Failed to save menu item.')
+            toast.error('Protocol violation: Failed to save.')
             console.error('Failed to save menu item:', error)
         } finally {
             setSubmitting(false)
@@ -119,178 +134,201 @@ const AdminMenu = () => {
     }
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Eradicate this menu item?')) return
+        if (!window.confirm('CAUTION: This will expunge the dish formulation. Proceed?')) return
         try {
             await api.delete(`/menu/items/${id}/`)
             setMenuItems(menuItems.filter(i => i.id !== id))
-            toast.success('Item deleted')
+            toast.success('Item deleted.')
         } catch {
             toast.error('Failed to delete item.')
         }
     }
 
-    const filteredItems = filterRestaurant === 'all'
-        ? menuItems
-        : menuItems.filter(i =>
-            String(i.restaurant) === String(filterRestaurant)
+    const filteredItems = menuItems.filter(i => {
+        const matchesRest = filterRestaurant === 'all' || String(i.restaurant) === String(filterRestaurant)
+        const matchesSearch = i.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                              i.description.toLowerCase().includes(searchQuery.toLowerCase())
+        return matchesRest && matchesSearch
+    })
+
+    if (loading) {
+        return (
+            <div className="flex-1 flex flex-col items-center justify-center bg-white">
+                <div className="w-12 h-12 border-4 border-slate-100 border-t-primary-500 rounded-full animate-spin mb-6"></div>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Syncing culinary database...</p>
+            </div>
         )
+    }
 
     return (
-        <div className="flex-1 px-8 py-10 bg-slate-50 overflow-y-auto min-h-screen selection:bg-primary-500/30">
-            
-            {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-6">
-                <div>
-                    <h1 className="text-3xl font-black text-slate-800 tracking-tight">Menu Items</h1>
-                    <p className="text-slate-500 font-medium mt-1">Design and manage all available dishes.</p>
-                </div>
-                
-                <div className="flex items-center gap-4 w-full md:w-auto">
-                    {/* Filter Dropdown */}
-                    <div className="relative flex-1 md:w-64">
-                        <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                        <select
-                            value={filterRestaurant}
-                            onChange={(e) => setFilterRestaurant(e.target.value)}
-                            className="w-full pl-11 pr-10 py-3 bg-white border border-slate-200 rounded-full text-slate-700 font-medium text-sm appearance-none focus:outline-none focus:ring-4 focus:ring-primary-500/20 shadow-sm"
-                        >
-                            <option value="all">All Restaurants Scope</option>
-                            {restaurants.map(r => (
-                                <option key={r.id} value={r.id}>{r.name}</option>
-                            ))}
-                        </select>
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none border-l-[5px] border-r-[5px] border-t-[6px] border-l-transparent border-r-transparent border-slate-400"></div>
-                    </div>
-
-                    <button 
-                        onClick={openCreateModal} 
-                        className="flex items-center justify-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-full font-bold shadow-md shadow-primary-600/20 hover:bg-primary-700 active:scale-95 transition-all whitespace-nowrap"
-                    >
-                        <Plus size={20} strokeWidth={2.5} />
-                        New Item
-                    </button>
-                </div>
+        <div className="flex-1 px-5 md:px-10 py-10 bg-slate-50/50 min-h-screen relative overflow-y-auto">
+            {/* Background Glows */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary-600/5 blur-[100px] rounded-full -mr-32 -mt-32" />
             </div>
 
-            {loading ? (
-                <div className="flex flex-col items-center justify-center py-40">
-                    <div className="w-10 h-10 border-4 border-slate-200 border-t-primary-500 rounded-full animate-spin mb-4"></div>
-                    <p className="text-slate-500 font-medium">Fetching the menu database...</p>
+            <div className="relative z-10">
+                {/* Header Section */}
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
+                    <div>
+                        <div className="flex items-center gap-2 mb-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-primary-500" />
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 italic">Global Menu Optimization</span>
+                        </div>
+                        <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter">Dish <span className="text-primary-600 font-light italic">Architecture</span></h1>
+                        <p className="text-slate-500 font-medium mt-2">Design, formulate, and manage the platform's culinary offerings.</p>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-4">
+                        <div className="relative group">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary-500 transition-colors" size={18} />
+                            <input 
+                                type="text"
+                                placeholder="Search formulations…"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="pl-12 pr-6 py-3.5 bg-white border border-slate-200 rounded-[20px] text-sm font-bold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all w-full sm:w-[280px] shadow-sm"
+                            />
+                        </div>
+                        <button
+                            onClick={openCreateModal}
+                            className="bg-slate-900 text-white px-8 py-3.5 rounded-[20px] font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-primary-600 active:scale-95 transition-all shadow-xl shadow-slate-900/10"
+                        >
+                            <Plus size={18} strokeWidth={3} />
+                            Mint Dish
+                        </button>
+                    </div>
                 </div>
-            ) : (
-                <motion.div 
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-white rounded-[32px] shadow-sm border border-slate-100 overflow-hidden"
-                >
+
+                {/* Filter Controls */}
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10">
+                    <div className="flex gap-2.5 overflow-x-auto pb-4 lg:pb-0 scrollbar-hide">
+                         <div className="flex items-center gap-3 bg-white border border-slate-100 px-5 py-2.5 rounded-full shadow-sm">
+                            <Filter size={14} className="text-primary-500" />
+                            <select
+                                value={filterRestaurant}
+                                onChange={(e) => setFilterRestaurant(e.target.value)}
+                                className="bg-transparent text-[10px] font-black uppercase tracking-widest text-slate-600 focus:outline-none cursor-pointer"
+                            >
+                                <option value="all">Global Operational Scope</option>
+                                {restaurants.map(r => (
+                                    <option key={r.id} value={r.id}>{r.name} Context</option>
+                                ))}
+                            </select>
+                         </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-3 text-slate-400 text-[10px] font-black uppercase tracking-widest bg-white/50 px-4 py-2 rounded-xl border border-slate-100">
+                        <Activity size={14} /> 
+                        <span>Displaying {filteredItems.length} Formulations</span>
+                    </div>
+                </div>
+
+                {/* Menu Table */}
+                <div className="bg-white rounded-[40px] border border-slate-100 shadow-sm overflow-hidden mb-12">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse whitespace-nowrap">
+                        <table className="w-full text-left border-collapse min-w-[1100px]">
                             <thead>
-                                <tr className="bg-slate-50/80">
-                                    <th className="px-6 py-4 text-slate-400 font-bold text-xs uppercase tracking-wider border-b border-slate-100 pl-8">Dish</th>
-                                    <th className="px-6 py-4 text-slate-400 font-bold text-xs uppercase tracking-wider border-b border-slate-100">Restaurant</th>
-                                    <th className="px-6 py-4 text-slate-400 font-bold text-xs uppercase tracking-wider border-b border-slate-100">Category</th>
-                                    <th className="px-6 py-4 text-slate-400 font-bold text-xs uppercase tracking-wider border-b border-slate-100">Price</th>
-                                    <th className="px-6 py-4 text-slate-400 font-bold text-xs uppercase tracking-wider border-b border-slate-100 text-center">Status</th>
-                                    <th className="px-6 py-4 text-slate-400 font-bold text-xs uppercase tracking-wider border-b border-slate-100 text-right pr-8">Actions</th>
+                                <tr className="bg-slate-50/50">
+                                    <th className="px-8 py-5 text-slate-400 font-black text-[10px] uppercase tracking-widest border-b border-slate-100">Dish Profile</th>
+                                    <th className="px-8 py-5 text-slate-400 font-black text-[10px] uppercase tracking-widest border-b border-slate-100">Venue / Collection</th>
+                                    <th className="px-8 py-5 text-slate-400 font-black text-[10px] uppercase tracking-widest border-b border-slate-100 text-right">Investment</th>
+                                    <th className="px-8 py-5 text-slate-400 font-black text-[10px] uppercase tracking-widest border-b border-slate-100 text-center">Protocol Status</th>
+                                    <th className="px-8 py-5 text-slate-400 font-black text-[10px] uppercase tracking-widest border-b border-slate-100 text-right pr-12">Controls</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <AnimatePresence>
-                                    {filteredItems.map((item) => (
-                                        <motion.tr 
-                                            key={item.id} 
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                            exit={{ opacity: 0, height: 0 }}
-                                            className="hover:bg-slate-50/80 transition-colors group border-b border-slate-50 last:border-0"
-                                        >
-                                            <td className="px-6 py-4 pl-8 min-w-[300px]">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="w-14 h-14 rounded-2xl bg-slate-100 flex-shrink-0 flex items-center justify-center overflow-hidden border border-slate-200 shadow-sm relative">
-                                                        {item.image ? (
-                                                            <img
-                                                                src={getImageUrl(item.image)}
-                                                                alt={item.name}
-                                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                                            />
-                                                        ) : (
-                                                            <UtensilsCrossed size={20} className="text-slate-400" />
-                                                        )}
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-bold text-slate-800 text-base mb-1 truncate md:max-w-xs transition-colors group-hover:text-primary-600">{item.name}</p>
-                                                        <p className="text-slate-500 text-xs font-medium truncate max-w-[200px] md:max-w-xs opacity-70">
-                                                            {item.description || 'No description provided'}
-                                                        </p>
-                                                    </div>
+                                {filteredItems.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={5} className="px-8 py-24 text-center">
+                                             <div className="flex flex-col items-center">
+                                                <UtensilsCrossed size={48} className="text-slate-100 mb-4" />
+                                                <h3 className="text-lg font-black text-slate-900 tracking-tight mb-1">Null Content</h3>
+                                                <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest">No matching dish formulations in this scope.</p>
+                                             </div>
+                                        </td>
+                                    </tr>
+                                ) : filteredItems.map(item => (
+                                    <tr key={item.id} className="border-b border-slate-50 hover:bg-slate-50/80 transition-colors group tracking-tight">
+                                        <td className="px-8 py-5">
+                                            <div className="flex items-center gap-5">
+                                                <div className="w-16 h-16 rounded-[24px] bg-slate-100 flex-shrink-0 flex items-center justify-center overflow-hidden border border-slate-200 shadow-sm relative group-hover:rotate-3 transition-all duration-500">
+                                                    {item.image ? (
+                                                        <img
+                                                            src={getImageUrl(item.image)}
+                                                            alt={item.name}
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    ) : (
+                                                        <ChefHat size={24} className="text-slate-300" />
+                                                    )}
                                                 </div>
-                                            </td>
-                                            <td className="px-6 py-4 text-sm font-semibold text-slate-600">
-                                                {item.restaurant_name}
-                                            </td>
-                                            <td className="px-6 py-4 text-sm font-semibold text-slate-600">
-                                                <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-md text-xs tracking-wide">
+                                                <div className="flex flex-col max-w-sm">
+                                                    <span className="text-base font-black text-slate-900 leading-none mb-1.5">{item.name}</span>
+                                                    <p className="text-[10px] font-bold text-slate-400 line-clamp-1 italic">{item.description || 'No descriptive payload provided.'}</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-5">
+                                            <div className="flex flex-col">
+                                                <div className="flex items-center gap-2 text-sm font-bold text-slate-700 leading-none mb-1.5">
+                                                    <Briefcase size={13} className="text-primary-400" />
+                                                    {item.restaurant_name}
+                                                </div>
+                                                <span className="text-[9px] font-black uppercase tracking-widest text-primary-500/60 bg-primary-50 px-2 py-0.5 rounded border border-primary-100/50 self-start">
                                                     {item.category_name}
                                                 </span>
-                                            </td>
-                                            <td className="px-6 py-4 font-black text-slate-800 text-base">
-                                                ₹{item.price}
-                                            </td>
-                                            <td className="px-6 py-4 text-center">
-                                                <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-bold ${
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-5 text-right font-black text-slate-900">
+                                            <span className="text-base tracking-tighter leading-none">₹{item.price}</span>
+                                            <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest mt-0.5">INR Yield</p>
+                                        </td>
+                                        <td className="px-8 py-5">
+                                            <div className="flex justify-center">
+                                                <span className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all ${
                                                     item.is_available
-                                                        ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
-                                                        : 'bg-rose-50 text-rose-600 border border-rose-100'
+                                                        ? 'bg-emerald-50 text-emerald-600 border-emerald-100/50'
+                                                        : 'bg-rose-50 text-rose-600 border-rose-100/50'
                                                 }`}>
-                                                    {item.is_available ? 'Available' : 'Hidden'}
+                                                    {item.is_available ? <CheckCircle2 size={12} strokeWidth={3} /> : <Activity size={12} strokeWidth={3} />}
+                                                    {item.is_available ? 'Available' : 'Restricted'}
                                                 </span>
-                                            </td>
-                                            <td className="px-6 py-4 pr-8 text-right">
-                                                <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <button
-                                                        onClick={() => openEditModal(item)}
-                                                        className="p-2 bg-slate-100 text-slate-500 rounded-xl hover:bg-primary-50 hover:text-primary-600 transition-colors focus:outline-none"
-                                                        title="Edit Item"
-                                                    >
-                                                        <Pencil size={18} strokeWidth={2.5} />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDelete(item.id)}
-                                                        className="p-2 bg-slate-100 text-slate-500 rounded-xl hover:bg-rose-50 hover:text-rose-600 transition-colors focus:outline-none"
-                                                        title="Delete Item"
-                                                    >
-                                                        <Trash2 size={18} strokeWidth={2.5} />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </motion.tr>
-                                    ))}
-                                </AnimatePresence>
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-5 pr-12">
+                                            <div className="flex items-center justify-end gap-3 translate-x-4 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300">
+                                                <button
+                                                    onClick={() => openEditModal(item)}
+                                                    className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-primary-600 hover:border-primary-200 hover:bg-primary-50 transition-all shadow-sm"
+                                                >
+                                                    <Pencil size={16} />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(item.id)}
+                                                    className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 transition-all shadow-sm"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
                             </tbody>
                         </table>
                     </div>
-                    {filteredItems.length === 0 && (
-                        <div className="flex flex-col items-center justify-center py-20 bg-slate-50/50">
-                            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm border border-slate-100">
-                                <Search className="text-slate-300" size={32} />
-                            </div>
-                            <p className="text-slate-500 text-lg font-bold">No menu items found</p>
-                            <p className="text-slate-400 text-sm mt-1">Try switching the restaurant scope or create a new item.</p>
-                        </div>
-                    )}
-                </motion.div>
-            )}
+                </div>
+            </div>
 
-            {/* Modal Drawer */}
+            {/* Premium Modal */}
             <AnimatePresence>
             {showModal && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                <div className="fixed inset-0 z-[200] flex items-center justify-center px-4">
                     <motion.div 
                         initial={{ opacity: 0 }} 
                         animate={{ opacity: 1 }} 
                         exit={{ opacity: 0 }} 
-                        className="absolute inset-0 bg-slate-900/40 backdrop-blur-md" 
+                        className="absolute inset-0 bg-slate-950/60 backdrop-blur-xl" 
                         onClick={() => setShowModal(false)} 
                     />
                     <motion.div 
@@ -298,52 +336,55 @@ const AdminMenu = () => {
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 20 }}
                         transition={{ duration: 0.2 }}
-                        className="bg-white rounded-[32px] shadow-2xl relative z-10 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden"
+                        className="bg-white rounded-[40px] shadow-2xl relative z-10 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden border border-white/20"
                     >
                         {/* Modal Header */}
-                        <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-white z-10">
-                            <h2 className="text-2xl font-black text-slate-800 tracking-tight">
-                                {editingItem ? 'Edit Formulation' : 'New Dish Architecture'}
-                            </h2>
+                        <div className="p-10 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+                            <div>
+                                <h2 className="text-3xl font-black text-slate-900 tracking-tighter">
+                                    {editingItem ? 'Edit Formulation' : 'New Dish Architecture'}
+                                </h2>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1 italic font-light">Specify the details for the new platform offering.</p>
+                            </div>
                             <button
                                 onClick={() => setShowModal(false)}
-                                className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700 transition-colors"
+                                className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white border border-slate-100 text-slate-400 hover:text-slate-900 transition-all shadow-sm active:scale-90"
                             >
-                                <X size={20} strokeWidth={2.5} />
+                                <X size={20} strokeWidth={3} />
                             </button>
                         </div>
 
-                        {/* Modal Form Scrollable Area */}
-                        <div className="p-8 overflow-y-auto custom-scrollbar">
-                            <form id="menuForm" onSubmit={handleSubmit} className="space-y-6">
+                        {/* Modal Form */}
+                        <div className="p-10 overflow-y-auto custom-scrollbar">
+                            <form id="menuForm" onSubmit={handleSubmit} className="space-y-8">
                                 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <label className="block font-bold text-slate-700 text-sm uppercase tracking-wider">Restaurant Origin</label>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Operational Origin</label>
                                         <select
                                             name="restaurant"
                                             value={formData.restaurant}
                                             onChange={handleChange}
-                                            className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-bold focus:outline-none focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 transition-all appearance-none"
+                                            className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all shadow-inner appearance-none bg-no-repeat bg-[right_1.5rem_center]"
                                             required
                                         >
-                                            <option value="" disabled>Select Assignment</option>
+                                            <option value="" disabled>Select Venue…</option>
                                             {restaurants.map(r => (
                                                 <option key={r.id} value={r.id}>{r.name}</option>
                                             ))}
                                         </select>
                                     </div>
 
-                                    <div className="space-y-2">
-                                        <label className="block font-bold text-slate-700 text-sm uppercase tracking-wider">Category Tag</label>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Collection Tag</label>
                                         <select
                                             name="category"
                                             value={formData.category}
                                             onChange={handleChange}
-                                            className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-bold focus:outline-none focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 transition-all appearance-none"
+                                            className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all shadow-inner appearance-none bg-no-repeat bg-[right_1.5rem_center]"
                                             required
                                         >
-                                            <option value="" disabled>Select Category grouping</option>
+                                            <option value="" disabled>Select Segment…</option>
                                             {categories.map(c => (
                                                 <option key={c.id} value={c.id}>{c.name}</option>
                                             ))}
@@ -351,52 +392,52 @@ const AdminMenu = () => {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-6">
-                                    <div className="space-y-2">
-                                        <label className="block font-bold text-slate-700 text-sm uppercase tracking-wider">Title Identity</label>
+                                <div className="grid grid-cols-1 md:grid-cols-[1.5fr_1fr] gap-8">
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Dish Identity</label>
                                         <input
                                             type="text"
                                             name="name"
                                             value={formData.name}
                                             onChange={handleChange}
-                                            placeholder="e.g. Truffle Infused Risotto"
-                                            className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-bold focus:outline-none focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 transition-all placeholder:font-medium placeholder:text-slate-400"
+                                            placeholder="Unique Formulation Title…"
+                                            className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all"
                                             required
                                         />
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="block font-bold text-slate-700 text-sm uppercase tracking-wider">Price (₹)</label>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Yield Investment (₹)</label>
                                         <input
                                             type="number"
                                             name="price"
                                             value={formData.price}
                                             onChange={handleChange}
-                                            placeholder="Ex: 899"
-                                            className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-black focus:outline-none focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 transition-all placeholder:font-medium placeholder:text-slate-400"
+                                            placeholder="Value in INR…"
+                                            className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-black text-slate-800 focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all"
                                             required
                                         />
                                     </div>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <label className="block font-bold text-slate-700 text-sm uppercase tracking-wider">Description Payload</label>
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Descriptive Payload</label>
                                     <textarea
                                         name="description"
                                         value={formData.description}
                                         onChange={handleChange}
-                                        placeholder="Give depth to the dish's flavor profile..."
-                                        className="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-medium focus:outline-none focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 transition-all resize-y min-h-[100px] placeholder:text-slate-400"
+                                        placeholder="Outline the flavor profile and presentation guidelines…"
+                                        className="w-full px-6 py-5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium text-slate-800 focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all resize-none min-h-[140px]"
                                         rows={3}
                                     />
                                 </div>
 
-                                <div className="space-y-2">
-                                    <label className="block font-bold text-slate-700 text-sm uppercase tracking-wider">Visual Asset Upload</label>
-                                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-200 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 hover:border-primary-400 transition-colors overflow-hidden group">
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Visual Evidence</label>
+                                    <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-slate-200 border-dashed rounded-[32px] cursor-pointer bg-slate-50 hover:bg-slate-100 hover:border-primary-400 transition-all group overflow-hidden">
                                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                            <ImageIcon size={32} className="text-slate-400 mb-3 group-hover:text-primary-500 transition-colors" strokeWidth={1.5} />
-                                            <p className="text-sm font-bold text-slate-500 group-hover:text-primary-600 transition-colors">
-                                                {imageFile ? imageFile.name : 'Drag or click to attach media'}
+                                            <ImageIcon size={32} className="text-slate-400 mb-3 group-hover:text-primary-500 group-hover:scale-110 transition-all" strokeWidth={1.5} />
+                                            <p className="text-[11px] font-black uppercase tracking-widest text-slate-500">
+                                                {imageFile ? imageFile.name : 'Attach Sensory Media'}
                                             </p>
                                         </div>
                                         <input
@@ -408,7 +449,7 @@ const AdminMenu = () => {
                                     </label>
                                 </div>
 
-                                <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 flex items-center gap-4">
+                                <div className="p-6 bg-slate-900 rounded-[30px] flex items-center gap-5 border border-slate-800 shadow-xl shadow-slate-900/10">
                                     <div className="flex items-center h-5">
                                         <input
                                             type="checkbox"
@@ -416,14 +457,14 @@ const AdminMenu = () => {
                                             id="is_available"
                                             checked={formData.is_available}
                                             onChange={handleChange}
-                                            className="w-5 h-5 text-primary-600 bg-white border-slate-300 rounded focus:ring-primary-500/30 focus:ring-2 cursor-pointer"
+                                            className="w-6 h-6 text-primary-500 bg-slate-800 border-slate-700 rounded-lg focus:ring-offset-slate-900 focus:ring-primary-500/50 cursor-pointer"
                                         />
                                     </div>
                                     <div className="flex flex-col">
-                                        <label htmlFor="is_available" className="font-bold text-slate-800 cursor-pointer">
-                                            Visible & Available to Customer App
+                                        <label htmlFor="is_available" className="font-black text-white text-sm tracking-tight cursor-pointer">
+                                            Operational Activation
                                         </label>
-                                        <p className="text-xs font-semibold text-slate-400">Toggle this off to temporarily hide the item without deleting it.</p>
+                                        <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest italic leading-none mt-1">Live visibility on customer discovery layer</p>
                                     </div>
                                 </div>
 
@@ -431,25 +472,19 @@ const AdminMenu = () => {
                         </div>
 
                         {/* Modal Footer */}
-                        <div className="px-8 py-5 border-t border-slate-100 bg-slate-50/50 flex gap-4 justify-end rounded-b-[32px]">
-                            <button
-                                type="button"
-                                onClick={() => setShowModal(false)}
-                                className="px-6 py-3 bg-white text-slate-600 border border-slate-200 rounded-full font-bold hover:bg-slate-50 hover:text-slate-800 transition-colors"
-                            >
-                                Cancel
-                            </button>
+                        <div className="p-10 border-t border-slate-50 bg-slate-50/30 flex gap-4 justify-end">
                             <button
                                 type="submit"
                                 form="menuForm"
                                 disabled={submitting}
-                                className="px-8 py-3 bg-primary-600 text-white rounded-full font-bold shadow-lg shadow-primary-600/30 hover:bg-primary-700 active:scale-95 disabled:opacity-50 transition-all flex items-center justify-center min-w-[140px]"
+                                className="flex-1 bg-slate-900 text-white py-4 rounded-[20px] font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-primary-600 active:scale-95 transition-all shadow-xl shadow-slate-900/10 disabled:opacity-50"
                             >
                                 {submitting ? (
-                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    <Loader2 size={20} className="animate-spin" />
                                 ) : (
-                                    editingItem ? 'Publish Updates' : 'Mint Menu Item'
+                                    <CheckCircle2 size={20} strokeWidth={3} />
                                 )}
+                                {submitting ? 'Finalizing…' : (editingItem ? 'Publish Updates' : 'Finalize Formulation')}
                             </button>
                         </div>
                     </motion.div>

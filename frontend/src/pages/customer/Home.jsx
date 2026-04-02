@@ -10,10 +10,10 @@ import { motion } from 'framer-motion'
 
 const KERALA_CITIES = [
     { name: 'Kochi',       desc: 'Commercial Capital' },
-    { name: 'Trivandrum',  desc: 'State Capital'      },
+    { name: 'Kannur',      desc: ''      },
     { name: 'Kozhikode',   desc: 'City of Spices'     },
     { name: 'Thrissur',    desc: 'Cultural Capital'   },
-    { name: 'Kollam',      desc: 'Cashew Capital'     },
+    { name: 'Trivandrum',  desc: 'State Capital'     },
     { name: 'Palakkad',    desc: 'Gateway to Kerala'  },
 ]
 
