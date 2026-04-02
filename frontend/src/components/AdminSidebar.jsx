@@ -1,20 +1,22 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
-import { 
-    LayoutDashboard, 
-    Store, 
-    Pizza, 
-    Layers, 
-    PackageSearch, 
-    CreditCard, 
-    Users, 
-    Settings, 
+import {
+    LayoutDashboard,
+    Store,
+    Pizza,
+    Layers,
+    PackageSearch,
+    CreditCard,
+    Users,
+    Settings,
     LogOut,
-    Menu as MenuIcon
+    Menu as MenuIcon,
+    X
 } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 
-const AdminSidebar = () => {
+const AdminSidebar = ({ isOpen, setIsOpen }) => {
     const { user, logout } = useAuth()
     const navigate = useNavigate()
 
@@ -54,18 +56,25 @@ const AdminSidebar = () => {
         },
     ]
 
-    return (
-        <div className="w-72 min-h-screen bg-slate-950 flex flex-col flex-shrink-0 sticky top-0 h-screen overflow-y-auto selection:bg-primary-500/30">
-
+    const sidebarContent = (
+        <div className="w-72 h-full bg-slate-950 flex flex-col selection:bg-primary-500/30">
             {/* Brand Header */}
-            <div className="flex items-center gap-3 p-6 border-b border-white/5 bg-slate-900/50">
-                <div className="bg-primary-500 p-2 rounded-xl shadow-lg shadow-primary-500/20 text-white">
-                    <MenuIcon size={24} strokeWidth={2.5} />
+            <div className="flex items-center justify-between p-6 border-b border-white/5 bg-slate-900/50">
+                <div className="flex items-center gap-3">
+                    <div className="bg-primary-500 p-2 rounded-xl shadow-lg shadow-primary-500/20 text-white">
+                        <MenuIcon size={24} strokeWidth={2.5} />
+                    </div>
+                    <div>
+                        <p className="text-white font-black text-xl m-0 tracking-tighter italic">Savor</p>
+                        <p className="text-primary-400 font-bold text-[10px] tracking-widest uppercase m-0 mt-0.5 opacity-80">Admin Core</p>
+                    </div>
                 </div>
-                <div>
-                    <p className="text-white font-black text-lg m-0 tracking-tight">FoodDelivery</p>
-                    <p className="text-primary-400 font-medium text-xs tracking-wider uppercase m-0 mt-0.5">Administration</p>
-                </div>
+                <button
+                    onClick={() => setIsOpen(false)}
+                    className="lg:hidden p-2 text-slate-400 hover:text-white transition-colors"
+                >
+                    <X size={20} />
+                </button>
             </div>
 
             {/* Admin User Info */}
@@ -82,7 +91,7 @@ const AdminSidebar = () => {
             </div>
 
             {/* Navigation Groups */}
-            <nav className="flex-1 py-4 px-3 space-y-6">
+            <nav className="flex-1 py-4 px-3 space-y-6 overflow-y-auto">
                 {navGroups.map(group => (
                     <div key={group.label}>
                         <p className="text-slate-500 text-xs font-bold tracking-[0.2em] px-3 mb-3">{group.label}</p>
@@ -94,8 +103,9 @@ const AdminSidebar = () => {
                                         key={link.to}
                                         to={link.to}
                                         end={link.end}
+                                        onClick={() => setIsOpen(false)}
                                         className={({ isActive }) =>
-                                            isActive 
+                                            isActive
                                                 ? "flex items-center gap-3 text-white px-3 py-2.5 rounded-xl text-sm bg-primary-500/10 text-primary-400 font-semibold transition-all duration-200 group relative overflow-hidden"
                                                 : "flex items-center gap-3 text-slate-400 px-3 py-2.5 rounded-xl text-sm hover:text-white hover:bg-slate-800/50 font-medium transition-all duration-200 group relative"
                                         }
@@ -128,7 +138,7 @@ const AdminSidebar = () => {
                         <span>Django Admin</span>
                     </a>
 
-                    <button 
+                    <button
                         onClick={handleLogout}
                         className="flex items-center gap-3 text-rose-400/80 px-3 py-3 w-full text-left rounded-xl hover:bg-rose-500/10 hover:text-rose-400 transition-all text-sm font-medium"
                     >
@@ -138,6 +148,39 @@ const AdminSidebar = () => {
                 </div>
             </div>
         </div>
+    )
+
+    return (
+        <>
+            {/* Desktop Sidebar */}
+            <aside className="hidden lg:block w-72 h-screen sticky top-0 flex-shrink-0">
+                {sidebarContent}
+            </aside>
+
+            {/* Mobile Sidebar */}
+            <AnimatePresence>
+                {isOpen && (
+                    <>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setIsOpen(false)}
+                            className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 lg:hidden"
+                        />
+                        <motion.div
+                            initial={{ x: '-100%' }}
+                            animate={{ x: 0 }}
+                            exit={{ x: '-100%' }}
+                            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                            className="fixed top-0 left-0 bottom-0 w-72 bg-slate-950 z-[60] lg:hidden shadow-2xl"
+                        >
+                            {sidebarContent}
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
+        </>
     )
 }
 

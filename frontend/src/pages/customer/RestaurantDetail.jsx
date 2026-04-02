@@ -100,15 +100,21 @@ const RestaurantDetail = () => {
         <div className="min-h-screen bg-slate-50 selection:bg-primary-500/30">
 
             {/* Restaurant Hero Header */}
-            <div className="relative bg-slate-900 border-b border-white/10">
-                <div className="absolute inset-0 overflow-hidden">
+            <div className="relative bg-slate-950 border-b border-white/[0.06] overflow-hidden">
+                <div
+                    className="absolute inset-0 opacity-[0.04]"
+                    style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,.3) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.3) 1px, transparent 1px)', backgroundSize: '60px 60px' }}
+                />
+                <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary-500/10 blur-[120px] rounded-full pointer-events-none" />
+
+                <div className="absolute inset-0 overflow-hidden z-0">
                     {restaurant.logo ? (
                         <>
-                            <img src={getImageUrl(restaurant.logo)} alt={restaurant.name} className="w-full h-full object-cover blur-md opacity-40 scale-105" />
-                            <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent" />
+                            <img src={getImageUrl(restaurant.logo)} alt={restaurant.name} className="w-full h-full object-cover blur-2xl opacity-20 scale-110" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent" />
                         </>
                     ) : (
-                        <div className="absolute inset-0 bg-primary-900" />
+                        <div className="absolute inset-0 bg-slate-950/50" />
                     )}
                 </div>
 
@@ -139,66 +145,71 @@ const RestaurantDetail = () => {
                         </button>
                         <h1 className="text-4xl md:text-6xl font-black mb-4 tracking-tight leading-tight mix-blend-plus-lighter">{restaurant.name}</h1>
                         <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 opacity-90 font-medium mb-6">
-                            <p className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/10 backdrop-blur-sm">
+                            <p className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10 backdrop-blur-sm text-sm">
                                 <MapPin size={16} className="text-primary-400" /> {restaurant.address}
                             </p>
-                            <p className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/10 backdrop-blur-sm">
+                            <p className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10 backdrop-blur-sm text-sm">
                                 <Phone size={16} className="text-primary-400" /> {restaurant.phone}
                             </p>
                         </div>
-                        <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold shadow-lg ${
-                            restaurant.is_active
-                                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 backdrop-blur-md'
-                                : 'bg-rose-500/20 text-rose-400 border border-rose-500/30 backdrop-blur-md'
-                        }`}>
-                            {restaurant.is_active ? <CheckCircle2 size={16} strokeWidth={3} /> : <AlertCircle size={16} strokeWidth={3} />}
-                            {restaurant.is_active ? 'Currently Open' : 'Closed Currently'}
-                        </span>
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg inline-flex backdrop-blur-sm">
+                            <div className={`w-2 h-2 rounded-full ${restaurant.is_active ? 'bg-emerald-400' : 'bg-rose-400'}`} />
+                            <span className="text-xs font-bold uppercase tracking-widest text-white/80">
+                                {restaurant.is_active ? 'Currently Open' : 'Closed'}
+                            </span>
+                        </div>
                     </motion.div>
                 </div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-6 py-10 -mt-10 relative z-20">
-                {/* Search + Filter Bar */}
-                <div className="bg-white/80 backdrop-blur-xl rounded-[24px] shadow-xl shadow-slate-200/50 border border-white p-6 mb-12">
-                    <div className="flex items-center bg-slate-50 rounded-2xl px-4 py-1 mb-6 border border-slate-100 focus-within:ring-4 focus-within:ring-primary-500/20 transition-all">
-                        <Search size={20} className="text-slate-400" />
+            <div className="sticky top-[64px] z-30 bg-white/80 backdrop-blur-lg border-b border-slate-200 shadow-sm -mt-0.5">
+                <div className="max-w-7xl mx-auto px-5 sm:px-6 py-4 flex flex-col md:flex-row gap-4 items-center justify-between">
+                    {/* Search Input */}
+                    <div className="w-full md:w-80 flex items-center bg-slate-50 rounded-xl px-4 py-2 border border-slate-200 focus-within:ring-2 focus-within:ring-primary-500/20 focus-within:border-primary-400 transition-all">
+                        <Search size={16} className="text-slate-400 shrink-0" />
                         <input
                             type="text"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="Search the menu..."
-                            className="w-full px-4 py-3 bg-transparent text-slate-800 font-medium placeholder:text-slate-400 outline-none"
+                            className="w-full px-3 py-1.5 bg-transparent text-slate-800 font-medium placeholder:text-slate-400 outline-none text-sm min-w-0"
+                            style={{ fontSize: '16px' }}
                         />
                     </div>
 
-                    <div className="flex gap-2 flex-wrap items-center">
-                        <span className="text-sm font-bold text-slate-400 uppercase tracking-widest mr-2">Categories</span>
-                        <button
-                            onClick={() => setSelectedCategory('all')}
-                            className={`px-5 py-2.5 rounded-full font-bold text-sm transition-all focus:outline-none ${
-                                selectedCategory === 'all'
-                                    ? 'bg-primary-600 text-white shadow-md shadow-primary-600/20'
-                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200/50'
-                            }`}
-                        >
-                            All Discoveries
-                        </button>
-                        {categories.map(category => (
+                    {/* Category Filters */}
+                    <div className="w-full md:w-auto overflow-x-auto scrollbar-hide -mx-5 px-5 md:mx-0 md:px-0">
+                        <div className="flex gap-2 items-center min-w-max">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mr-2 hidden sm:block">Categories</span>
                             <button
-                                key={category.id}
-                                onClick={() => setSelectedCategory(String(category.id))}
-                                className={`px-5 py-2.5 rounded-full font-bold text-sm transition-all focus:outline-none ${
-                                    selectedCategory === String(category.id)
-                                        ? 'bg-primary-600 text-white shadow-md shadow-primary-600/20'
-                                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200/50'
+                                onClick={() => setSelectedCategory('all')}
+                                className={`px-4 py-1.5 rounded-lg font-bold text-sm transition-all focus:outline-none ${
+                                    selectedCategory === 'all'
+                                        ? 'bg-slate-900 text-white shadow-sm'
+                                        : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200 hover:border-slate-300'
                                 }`}
                             >
-                                {category.name}
+                                All Items
                             </button>
-                        ))}
+                            {categories.map(category => (
+                                <button
+                                    key={category.id}
+                                    onClick={() => setSelectedCategory(String(category.id))}
+                                    className={`px-4 py-1.5 rounded-lg font-bold text-sm transition-all focus:outline-none ${
+                                        selectedCategory === String(category.id)
+                                            ? 'bg-slate-900 text-white shadow-sm'
+                                            : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200 hover:border-slate-300'
+                                    }`}
+                                >
+                                    {category.name}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 </div>
+            </div>
+
+            <div className="max-w-7xl mx-auto px-5 sm:px-6 py-8 relative z-20">
 
                 {/* Menu Items */}
                 <div className="flex items-baseline justify-between mb-8">
@@ -235,35 +246,35 @@ const RestaurantDetail = () => {
                                     layout
                                     exit={{ opacity: 0, scale: 0.9 }}
                                     key={item.id} 
-                                    className="bg-white rounded-[24px] shadow-sm hover:shadow-xl border border-slate-100 transition-all duration-300 overflow-hidden group flex flex-col"
+                                    className="bg-white rounded-[24px] shadow-[0_4px_20px_rgb(0,0,0,0.02)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] border border-slate-200/60 hover:border-primary-200 transition-all duration-500 overflow-hidden group flex flex-col"
                                 >
                                     {/* Item Image */}
-                                    <div className="relative h-48 bg-slate-100 overflow-hidden">
+                                    <div className="relative h-44 bg-slate-100 overflow-hidden">
                                         {item.image ? (
                                             <>
                                                 <img
                                                     src={getImageUrl(item.image)}
                                                     alt={item.name}
-                                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-in-out"
+                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                                                 />
-                                                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                                             </>
                                         ) : (
                                             <div className="w-full h-full flex flex-col items-center justify-center text-primary-200 bg-primary-50">
-                                                <UtensilsCrossed size={48} strokeWidth={1.5} />
+                                                <UtensilsCrossed size={40} strokeWidth={1.5} />
                                             </div>
                                         )}
                                         {!item.is_available && (
-                                            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center text-white font-black tracking-widest uppercase text-xl z-10">
+                                            <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-[2px] flex items-center justify-center text-white font-black tracking-widest uppercase text-lg z-10">
                                                 Sold Out
                                             </div>
                                         )}
                                     </div>
 
                                     {/* Item Info */}
-                                    <div className="p-6 flex flex-col flex-1">
-                                        <h3 className="text-xl font-black mb-2 text-slate-800 tracking-tight group-hover:text-primary-600 transition-colors">{item.name}</h3>
-                                        <p className="text-slate-500 text-sm mb-6 leading-relaxed flex-1 font-medium">
+                                    <div className="p-5 flex flex-col flex-1">
+                                        <h3 className="text-lg font-black mb-1.5 text-slate-900 tracking-tight group-hover:text-primary-600 transition-colors line-clamp-1">{item.name}</h3>
+                                        <p className="text-slate-500 text-xs mb-5 leading-relaxed flex-1 font-medium line-clamp-2">
                                             {item.description}
                                         </p>
                                         <div className="flex justify-between items-center pt-4 border-t border-slate-100">

@@ -1,18 +1,18 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary-50: #fff0f0;
-  --color-primary-100: #ffe4e4;
-  --color-primary-200: #ffc2c2;
-  --color-primary-300: #ff9191;
-  --color-primary-400: #ff5757;
-  --color-primary-500: #ff4b2b;
-  --color-primary-600: #e83a1b;
-  --color-primary-700: #c22910;
-  --color-primary-800: #a02511;
-  --color-primary-900: #852514;
-  --color-primary-950: #480f06;
-  
+  --color-primary-50: #ecfdf5;
+  --color-primary-100: #d1fae5;
+  --color-primary-200: #a7f3d0;
+  --color-primary-300: #6ee7b7;
+  --color-primary-400: #34d399;
+  --color-primary-500: #10b981;
+  --color-primary-600: #059669;
+  --color-primary-700: #047857;
+  --color-primary-800: #065f46;
+  --color-primary-900: #064e3b;
+  --color-primary-950: #022c22;
+
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
@@ -20,32 +20,89 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  @apply bg-slate-50 text-slate-900;
+  @apply bg-[#FCFCFD] text-slate-900;
 }
 
 @layer components {
+
   /* High-end utilities */
   .glass {
-    @apply bg-white/70 backdrop-blur-xl border border-white/50 shadow-sm;
+    @apply bg-white/70 backdrop-blur-2xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)];
   }
+
   .glass-dark {
-    @apply bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 shadow-xl;
+    @apply bg-slate-950/80 backdrop-blur-2xl border border-white/[0.05] shadow-[0_8px_30px_rgb(0,0,0,0.12)];
   }
   
+  .shadow-premium {
+    @apply shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] transition-shadow duration-500;
+  }
+
+  /* Premium Form Inputs */
+  .input-premium {
+    @apply w-full bg-slate-50/50 border border-transparent rounded-2xl text-slate-900 font-medium 
+    hover:bg-slate-50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 
+    focus:border-primary-500/30 transition-all duration-300 placeholder:text-slate-400 text-sm sm:text-base;
+  }
+
   /* Legacy classes being replaced for compatibility but restyled */
   .card {
-    @apply bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100;
+    @apply bg-white rounded-[24px] overflow-hidden border border-slate-200/50 shadow-[0_4px_20px_rgb(0,0,0,0.02)] hover:shadow-[0_12px_32px_rgb(0,0,0,0.06)] hover:-translate-y-1 transition-all duration-500;
   }
+
   .badge {
-    @apply px-3 py-1 text-xs font-semibold rounded-full tracking-wide uppercase;
+    @apply px-3 py-1.5 text-[10px] font-bold rounded-full tracking-[0.05em] uppercase;
   }
+
   .badge-success {
-    @apply bg-emerald-100 text-emerald-700;
+    @apply bg-emerald-50 text-emerald-700 border border-emerald-100/50;
   }
+
   .badge-danger {
-    @apply bg-rose-100 text-rose-700;
+    @apply bg-rose-50 text-rose-700 border border-rose-100/50;
   }
+
   .nav-link {
-    @apply text-white/90 font-medium hover:text-white transition-colors relative after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:bg-white after:transition-all after:duration-300 hover:after:w-full;
+    @apply text-white/70 font-medium hover:text-white transition-colors relative after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:bg-white after:transition-all after:duration-500 hover:after:w-full;
   }
+
+  /* Responsive Table Wrapper */
+  .table-responsive {
+    @apply overflow-x-auto -mx-5 px-5 md:mx-0 md:px-0;
+  }
+}
+
+/* Custom Premium Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+/* Smooth Page Transitions */
+.page-enter {
+  opacity: 0;
+  transform: translateY(12px) scale(0.99);
+}
+
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition: opacity 500ms cubic-bezier(0.16, 1, 0.3, 1), transform 500ms cubic-bezier(0.16, 1, 0.3, 1);
 }

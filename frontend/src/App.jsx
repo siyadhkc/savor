@@ -9,6 +9,7 @@ import RestaurantLayout from './layouts/RestaurantLayout'
 
 // Customer Pages
 import Home from './pages/customer/Home'
+import Restaurants from './pages/customer/Restaurants'
 import Login from './pages/customer/Login'
 import Register from './pages/customer/Register'
 import RestaurantDetail from './pages/customer/RestaurantDetail'
@@ -73,6 +74,7 @@ function App() {
                                 <Home />
                             </RoleRedirect>
                         } />
+                        <Route path="/restaurants" element={<Restaurants />} />
                         <Route path="/restaurant/:id" element={<RestaurantDetail />} />
                     </Route>
 

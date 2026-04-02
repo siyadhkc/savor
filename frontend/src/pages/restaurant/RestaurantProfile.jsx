@@ -43,7 +43,7 @@ const RestaurantProfile = () => {
             const response = await api.patch('/users/profile/', formData)
             // Update the local auth context with new user data reactively
             updateUser(response.data)
-            toast.success('Profile & Store details updated! 🚀')
+            toast.success('Profile & Store details updated.')
             setEditing(false)
         } catch (error) {
             console.error('Failed to update profile:', error)

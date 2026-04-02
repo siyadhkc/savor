@@ -1,23 +1,20 @@
 import { useState, useEffect } from 'react'
-import AdminSidebar from '../../components/AdminSidebar'
 import api from '../../api/axios'
 import { getImageUrl } from '../../utils/helpers'
 import toast from 'react-hot-toast'
+import { Store, Plus, Pencil, Trash2, Utensils, X, Loader2, MapPin, Phone } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 const AdminRestaurants = () => {
     const [restaurants, setRestaurants] = useState([])
     const [loading, setLoading] = useState(true)
     const [showModal, setShowModal] = useState(false)
     const [editingRestaurant, setEditingRestaurant] = useState(null)
-    const [formData, setFormData] = useState({
-        name: '', address: '', phone: '', is_active: true
-    })
+    const [formData, setFormData] = useState({ name: '', address: '', phone: '', is_active: true })
     const [logoFile, setLogoFile] = useState(null)
     const [submitting, setSubmitting] = useState(false)
 
-    useEffect(() => {
-        fetchRestaurants()
-    }, [])
+    useEffect(() => { fetchRestaurants() }, [])
 
     const fetchRestaurants = async () => {
         try {
@@ -39,62 +36,34 @@ const AdminRestaurants = () => {
 
     const openEditModal = (restaurant) => {
         setEditingRestaurant(restaurant)
-        setFormData({
-            name: restaurant.name,
-            address: restaurant.address,
-            phone: restaurant.phone || '',
-            is_active: restaurant.is_active,
-        })
+        setFormData({ name: restaurant.name, address: restaurant.address, phone: restaurant.phone || '', is_active: restaurant.is_active })
         setLogoFile(null)
         setShowModal(true)
     }
 
     const handleChange = (e) => {
-        const value = e.target.type === 'checkbox'
-            ? e.target.checked
-            : e.target.value
+        const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value
         setFormData({ ...formData, [e.target.name]: value })
     }
 
     const handleSubmit = async (e) => {
         e.preventDefault()
         setSubmitting(true)
-
         try {
-            /*
-            WHY FormData instead of JSON?
-            When uploading files (images), you MUST use
-            FormData — JSON cannot carry binary file data.
-            FormData sends data as multipart/form-data
-            which Django's ImageField understands.
-            BEGINNER MISTAKE: sending image as JSON and
-            wondering why Django says no file was uploaded.
-            */
             const data = new FormData()
             data.append('name', formData.name)
             data.append('address', formData.address)
             data.append('phone', formData.phone)
             data.append('is_active', formData.is_active)
-            if (logoFile) {
-                data.append('logo', logoFile)
-            }
+            if (logoFile) data.append('logo', logoFile)
 
             if (editingRestaurant) {
-                await api.patch(
-                    `/restaurant/restaurants/${editingRestaurant.id}/`,
-                    data,
-                    { headers: { 'Content-Type': 'multipart/form-data' } }
-                )
-                toast.success('Restaurant updated! ✅')
+                await api.patch(`/restaurant/restaurants/${editingRestaurant.id}/`, data, { headers: { 'Content-Type': 'multipart/form-data' } })
+                toast.success('Restaurant updated.')
             } else {
-                await api.post(
-                    '/restaurant/restaurants/',
-                    data,
-                    { headers: { 'Content-Type': 'multipart/form-data' } }
-                )
-                toast.success('Restaurant created! 🎉')
+                await api.post('/restaurant/restaurants/', data, { headers: { 'Content-Type': 'multipart/form-data' } })
+                toast.success('Restaurant created.')
             }
-
             setShowModal(false)
             fetchRestaurants()
         // eslint-disable-next-line no-unused-vars
@@ -106,14 +75,7 @@ const AdminRestaurants = () => {
     }
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Delete this restaurant?')) return
-        /*
-        WHY window.confirm?
-        Simple confirmation before destructive actions.
-        In production use a custom modal.
-        For a student project this is perfectly acceptable.
-        Always confirm before delete — never delete silently.
-        */
+        if (!window.confirm('Delete this restaurant? This action cannot be undone.')) return
         try {
             await api.delete(`/restaurant/restaurants/${id}/`)
             setRestaurants(restaurants.filter(r => r.id !== id))
@@ -125,229 +87,275 @@ const AdminRestaurants = () => {
 
     const handleToggleActive = async (restaurant) => {
         try {
-            await api.patch(
-                `/restaurant/restaurants/${restaurant.id}/`,
-                { is_active: !restaurant.is_active },
-                { headers: { 'Content-Type': 'multipart/form-data' } }
-            )
-            setRestaurants(restaurants.map(r =>
-                r.id === restaurant.id
-                    ? { ...r, is_active: !r.is_active }
-                    : r
-            ))
-            toast.success('Status updated!')
+            await api.patch(`/restaurant/restaurants/${restaurant.id}/`, { is_active: !restaurant.is_active }, { headers: { 'Content-Type': 'multipart/form-data' } })
+            setRestaurants(restaurants.map(r => r.id === restaurant.id ? { ...r, is_active: !r.is_active } : r))
+            toast.success('Status updated.')
         } catch {
             toast.error('Failed to update status.')
         }
     }
 
     return (
-        <div className="flex min-h-screen">
-            {/* <AdminSidebar /> */}
-            <div className="flex-1 p-7.5 bg-gray-100">
+        <div className="flex-1 min-h-screen bg-[#FCFCFD]">
+            <div className="max-w-7xl mx-auto px-5 sm:px-8 py-8">
 
-                {/* Header */}
-                <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-3xl font-bold text-gray-800">Restaurants 🍽️</h1>
-                    <button onClick={openCreateModal} className="px-5 py-2.5 bg-primary-600 text-white border-0 rounded-lg font-bold cursor-pointer hover:opacity-90">
-                        + Add Restaurant
+                {/* Page Header */}
+                <div className="flex items-center justify-between mb-8">
+                    <div>
+                        <p className="text-primary-600 text-xs font-bold uppercase tracking-[0.2em] mb-1">Administration</p>
+                        <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+                            <Store size={28} className="text-slate-300" strokeWidth={1.5} />
+                            Restaurants
+                        </h1>
+                    </div>
+                    <button
+                        onClick={openCreateModal}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white font-bold text-sm rounded-xl hover:bg-primary-700 active:scale-95 transition-all shadow-lg shadow-primary-600/20"
+                    >
+                        <Plus size={16} strokeWidth={2.5} />
+                        Add Restaurant
                     </button>
                 </div>
 
-                {loading ? <p>Loading...</p> : (
-                    <div className="bg-white rounded-2xl shadow-sm p-5 overflow-x-auto">
-                        <table className="w-full border-collapse">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    <th className="px-4 py-3 text-left text-gray-600 text-sm font-semibold border-b border-gray-100">Logo</th>
-                                    <th className="px-4 py-3 text-left text-gray-600 text-sm font-semibold border-b border-gray-100">Name</th>
-                                    <th className="px-4 py-3 text-left text-gray-600 text-sm font-semibold border-b border-gray-100">Address</th>
-                                    <th className="px-4 py-3 text-left text-gray-600 text-sm font-semibold border-b border-gray-100">Phone</th>
-                                    <th className="px-4 py-3 text-left text-gray-600 text-sm font-semibold border-b border-gray-100">Status</th>
-                                    <th className="px-4 py-3 text-left text-gray-600 text-sm font-semibold border-b border-gray-100">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {restaurants.map(r => (
-                                    <tr key={r.id} className="border-b border-gray-50">
-                                        <td className="px-4 py-3 text-sm">
-                                            {r.logo ? (
-                                                <img
-                                                    src={getImageUrl(r.logo)}
-                                                    alt={r.name}
-                                                    className="w-12 h-12 rounded-lg object-cover"
-                                                />
-                                            ) : (
-                                                <div className="w-12 h-12 rounded-lg bg-orange-50 flex items-center justify-center text-xl">
-                                                    🍽️
-                                                </div>
-                                            )}
-                                        </td>
-                                        <td className="px-4 py-3 text-sm">
-                                            <strong className="text-gray-800">{r.name}</strong>
-                                        </td>
-                                        <td className="px-4 py-3 text-sm text-gray-800">{r.address}</td>
-                                        <td className="px-4 py-3 text-sm text-gray-800">{r.phone || '—'}</td>
-                                        <td className="px-4 py-3 text-sm">
-                                            <button
-                                                onClick={() => handleToggleActive(r)}
-                                                className={`px-3 py-1 rounded-full text-xs font-semibold border-0 cursor-pointer ${
-                                                    r.is_active
-                                                        ? 'bg-green-100 text-green-700'
-                                                        : 'bg-red-100 text-red-700'
-                                                }`}
-                                            >
-                                                {r.is_active ? '🟢 Active' : '🔴 Inactive'}
-                                            </button>
-                                        </td>
-                                        <td className="px-4 py-3 text-sm">
-                                            <div className="flex gap-2">
-                                                <button
-                                                    onClick={() => openEditModal(r)}
-                                                    className="px-3 py-1.5 bg-blue-50 text-blue-600 border-0 rounded-lg cursor-pointer font-semibold text-xs hover:bg-blue-100"
-                                                >
-                                                    ✏️ Edit
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(r.id)}
-                                                    className="px-3 py-1.5 bg-pink-50 text-red-700 border-0 rounded-lg cursor-pointer font-semibold text-xs hover:bg-pink-100"
-                                                >
-                                                    🗑️ Delete
-                                                </button>
-                                            </div>
-                                        </td>
+                {/* Stats row */}
+                <div className="grid grid-cols-2 gap-4 mb-8 max-w-sm">
+                    <div className="bg-white rounded-2xl border border-slate-100 px-5 py-4 shadow-sm">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Total</p>
+                        <p className="text-2xl font-black text-slate-800">{restaurants.length}</p>
+                    </div>
+                    <div className="bg-white rounded-2xl border border-slate-100 px-5 py-4 shadow-sm">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Active</p>
+                        <p className="text-2xl font-black text-emerald-600">{restaurants.filter(r => r.is_active).length}</p>
+                    </div>
+                </div>
+
+                {/* Table / Content */}
+                {loading ? (
+                    <div className="flex items-center justify-center py-32">
+                        <Loader2 size={36} className="animate-spin text-primary-400" />
+                    </div>
+                ) : (
+                    <motion.div
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden"
+                    >
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead>
+                                    <tr className="border-b border-slate-100 bg-slate-50/60">
+                                        {['Logo', 'Name', 'Address', 'Phone', 'Status', 'Actions'].map(col => (
+                                            <th key={col} className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                                {col}
+                                            </th>
+                                        ))}
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                        {restaurants.length === 0 && (
-                            <p className="text-center py-10 text-gray-500">
-                                No restaurants yet. Add one!
-                            </p>
-                        )}
-                    </div>
-                )}
-
-                {/* Modal */}
-                {showModal && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                        <div className="bg-white rounded-2xl p-7.5 w-11/12 max-w-lg max-h-11/12 overflow-y-auto">
-                            <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-xl font-bold text-gray-800">
-                                    {editingRestaurant
-                                        ? 'Edit Restaurant'
-                                        : 'Add Restaurant'
-                                    }
-                                </h2>
-                                <button
-                                    onClick={() => setShowModal(false)}
-                                    className="text-gray-400 hover:text-gray-600 text-xl bg-transparent border-0 cursor-pointer"
-                                >
-                                    ✕
-                                </button>
-                            </div>
-
-                            <form onSubmit={handleSubmit}>
-                                {[
-                                    {
-                                        label: 'Restaurant Name',
-                                        name: 'name',
-                                        type: 'text',
-                                        placeholder: 'e.g. Pizza Palace'
-                                    },
-                                    {
-                                        label: 'Phone',
-                                        name: 'phone',
-                                        type: 'tel',
-                                        placeholder: 'e.g. 9876543210'
-                                    },
-                                ].map(field => (
-                                    <div key={field.name} className="mb-4">
-                                        <label className="block mb-1.5 font-medium text-gray-700">
-                                            {field.label}
-                                        </label>
-                                        <input
-                                            type={field.type}
-                                            name={field.name}
-                                            value={formData[field.name]}
-                                            onChange={handleChange}
-                                            placeholder={field.placeholder}
-                                            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm outline-none box-border"
-                                            required={field.name === 'name'}
-                                        />
-                                    </div>
-                                ))}
-
-                                <div className="mb-4">
-                                    <label className="block mb-1.5 font-medium text-gray-700">Address</label>
-                                    <textarea
-                                        name="address"
-                                        value={formData.address}
-                                        onChange={handleChange}
-                                        placeholder="Full address..."
-                                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm outline-none box-border resize-vertical font-inherit"
-                                        rows={3}
-                                        required
-                                    />
-                                </div>
-
-                                <div className="mb-4">
-                                    <label className="block mb-1.5 font-medium text-gray-700">
-                                        Logo Image
-                                    </label>
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={(e) =>
-                                            setLogoFile(e.target.files[0])
-                                        }
-                                        className="w-full text-sm"
-                                    />
-                                </div>
-
-                                <div className="flex items-center gap-2.5 mb-5 text-gray-700">
-                                    <input
-                                        type="checkbox"
-                                        name="is_active"
-                                        checked={formData.is_active}
-                                        onChange={handleChange}
-                                        id="is_active"
-                                    />
-                                    <label htmlFor="is_active">
-                                        Active (visible to customers)
-                                    </label>
-                                </div>
-
-                                <div className="flex gap-3 justify-end">
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowModal(false)}
-                                        className="px-5 py-2.5 bg-transparent text-gray-400 border-2 border-gray-300 rounded-lg font-bold cursor-pointer"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={submitting}
-                                        className={`px-6 py-2.5 text-white border-0 rounded-lg font-bold cursor-pointer ${
-                                            submitting
-                                                ? 'bg-gray-400 cursor-not-allowed'
-                                                : 'bg-primary-600 hover:opacity-90'
-                                        }`}
-                                    >
-                                        {submitting
-                                            ? 'Saving...'
-                                            : editingRestaurant
-                                                ? 'Update'
-                                                : 'Create'
-                                        }
-                                    </button>
-                                </div>
-                            </form>
+                                </thead>
+                                <tbody>
+                                    {restaurants.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={6} className="px-6 py-16 text-center text-slate-400 font-medium text-sm">
+                                                No restaurants yet. Add the first one.
+                                            </td>
+                                        </tr>
+                                    ) : restaurants.map(r => (
+                                        <tr key={r.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                                            <td className="px-6 py-4">
+                                                {r.logo ? (
+                                                    <img src={getImageUrl(r.logo)} alt={r.name} className="w-11 h-11 rounded-xl object-cover border border-slate-100" />
+                                                ) : (
+                                                    <div className="w-11 h-11 rounded-xl bg-slate-100 flex items-center justify-center">
+                                                        <Utensils size={18} className="text-slate-300" strokeWidth={1.5} />
+                                                    </div>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className="text-slate-800 font-bold text-sm">{r.name}</span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className="text-slate-500 text-sm flex items-center gap-1.5 max-w-[220px]">
+                                                    <MapPin size={13} className="text-slate-300 shrink-0" />
+                                                    <span className="truncate">{r.address}</span>
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                {r.phone ? (
+                                                    <span className="text-slate-500 text-sm flex items-center gap-1.5">
+                                                        <Phone size={13} className="text-slate-300" />
+                                                        {r.phone}
+                                                    </span>
+                                                ) : <span className="text-slate-300 text-sm">—</span>}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <button
+                                                    onClick={() => handleToggleActive(r)}
+                                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider border transition-colors ${
+                                                        r.is_active
+                                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100'
+                                                            : 'bg-rose-50 text-rose-700 border-rose-100 hover:bg-rose-100'
+                                                    }`}
+                                                >
+                                                    <span className={`w-1.5 h-1.5 rounded-full ${r.is_active ? 'bg-emerald-400' : 'bg-rose-400'}`} />
+                                                    {r.is_active ? 'Active' : 'Inactive'}
+                                                </button>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={() => openEditModal(r)}
+                                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-100 transition-colors"
+                                                    >
+                                                        <Pencil size={12} /> Edit
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(r.id)}
+                                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 border border-rose-100 text-rose-600 rounded-xl text-xs font-bold hover:bg-rose-100 transition-colors"
+                                                    >
+                                                        <Trash2 size={12} /> Delete
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
-                    </div>
+                    </motion.div>
                 )}
             </div>
+
+            {/* Modal */}
+            <AnimatePresence>
+                {showModal && (
+                    <>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setShowModal(false)}
+                            className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50"
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-slate-100">
+                                {/* Modal Header */}
+                                <div className="flex items-center justify-between px-7 pt-7 pb-5 border-b border-slate-100">
+                                    <h2 className="text-xl font-black text-slate-800 tracking-tight">
+                                        {editingRestaurant ? 'Edit Restaurant' : 'New Restaurant'}
+                                    </h2>
+                                    <button
+                                        onClick={() => setShowModal(false)}
+                                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                </div>
+
+                                <form onSubmit={handleSubmit} className="px-7 py-6 flex flex-col gap-4">
+                                    {/* Name */}
+                                    <div className="space-y-1.5">
+                                        <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
+                                            Restaurant Name <span className="text-rose-400">*</span>
+                                        </label>
+                                        <input
+                                            name="name"
+                                            value={formData.name}
+                                            onChange={handleChange}
+                                            placeholder="e.g. Pizza Palace"
+                                            className="input-premium py-3"
+                                            required
+                                        />
+                                    </div>
+
+                                    {/* Phone */}
+                                    <div className="space-y-1.5">
+                                        <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">Phone</label>
+                                        <input
+                                            name="phone"
+                                            type="tel"
+                                            value={formData.phone}
+                                            onChange={handleChange}
+                                            placeholder="e.g. 9876543210"
+                                            className="input-premium py-3"
+                                        />
+                                    </div>
+
+                                    {/* Address */}
+                                    <div className="space-y-1.5">
+                                        <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
+                                            Address <span className="text-rose-400">*</span>
+                                        </label>
+                                        <textarea
+                                            name="address"
+                                            value={formData.address}
+                                            onChange={handleChange}
+                                            placeholder="Full address…"
+                                            rows={3}
+                                            required
+                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 text-sm font-medium placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 transition-all resize-y"
+                                        />
+                                    </div>
+
+                                    {/* Logo Upload */}
+                                    <div className="space-y-1.5">
+                                        <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">Logo Image</label>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={e => setLogoFile(e.target.files[0])}
+                                            className="w-full text-sm text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200 transition-all"
+                                        />
+                                    </div>
+
+                                    {/* Active Toggle */}
+                                    <div className="flex items-center gap-3 py-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setFormData({ ...formData, is_active: !formData.is_active })}
+                                            className={`relative w-10 h-6 rounded-full transition-colors ${formData.is_active ? 'bg-emerald-500' : 'bg-slate-200'}`}
+                                        >
+                                            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${formData.is_active ? 'translate-x-4' : ''}`} />
+                                        </button>
+                                        <label className="text-sm font-semibold text-slate-700 cursor-pointer" onClick={() => setFormData({ ...formData, is_active: !formData.is_active })}>
+                                            <span className={formData.is_active ? 'text-emerald-700' : 'text-slate-500'}>
+                                                {formData.is_active ? 'Active — visible to customers' : 'Inactive — hidden from customers'}
+                                            </span>
+                                        </label>
+                                    </div>
+
+                                    {/* Actions */}
+                                    <div className="flex gap-3 pt-2">
+                                        <button
+                                            type="submit"
+                                            disabled={submitting}
+                                            className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-sm transition-all ${
+                                                submitting
+                                                    ? 'bg-slate-100 text-slate-400 cursor-wait'
+                                                    : 'bg-primary-600 text-white hover:bg-primary-700 active:scale-95 shadow-lg shadow-primary-600/20'
+                                            }`}
+                                        >
+                                            {submitting ? <Loader2 size={16} className="animate-spin" /> : null}
+                                            {submitting ? 'Saving…' : editingRestaurant ? 'Update Restaurant' : 'Create Restaurant'}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowModal(false)}
+                                            className="px-5 py-3.5 bg-slate-50 border border-slate-200 text-slate-700 rounded-2xl font-bold text-sm hover:bg-slate-100 transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
         </div>
     )
 }

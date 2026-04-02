@@ -65,7 +65,7 @@ const Checkout = () => {
             const order = orderRes.data
 
             if (formData.payment_method === 'cod') {
-                toast.success('Order placed successfully! 🎉')
+                toast.success('Order placed. We are preparing it now.')
                 navigate('/orders', { state: { newOrderId: order.id } })
                 return
             }
@@ -94,7 +94,7 @@ const Checkout = () => {
                             razorpay_payment_id: paymentResponse.razorpay_payment_id,
                             razorpay_signature: paymentResponse.razorpay_signature,
                         })
-                        toast.success('Payment verified! 🎉')
+                        toast.success('Payment verified successfully.')
                         navigate('/orders', {
                             state: { newOrderId: order.id }
                         })
@@ -138,13 +138,18 @@ const Checkout = () => {
     return (
         <div className="min-h-screen bg-slate-50 pb-20 selection:bg-primary-500/30">
             {/* Header Area */}
-            <div className="bg-white border-b border-slate-200 pt-10 pb-20 px-6">
-                <div className="max-w-6xl mx-auto">
-                    <button onClick={() => navigate('/cart')} className="flex items-center gap-2 text-slate-500 font-bold mb-6 hover:text-primary-600 transition-colors group">
-                        <ChevronLeft size={20} className="group-hover:-translate-x-1 transition-transform" /> Return to Cart
+            <div className="relative bg-slate-950 overflow-hidden pt-10 pb-20 px-6">
+                <div
+                    className="absolute inset-0 opacity-[0.03]"
+                    style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.5) 1px, transparent 1px)', backgroundSize: '60px 60px' }}
+                />
+                <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary-500/10 blur-[100px] rounded-full pointer-events-none" />
+                <div className="relative z-10 max-w-6xl mx-auto">
+                    <button onClick={() => navigate('/cart')} className="flex items-center gap-2 text-white/40 hover:text-white font-bold mb-6 transition-colors group text-xs uppercase tracking-widest">
+                        <ChevronLeft size={18} className="group-hover:-translate-x-1 transition-transform" /> Return to Cart
                     </button>
-                    <h1 className="text-4xl md:text-5xl font-black text-slate-800 tracking-tight flex items-center gap-4">
-                        <Target className="text-primary-600" size={40} strokeWidth={2.5} />
+                    <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight flex items-center gap-4">
+                        <Target className="text-primary-400" size={36} strokeWidth={2.5} />
                         Checkout
                     </h1>
                 </div>

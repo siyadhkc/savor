@@ -7,6 +7,7 @@ import {
 } from 'recharts'
 import { formatOrderId } from '../../utils/helpers'
 import { Package, IndianRupee, TrendingUp, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { motion } from 'framer-motion'
 
 const STATUS_COLORS = {
     pending: '#f59e0b',       // amber-500
@@ -53,7 +54,7 @@ const RestaurantDashboard = () => {
             setStats({
                 totalOrders: ordersRes.data.count,
                 totalRevenue: totalRevenue.toFixed(2),
-                recentOrders: orders.slice(0, 7), // Changed to 7 for better table look
+                recentOrders: orders.slice(0, 7),
                 ordersByStatus,
             })
         } catch (error) {
@@ -82,34 +83,61 @@ const RestaurantDashboard = () => {
         }
     ]
 
+    const containerVariants = {
+        hidden: { opacity: 0, y: 20 },
+        visible: {
+            opacity: 1,
+            y: 0,
+            transition: {
+                duration: 0.5,
+                staggerChildren: 0.1
+            }
+        }
+    }
+
+    const itemVariants = {
+        hidden: { opacity: 0, scale: 0.95 },
+        visible: { opacity: 1, scale: 1 }
+    }
+
     return (
-        <div className="flex-1 px-8 py-10 bg-slate-50 overflow-y-auto">
-            <div className="flex justify-between items-end mb-8">
+        <motion.div 
+            initial="hidden"
+            animate="visible"
+            variants={containerVariants}
+            className="flex-1 px-4 md:px-8 py-6 md:py-10 bg-slate-50 overflow-y-auto"
+        >
+            <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 mb-8">
                 <div>
-                    <h1 className="text-3xl font-black text-slate-800 tracking-tight">Store Overview</h1>
+                    <h1 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">Store Overview</h1>
                     <p className="text-slate-500 font-medium mt-1">Monitor your restaurant performance in real-time.</p>
                 </div>
-                <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-full border border-slate-200 shadow-sm">
+                <div className="flex items-center self-start md:self-auto gap-2 px-4 py-2 bg-white rounded-full border border-slate-200 shadow-sm">
                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
                     <span className="text-sm font-semibold text-slate-600">Live Updating</span>
                 </div>
             </div>
 
             {loading ? (
-                <div className="flex flex-col items-center justify-center p-32">
+                <div className="flex flex-col items-center justify-center p-20 md:p-32">
                     <div className="w-10 h-10 border-4 border-slate-200 border-t-primary-500 rounded-full animate-spin mb-4"></div>
                     <p className="text-slate-500 font-medium">Crunching the numbers...</p>
                 </div>
             ) : (
                 <>
                     {/* Stat Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 mb-8">
                         {statCards.map((card, idx) => {
                             const Icon = card.icon;
                             return (
-                                <div key={idx} className="bg-white rounded-[24px] p-6 border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-300 group">
+                                <motion.div 
+                                    key={idx} 
+                                    variants={itemVariants}
+                                    whileHover={{ y: -5 }}
+                                    className="bg-white rounded-[24px] p-6 border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-300 group"
+                                >
                                     <div className="flex justify-between items-start mb-4">
-                                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${card.bgClass} ${card.colorClass} group-hover:scale-110 transition-transform duration-300`}>
+                                        <div className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center ${card.bgClass} ${card.colorClass} group-hover:rotate-6 transition-transform duration-300`}>
                                             <Icon size={24} strokeWidth={2.5} />
                                         </div>
                                         <div className="flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">
@@ -118,14 +146,14 @@ const RestaurantDashboard = () => {
                                         </div>
                                     </div>
                                     <div>
-                                        <h3 className="text-4xl font-black text-slate-800 tracking-tight mb-1">
+                                        <h3 className="text-3xl md:text-4xl font-black text-slate-800 tracking-tight mb-1">
                                             {card.value}
                                         </h3>
                                         <p className="text-slate-500 font-medium text-sm">
                                             {card.label}
                                         </p>
                                     </div>
-                                </div>
+                                </motion.div>
                             )
                         })}
                     </div>
@@ -133,14 +161,14 @@ const RestaurantDashboard = () => {
                     {/* Charts Row */}
                     <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6 mb-8">
                         {/* Bar Chart — Orders by Status */}
-                        <div className="bg-white rounded-[24px] p-6 border border-slate-100 shadow-sm">
+                        <motion.div variants={itemVariants} className="bg-white rounded-[24px] p-6 border border-slate-100 shadow-sm overflow-hidden">
                             <h2 className="text-xl font-bold text-slate-800 mb-6">Orders Pipeline</h2>
-                            <div className="h-[300px]">
+                            <div className="h-[250px] md:h-[300px]">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={stats.ordersByStatus} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                                        <XAxis dataKey="status" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
-                                        <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
+                                        <XAxis dataKey="status" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10}} dy={10} />
+                                        <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10}} />
                                         <Tooltip 
                                             cursor={{fill: '#f8fafc'}}
                                             contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'}}
@@ -156,12 +184,12 @@ const RestaurantDashboard = () => {
                                     </BarChart>
                                 </ResponsiveContainer>
                             </div>
-                        </div>
+                        </motion.div>
 
                         {/* Pie Chart — Status Distribution */}
-                        <div className="bg-white rounded-[24px] p-6 border border-slate-100 shadow-sm flex flex-col">
+                        <motion.div variants={itemVariants} className="bg-white rounded-[24px] p-6 border border-slate-100 shadow-sm flex flex-col">
                             <h2 className="text-xl font-bold text-slate-800 mb-2">Distribution</h2>
-                            <div className="flex-1 min-h-[300px]">
+                            <div className="flex-1 min-h-[250px] md:min-h-[300px]">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
                                         <Pie
@@ -171,7 +199,7 @@ const RestaurantDashboard = () => {
                                             cx="50%"
                                             cy="50%"
                                             innerRadius={60}
-                                            outerRadius={90}
+                                            outerRadius={80}
                                             paddingAngle={5}
                                             stroke="none"
                                         >
@@ -182,20 +210,20 @@ const RestaurantDashboard = () => {
                                         <Tooltip 
                                             contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'}}
                                         />
-                                        <Legend iconType="circle" wrapperStyle={{fontSize: '12px'}} />
+                                        <Legend iconType="circle" wrapperStyle={{fontSize: '11px'}} />
                                     </PieChart>
                                 </ResponsiveContainer>
                             </div>
-                        </div>
+                        </motion.div>
                     </div>
 
                     {/* Recent Orders Table */}
-                    <div className="bg-white rounded-[24px] border border-slate-100 shadow-sm overflow-hidden">
+                    <motion.div variants={itemVariants} className="bg-white rounded-[24px] border border-slate-100 shadow-sm overflow-hidden mb-10">
                         <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center">
                             <h2 className="text-xl font-bold text-slate-800">Recent Orders</h2>
                         </div>
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left border-collapse">
+                        <div className="table-responsive">
+                            <table className="w-full text-left border-collapse min-w-[600px]">
                                 <thead>
                                     <tr className="bg-slate-50/50">
                                         <th className="px-6 py-4 text-slate-500 font-semibold text-sm border-b border-slate-100">Order ID</th>
@@ -238,11 +266,12 @@ const RestaurantDashboard = () => {
                                 </tbody>
                             </table>
                         </div>
-                    </div>
+                    </motion.div>
                 </>
             )}
-        </div>
+        </motion.div>
     )
 }
 
 export default RestaurantDashboard
+

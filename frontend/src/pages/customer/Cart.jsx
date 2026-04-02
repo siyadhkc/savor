@@ -67,7 +67,7 @@ const Cart = () => {
         try {
             await api.post('/orders/cart/clear/')
             setCart(prev => ({ ...prev, items: [] }))
-            toast.success('Cart flushed')
+            toast.success('Cart cleared.')
         } catch (error) {
             console.error('Failed to clear cart:', error)
             toast.error('Failed to clear cart.')
@@ -88,54 +88,61 @@ const Cart = () => {
     return (
         <div className="min-h-[90vh] bg-slate-50 pb-20 selection:bg-primary-500/30">
             {/* Header Area */}
-            <div className="bg-white border-b border-slate-200 pt-10 pb-20 px-6">
-                <div className="max-w-6xl mx-auto">
-                    <button onClick={() => navigate('/')} className="flex items-center gap-2 text-slate-500 font-bold mb-6 hover:text-primary-600 transition-colors group">
+            <div className="relative bg-slate-950 text-white border-b border-white/[0.06] pt-10 pb-20 px-6 overflow-hidden">
+                <div
+                    className="absolute inset-0 opacity-[0.04]"
+                    style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,.3) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.3) 1px, transparent 1px)', backgroundSize: '60px 60px' }}
+                />
+                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary-500/10 blur-[100px] rounded-full pointer-events-none" />
+
+                <div className="relative z-10 max-w-6xl mx-auto">
+                    <button onClick={() => navigate('/')} className="flex items-center gap-2 text-white/50 font-bold mb-6 hover:text-white transition-colors group">
                         <ChevronLeft size={20} className="group-hover:-translate-x-1 transition-transform" /> Keep Browsing
                     </button>
-                    <h1 className="text-4xl md:text-5xl font-black text-slate-800 tracking-tight flex items-center gap-4">
-                        <ShoppingBag className="text-primary-600" size={40} strokeWidth={2.5} />
+                    <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight flex items-center gap-3 sm:gap-4">
+                        <ShoppingBag className="text-primary-500 w-8 h-8 sm:w-10 sm:h-10" strokeWidth={2.5} />
                         Your Cart
                     </h1>
                 </div>
             </div>
 
-            <div className="max-w-6xl mx-auto px-6 -mt-10 relative z-10">
+            <div className="max-w-6xl mx-auto px-6 -mt-10 relative z-20">
                 {isEmpty ? (
                     /* Elegant Empty State */
                     <motion.div 
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="bg-white rounded-[32px] shadow-xl shadow-slate-200/50 p-16 md:p-32 text-center border border-white"
+                        className="bg-white rounded-3xl shadow-lg border border-slate-100 p-16 md:p-32 text-center"
                     >
                         <div className="w-32 h-32 mx-auto bg-slate-50 rounded-full flex items-center justify-center text-slate-300 mb-8 border-8 border-white shadow-inner">
                             <ShoppingBag size={64} strokeWidth={1.5} />
                         </div>
-                        <h2 className="text-3xl font-black text-slate-800 tracking-tight mb-4">It looks a little empty here!</h2>
+                        <h2 className="text-3xl font-black text-slate-800 tracking-tight mb-4">Your cart is empty</h2>
                         <p className="text-slate-500 text-lg font-medium mb-10 max-w-sm mx-auto">
-                            Add some delicious masterpieces from our curated restaurants to get started.
+                            Browse our partner restaurants and add your favourite items to get started.
                         </p>
                         <button
                             onClick={() => navigate('/')}
-                            className="inline-flex items-center gap-3 px-8 py-4 bg-primary-600 text-white rounded-full font-bold hover:bg-primary-700 active:scale-95 shadow-lg shadow-primary-600/30 transition-all text-lg"
+                            className="inline-flex items-center gap-2 sm:gap-3 px-6 sm:px-8 py-3 sm:py-4 bg-primary-600 text-white rounded-full font-bold hover:bg-primary-700 active:scale-95 shadow-lg shadow-primary-600/30 transition-all text-base sm:text-lg"
                         >
-                            Explore Restaurants <ArrowRight size={20} strokeWidth={3} />
+                            Explore Restaurants <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={3} />
                         </button>
                     </motion.div>
                 ) : (
                     <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8 xl:gap-12 items-start">
                         {/* Cart Items List */}
-                        <div className="bg-white rounded-[32px] shadow-xl shadow-slate-200/50 p-6 md:p-10 border border-white">
+                        <div className="bg-white rounded-3xl shadow-lg border border-slate-100 p-6 md:p-10">
                             <div className="flex justify-between items-center mb-8 pb-6 border-b border-slate-100">
-                                <h2 className="text-2xl font-black text-slate-800 flex items-center gap-3">
-                                    <ReceiptText className="text-slate-400" />
-                                    Order Items <span className="text-slate-400 font-semibold text-xl">({cart.total_items})</span>
+                                <h2 className="text-lg sm:text-2xl font-black text-slate-800 flex items-center gap-2 sm:gap-3">
+                                    <ReceiptText className="text-slate-400 w-5 h-5 sm:w-6 sm:h-6" />
+                                    Order Items
+                                    <span className="text-slate-400 font-semibold text-base sm:text-lg">({cart.total_items})</span>
                                 </h2>
                                 <button
                                     onClick={handleClearCart}
-                                    className="px-4 py-2 bg-rose-50 text-rose-600 rounded-full font-bold text-sm hover:bg-rose-100 transition-colors"
+                                    className="px-3 sm:px-4 py-1.5 sm:py-2 bg-rose-50 text-rose-600 rounded-full font-bold text-xs sm:text-sm hover:bg-rose-100 transition-colors border border-rose-100"
                                 >
-                                    Flush Cart
+                                    Clear Cart
                                 </button>
                             </div>
 
@@ -146,10 +153,10 @@ const Cart = () => {
                                             key={item.id} 
                                             layout
                                             exit={{ opacity: 0, x: -50 }}
-                                            className="flex flex-col sm:flex-row items-center sm:items-stretch gap-6 pb-6 border-b border-slate-100 last:border-0 last:pb-0 group"
+                                            className="flex flex-row items-start sm:items-stretch gap-4 sm:gap-6 pb-6 border-b border-slate-100 last:border-0 last:pb-0 group"
                                         >
                                             {/* Beautiful Image Block */}
-                                            <div className="w-full sm:w-32 h-32 flex-shrink-0 bg-slate-50 rounded-2xl overflow-hidden relative shadow-inner">
+                                            <div className="w-20 h-20 sm:w-32 sm:h-32 flex-shrink-0 bg-slate-50 rounded-[16px] sm:rounded-2xl overflow-hidden relative shadow-inner border border-slate-200/50">
                                                 {item.menu_item_image ? (
                                                     <img
                                                         src={getImageUrl(item.menu_item_image)}
@@ -158,55 +165,55 @@ const Cart = () => {
                                                     />
                                                 ) : (
                                                     <div className="w-full h-full flex items-center justify-center text-primary-200 bg-primary-50">
-                                                        <UtensilsCrossed size={32} />
+                                                        <UtensilsCrossed size={24} className="sm:w-8 sm:h-8" />
                                                     </div>
                                                 )}
                                             </div>
 
                                             {/* Item Info Matrix */}
-                                            <div className="flex-1 w-full flex flex-col justify-center">
-                                                <div className="flex justify-between items-start mb-2">
-                                                    <h3 className="text-lg font-black text-slate-800 tracking-tight">
+                                            <div className="flex-1 w-full flex flex-col justify-between py-0.5 sm:py-0">
+                                                <div className="flex justify-between items-start mb-1 sm:mb-2">
+                                                    <h3 className="text-base sm:text-lg font-black text-slate-800 tracking-tight leading-tight line-clamp-2 pr-2">
                                                         {item.menu_item_name}
                                                     </h3>
                                                     <button
                                                         onClick={() => handleRemoveItem(item.id)}
                                                         disabled={updatingItem === item.id}
-                                                        className="text-slate-400 hover:text-rose-500 hover:bg-rose-50 p-2 rounded-xl transition-colors focus:outline-none"
+                                                        className="text-slate-400 hover:text-rose-500 hover:bg-rose-50 p-1.5 sm:p-2 rounded-xl transition-colors focus:outline-none shrink-0 -mt-1 -mr-1"
                                                         title="Remove from cart"
                                                     >
-                                                        <Trash2 size={20} strokeWidth={2.5} />
+                                                        <Trash2 size={18} className="sm:w-5 sm:h-5" strokeWidth={2.5} />
                                                     </button>
                                                 </div>
                                                 
-                                                <p className="text-slate-500 font-medium mb-4">
-                                                    Base price: <span className="font-bold text-slate-700">₹{item.menu_item_price}</span>
+                                                <p className="text-slate-400 text-xs sm:text-sm font-medium mb-3 sm:mb-4">
+                                                    Base: <span className="font-bold text-slate-600">₹{item.menu_item_price}</span>
                                                 </p>
 
-                                                <div className="flex justify-between items-center mt-auto">
+                                                <div className="flex justify-between items-center sm:items-end mt-auto pt-2">
                                                     {/* Elite Quantity Toggle */}
-                                                    <div className="flex items-center bg-slate-100 rounded-full border border-slate-200 shadow-sm p-1">
+                                                    <div className="flex items-center bg-slate-50 rounded-full border border-slate-200/60 shadow-sm p-1">
                                                         <button
                                                             onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
                                                             disabled={updatingItem === item.id || item.quantity <= 1}
-                                                            className="w-8 h-8 flex items-center justify-center bg-white rounded-full text-slate-700 font-bold hover:shadow-sm hover:text-primary-600 disabled:opacity-50 transition-all"
+                                                            className="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center bg-white border border-slate-100 rounded-full text-slate-700 font-bold shadow-[0_2px_4px_rgba(0,0,0,0.02)] hover:shadow-md hover:text-primary-600 disabled:opacity-50 transition-all"
                                                         >
-                                                            <Minus size={16} strokeWidth={3} />
+                                                            <Minus size={14} className="sm:w-4 sm:h-4" strokeWidth={3} />
                                                         </button>
-                                                        <span className="w-10 text-center font-black text-slate-800 text-sm">
+                                                        <span className="w-8 sm:w-10 text-center font-black text-slate-800 text-xs sm:text-sm">
                                                             {updatingItem === item.id ? '...' : item.quantity}
                                                         </span>
                                                         <button
                                                             onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
                                                             disabled={updatingItem === item.id}
-                                                            className="w-8 h-8 flex items-center justify-center bg-white rounded-full text-slate-700 font-bold hover:shadow-sm hover:text-primary-600 disabled:opacity-50 transition-all"
+                                                            className="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center bg-white border border-slate-100 rounded-full text-slate-700 font-bold shadow-[0_2px_4px_rgba(0,0,0,0.02)] hover:shadow-md hover:text-primary-600 disabled:opacity-50 transition-all"
                                                         >
-                                                            <Plus size={16} strokeWidth={3} />
+                                                            <Plus size={14} className="sm:w-4 sm:h-4" strokeWidth={3} />
                                                         </button>
                                                     </div>
 
                                                     <div className="text-right">
-                                                        <p className="font-black text-2xl text-slate-800 flex items-center gap-1">
+                                                        <p className="font-black text-lg sm:text-2xl text-slate-800 flex items-center gap-1 leading-none">
                                                             ₹{item.total_price}
                                                         </p>
                                                     </div>
@@ -223,7 +230,7 @@ const Cart = () => {
                             initial={{ opacity: 0, y: 30 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.1 }}
-                            className="bg-white/90 backdrop-blur-xl rounded-[32px] shadow-2xl shadow-slate-200/50 p-8 border border-white sticky top-24"
+                            className="bg-white rounded-[24px] shadow-premium border border-slate-200/50 p-6 sm:p-8 sticky top-24"
                         >
                             <h2 className="text-2xl font-black text-slate-800 mb-8 tracking-tight">Summary</h2>
 
@@ -253,14 +260,14 @@ const Cart = () => {
 
                             <button
                                 onClick={() => navigate('/checkout')}
-                                className="w-full py-4 bg-primary-600 text-white rounded-full font-black text-lg hover:bg-primary-700 active:scale-95 shadow-xl shadow-primary-600/30 transition-all flex items-center justify-center gap-3 mb-4"
+                                className="w-full py-3 sm:py-4 bg-primary-600 text-white rounded-2xl font-black text-base sm:text-lg hover:bg-primary-700 active:scale-95 shadow-premium transition-all flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4"
                             >
-                                Secure Checkout <ArrowRight size={20} strokeWidth={3} />
+                                Secure Checkout <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={3} />
                             </button>
 
                             <button
                                 onClick={() => navigate('/')}
-                                className="w-full py-4 bg-slate-50 text-slate-600 rounded-full font-bold text-sm hover:bg-slate-100 transition-colors flex items-center justify-center"
+                                className="w-full py-3 sm:py-4 bg-slate-50 text-slate-600 rounded-full font-bold text-xs sm:text-sm hover:bg-slate-100 transition-colors flex items-center justify-center"
                             >
                                 Continue Shopping
                             </button>
