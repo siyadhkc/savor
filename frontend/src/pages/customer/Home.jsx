@@ -6,6 +6,7 @@ import qrImg from '../../assets/images/qr.png'
 import pizzaImg from '../../assets/images/pizza.png'
 import { Search, MapPin, ArrowRight, Utensils, Loader2, ChevronRight, Star, Clock, Heart, TrendingUp, CheckCircle2, ChefHat, ChevronLeft } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { getImageUrl } from '../../utils/helpers'
 
 const KERALA_CITIES = [
     { name: 'Kochi',       desc: 'Commercial Capital' },
@@ -31,18 +32,22 @@ const Home = () => {
     }
 
     useEffect(() => {
-        api.get('/menu/categories/')
+        api.get('/menu/cuisines/')
             .then(res => setCategories(res.data.results || []))
             .finally(() => setCatLoading(false))
     }, [])
 
-    const goToRestaurants = (search = '') => {
+    const goToRestaurants = ({ search = '', category = '' } = {}) => {
         const params = new URLSearchParams()
         if (search.trim()) params.set('search', search.trim())
+        if (category) params.set('category', category)
         navigate(`/restaurants${params.toString() ? '?' + params.toString() : ''}`)
     }
 
-    const handleSearchSubmit = (e) => { e.preventDefault(); goToRestaurants(searchInput) }
+    const handleSearchSubmit = (e) => { 
+        e.preventDefault(); 
+        goToRestaurants({ search: searchInput }) 
+    }
 
     return (
         <div className="min-h-screen bg-white flex flex-col">
@@ -312,14 +317,14 @@ const Home = () => {
                                         whileInView={{ opacity: 1, x: 0 }}
                                         viewport={{ once: true }}
                                         transition={{ delay: Math.min(idx * 0.05, 0.4) }}
-                                        onClick={() => goToRestaurants(cat.name)}
+                                        onClick={() => goToRestaurants({ category: cat.id })}
                                         className="group/item flex flex-col items-center gap-3 focus:outline-none shrink-0 snap-start"
                                         style={{ minWidth: '90px' }}
                                     >
                                         <div className="w-[84px] h-[84px] sm:w-28 sm:h-28 rounded-full overflow-hidden bg-slate-50 border border-slate-200/60 shadow-[0_4px_20px_rgb(0,0,0,0.02)] group-hover/item:border-blue-400 group-hover/item:shadow-[0_8px_30px_rgba(37,99,235,0.08)] group-hover/item:-translate-y-1 transition-all duration-500 shrink-0">
                                             {cat.image ? (
                                                 <img
-                                                    src={`${import.meta.env.VITE_API_URL?.replace('/api', '') || ''}${cat.image}`}
+                                                    src={getImageUrl(cat.image)}
                                                     alt={cat.name}
                                                     className="w-full h-full object-cover group-hover/item:scale-110 transition-transform duration-500"
                                                 />
@@ -453,7 +458,7 @@ const Home = () => {
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
                                 transition={{ delay: idx * 0.07 }}
-                                onClick={() => goToRestaurants(city.name)}
+                                onClick={() => goToRestaurants({ search: city.name })}
                                 className="group relative bg-white border border-slate-200/60 rounded-2xl sm:rounded-[24px] p-4 sm:p-6 text-left shadow-[0_4px_20px_rgb(0,0,0,0.02)] hover:shadow-[0_12px_32px_rgb(0,0,0,0.06)] hover:-translate-y-1 hover:border-primary-200 transition-all duration-500 overflow-hidden focus:outline-none"
                             >
                                 <div className="absolute inset-0 bg-primary-50 opacity-0 group-hover:opacity-100 transition-opacity" />

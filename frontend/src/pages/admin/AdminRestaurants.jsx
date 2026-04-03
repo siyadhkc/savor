@@ -7,22 +7,51 @@ import { motion, AnimatePresence } from 'framer-motion'
 
 const AdminRestaurants = () => {
     const [restaurants, setRestaurants] = useState([])
-    const [loading, setLoading] = useState(true)
-    const [showModal, setShowModal] = useState(false)
+    const [totalCount, setTotalCount]   = useState(0)
+    const [loading, setLoading]         = useState(true)
+    const [showModal, setShowModal]     = useState(false)
     const [editingRestaurant, setEditingRestaurant] = useState(null)
-    const [formData, setFormData] = useState({ name: '', address: '', phone: '', is_active: true })
-    const [logoFile, setLogoFile] = useState(null)
-    const [submitting, setSubmitting] = useState(false)
+    const [formData, setFormData]       = useState({ name: '', address: '', phone: '', is_active: true })
+    const [logoFile, setLogoFile]       = useState(null)
+    const [submitting, setSubmitting]   = useState(false)
     const [searchQuery, setSearchQuery] = useState('')
 
-    useEffect(() => { fetchRestaurants() }, [])
+    useEffect(() => { fetchRestaurants() }, [searchQuery]) // refetch when search changes
 
     const fetchRestaurants = async () => {
+        setLoading(true)
         try {
-            const response = await api.get('/restaurant/restaurants/')
-            setRestaurants(response.data.results)
+            const params = {}
+            if (searchQuery.trim()) params.search = searchQuery.trim()
+
+            let nextUrl = '/restaurant/restaurants/'
+            let isFirstPage = true
+            let allRestaurants = []
+            let count = 0
+
+            while (nextUrl) {
+                const response = await api.get(nextUrl, {
+                    params: isFirstPage ? params : undefined,
+                })
+                const payload = response.data
+
+                if (Array.isArray(payload)) {
+                    allRestaurants = payload
+                    count = payload.length
+                    nextUrl = null
+                    continue
+                }
+
+                allRestaurants = allRestaurants.concat(payload.results || [])
+                count = payload.count || allRestaurants.length
+                nextUrl = payload.next
+                isFirstPage = false
+            }
+
+            setRestaurants(allRestaurants)
+            setTotalCount(count)
         } catch {
-            toast.error('Failed to load venue manifest.')
+            toast.error('Failed to load restaurants.')
         } finally {
             setLoading(false)
         }
@@ -75,13 +104,13 @@ const AdminRestaurants = () => {
     }
 
     const handleDelete = async (id) => {
-        if (!window.confirm('CAUTION: This will expunge the venue entity. Proceed?')) return
+        if (!window.confirm('Delete this restaurant? This cannot be undone.')) return
         try {
             await api.delete(`/restaurant/restaurants/${id}/`)
-            setRestaurants(restaurants.filter(r => r.id !== id))
-            toast.success('Venue identity expunged.')
+            toast.success('Restaurant deleted.')
+            fetchRestaurants()
         } catch {
-            toast.error('Failed to expunge venue.')
+            toast.error('Failed to delete restaurant.')
         }
     }
 
@@ -95,10 +124,8 @@ const AdminRestaurants = () => {
         }
     }
 
-    const filteredRestaurants = restaurants.filter(r => 
-        r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        r.address.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+    // Search is server-side (triggered by useEffect above), so filteredRestaurants = restaurants
+    const filteredRestaurants = restaurants
 
     if (loading) {
         return (
@@ -149,11 +176,11 @@ const AdminRestaurants = () => {
                     </div>
                 </div>
 
-                {/* Stats Matrix */}
+                {/* Stats */}
                 <div className="flex gap-6 mb-10 overflow-x-auto pb-4 scrollbar-hide">
                     {[
-                        { label: 'Total Clusters', value: restaurants.length, icon: Store, color: 'text-slate-900', bg: 'bg-slate-50' },
-                        { label: 'Active Channels', value: restaurants.filter(r => r.is_active).length, icon: Activity, color: 'text-emerald-600', bg: 'bg-emerald-50/50' },
+                        { label: 'Total Restaurants', value: totalCount, icon: Store, color: 'text-slate-900', bg: 'bg-slate-50' },
+                        { label: 'Active Now', value: restaurants.filter(r => r.is_active).length, icon: Activity, color: 'text-emerald-600', bg: 'bg-emerald-50/50' },
                     ].map(stat => (
                         <div key={stat.label} className="bg-white rounded-[28px] border border-slate-100 p-6 shadow-sm min-w-[240px] flex items-center gap-4">
                             <div className={`w-12 h-12 rounded-2xl ${stat.bg} flex items-center justify-center ${stat.color}`}>

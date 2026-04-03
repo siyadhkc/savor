@@ -7,6 +7,7 @@ import markerIcon from 'leaflet/dist/images/marker-icon.png'
 import markerShadow from 'leaflet/dist/images/marker-shadow.png'
 import { Truck, Navigation, Clock3 } from 'lucide-react'
 import { getOrderLocation } from '../../api/orders'
+import { getDeliveryAgentStatusLabel } from '../../utils/orderFlow'
 
 delete L.Icon.Default.prototype._getIconUrl
 L.Icon.Default.mergeOptions({
@@ -47,7 +48,7 @@ const LiveTracking = ({ orderId, isPolling = true }) => {
                 setError(null)
             } catch (err) {
                 console.error('Tracking failed:', err)
-                setError('Unable to reach GPS satellite.')
+                setError('Unable to refresh live location right now.')
             } finally {
                 setLoading(false)
             }
@@ -65,7 +66,7 @@ const LiveTracking = ({ orderId, isPolling = true }) => {
         return (
             <div className="h-[400px] bg-slate-50 rounded-[32px] flex flex-col items-center justify-center border border-slate-100 italic font-black text-slate-400 p-8 text-center uppercase tracking-widest text-[10px]">
                 <div className="w-8 h-8 border-2 border-slate-200 border-t-primary-500 rounded-full animate-spin mb-4" />
-                Establishing secure GPS linkage...
+                Connecting to your rider's live location...
             </div>
         )
     }
@@ -74,9 +75,9 @@ const LiveTracking = ({ orderId, isPolling = true }) => {
         return (
             <div className="h-[400px] bg-slate-50 rounded-[32px] flex flex-col items-center justify-center border border-slate-100 p-8 text-center">
                 <Navigation className="text-slate-200 mb-4 animate-pulse" size={48} />
-                <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-1 italic">Awaiting Signal</h4>
+                <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-1 italic">Waiting for location</h4>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-loose max-w-[200px]">
-                    {error || 'Agent is currently initializing tracking hardware. Please remain standby.'}
+                    {error || 'Your rider will appear here once delivery tracking starts.'}
                 </p>
             </div>
         )
@@ -99,7 +100,7 @@ const LiveTracking = ({ orderId, isPolling = true }) => {
                         <Popup>
                             <div className="flex flex-col gap-1 py-1">
                                 <span className="text-[10px] font-black uppercase text-slate-400">Status</span>
-                                <span className="text-xs font-bold text-slate-900 capitalize">{status.replace('_', ' ')}</span>
+                                <span className="text-xs font-bold text-slate-900">{getDeliveryAgentStatusLabel(status)}</span>
                             </div>
                         </Popup>
                     </Marker>
@@ -111,13 +112,13 @@ const LiveTracking = ({ orderId, isPolling = true }) => {
             <div className="absolute top-6 left-6 z-[1000] space-y-3">
                 <div className="bg-white/90 backdrop-blur-md px-4 py-2 rounded-2xl border border-white shadow-lg flex items-center gap-3">
                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-900 italic">Live Tracking Active</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-900 italic">Live tracking active</span>
                 </div>
                 
                 {status === 'delivering' && (
                     <div className="bg-slate-900 px-4 py-2 rounded-2xl shadow-lg border border-white/10 flex items-center gap-3">
                         <Truck size={14} className="text-primary-500" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-white italic">In Local Transit</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-white italic">Rider is on the way</span>
                     </div>
                 )}
 
@@ -125,7 +126,7 @@ const LiveTracking = ({ orderId, isPolling = true }) => {
                     <div className="bg-white/90 backdrop-blur-md px-4 py-2 rounded-2xl border border-white shadow-lg flex items-center gap-3">
                         <Clock3 size={14} className="text-slate-500" />
                         <span className="text-[10px] font-black uppercase tracking-widest text-slate-900 italic">
-                            Last Sync: {new Date(lastUpdatedAt).toLocaleTimeString()}
+                            Last updated: {new Date(lastUpdatedAt).toLocaleTimeString()}
                         </span>
                     </div>
                 )}

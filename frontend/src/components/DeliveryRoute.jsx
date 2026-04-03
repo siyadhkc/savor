@@ -17,8 +17,13 @@ const DeliveryRoute = ({ children }) => {
         return <Navigate to="/login" replace />
     }
 
-    // Only allow delivery role
-    if (user.role !== 'delivery' && !user.is_staff) {
+    if (user.role !== 'delivery') {
+        if (user.is_staff === true || user.role === 'admin') {
+            return <Navigate to="/admin" replace />
+        }
+        if (user.role === 'restaurant') {
+            return <Navigate to="/restaurant-admin" replace />
+        }
         return <Navigate to="/" replace />
     }
 

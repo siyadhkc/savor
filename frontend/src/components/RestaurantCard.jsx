@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { getImageUrl } from '../utils/helpers'
-import { MapPin, Utensils, ArrowRight, Star, Clock, Dot } from 'lucide-react'
+import { MapPin, Utensils, ArrowRight, Star, Clock, Dot, BadgePercent } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 const RestaurantCard = ({ restaurant }) => {
@@ -12,10 +12,11 @@ const RestaurantCard = ({ restaurant }) => {
         const rating = (4 + (seed % 10) / 10).toFixed(1)
         const time = 20 + (seed % 25)
         const price = 200 + (seed % 400)
-        return { rating, time, price }
+        const offer = seed % 3 === 0 ? '20% OFF up to Rs120' : seed % 5 === 0 ? 'Free delivery' : null
+        return { rating, time, price, offer }
     }
 
-    const { rating, time, price } = getMockData(restaurant.id)
+    const { rating, time, price, offer } = getMockData(restaurant.id)
 
     return (
         <motion.div
@@ -24,85 +25,99 @@ const RestaurantCard = ({ restaurant }) => {
             viewport={{ once: true, margin: '-50px' }}
             transition={{ duration: 0.4 }}
             whileHover={{ y: -6 }}
-            className="group cursor-pointer flex flex-col h-full bg-white rounded-[2rem] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgb(0,0,0,0.1)] border border-slate-100 hover:border-primary-100 transition-all duration-500"
+            className="group flex h-full cursor-pointer flex-col overflow-hidden rounded-[28px] border border-slate-200/70 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.05)] transition-all duration-500 hover:-translate-y-1.5 hover:border-slate-300 hover:shadow-[0_24px_50px_rgba(15,23,42,0.12)]"
             onClick={() => navigate(`/restaurant/${restaurant.id}`)}
         >
-            {/* Image Container */}
-            <div className="w-full h-56 overflow-hidden bg-slate-100 relative">
+            <div className="relative h-52 w-full overflow-hidden bg-slate-100">
                 {restaurant.logo ? (
                     <>
                         <img
                             src={getImageUrl(restaurant.logo)}
                             alt={restaurant.name}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-out"
+                            className="h-full w-full object-cover transition-transform duration-1000 ease-out group-hover:scale-110"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-500" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/15 to-transparent opacity-80 transition-opacity duration-500 group-hover:opacity-95" />
                     </>
                 ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 text-slate-200">
+                    <div className="flex h-full w-full flex-col items-center justify-center bg-slate-50 text-slate-200">
                         <Utensils size={48} strokeWidth={1} />
                     </div>
                 )}
 
-                {/* Top Overlay: Status */}
-                <div className="absolute top-4 left-4 flex gap-2">
-                    <div className={`px-3 py-1 rounded-full backdrop-blur-md border border-white/20 flex items-center gap-1.5 shadow-xl ${
-                        restaurant.is_active ? 'bg-emerald-500/90 text-white' : 'bg-slate-800/90 text-slate-300'
+                <div className="absolute left-4 top-4 flex flex-wrap gap-2">
+                    <div className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-widest shadow-xl backdrop-blur-md ${
+                        restaurant.is_active
+                            ? 'border-emerald-300/40 bg-emerald-500/90 text-white'
+                            : 'border-white/15 bg-slate-800/90 text-slate-300'
                     }`}>
-                        <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${restaurant.is_active ? 'bg-white' : 'bg-slate-500'}`} />
-                        <span className="text-[10px] font-black uppercase tracking-widest">
-                            {restaurant.is_active ? 'Accepting Orders' : 'Closed'}
+                        <div className={`h-1.5 w-1.5 rounded-full ${restaurant.is_active ? 'bg-white animate-pulse' : 'bg-slate-500'}`} />
+                        {restaurant.is_active ? 'Open now' : 'Closed'}
+                    </div>
+                    {offer && (
+                        <div className="flex items-center gap-1.5 rounded-full border border-rose-200/40 bg-white/95 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-rose-600 shadow-xl">
+                            <BadgePercent size={12} />
+                            {offer}
+                        </div>
+                    )}
+                </div>
+
+                <div className="absolute inset-x-0 bottom-0 p-4">
+                    <div className="flex items-end justify-between gap-3">
+                        <div>
+                            <p className="line-clamp-1 text-xl font-black tracking-tight text-white drop-shadow-sm">
+                                {restaurant.name}
+                            </p>
+                            <p className="mt-1 line-clamp-1 text-[12px] font-semibold text-white/80">
+                                {restaurant.cuisine || 'Popular local favourites'}
+                            </p>
+                        </div>
+                        <span className="inline-flex items-center gap-1.5 rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-[11px] font-black uppercase tracking-widest text-white backdrop-blur-md transition-all group-hover:bg-white/15">
+                            View
+                            <ArrowRight size={12} />
                         </span>
                     </div>
                 </div>
-
-                {/* Bottom Overlay: Rating (Swiggy Style) */}
-                <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end transform translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500">
-                     <span className="text-white text-xs font-black uppercase tracking-tighter flex items-center gap-1.5 px-3 py-1.5 bg-white/10 backdrop-blur-md rounded-lg border border-white/20">
-                         View Details <ArrowRight size={12} />
-                     </span>
-                </div>
             </div>
 
-            {/* Content */}
-            <div className="p-6 pt-5 flex flex-col flex-1">
-                <div className="flex justify-between items-start gap-2 mb-1.5">
-                    <h3 className="text-xl font-black text-slate-900 tracking-tight group-hover:text-primary-600 transition-colors line-clamp-1">
-                        {restaurant.name}
-                    </h3>
-                    <div className="flex items-center gap-1 bg-emerald-600 text-white px-1.5 py-0.5 rounded-md shrink-0">
+            <div className="flex flex-1 flex-col p-5">
+                <div className="mb-3 flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                        <p className="line-clamp-1 text-sm font-bold text-slate-500">
+                            {restaurant.cuisine || 'Kerala, Indian, Fast Food'}
+                        </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1 rounded-lg bg-emerald-600 px-2 py-1 text-white shadow-sm">
                         <span className="text-[11px] font-black leading-none">{rating}</span>
                         <Star size={10} fill="currentColor" stroke="none" />
                     </div>
                 </div>
 
-                <div className="flex items-center text-slate-500 text-[13px] font-bold tracking-tight mb-4">
+                <div className="mb-4 flex items-center text-[13px] font-bold tracking-tight text-slate-500">
                     <div className="flex items-center gap-1 text-slate-800">
                         <Clock size={13} className="text-primary-500" strokeWidth={3} />
                         <span>{time}-{time + 5} mins</span>
                     </div>
                     <Dot className="text-slate-300" strokeWidth={4} />
-                    <span className="text-slate-400">₹{price} for two</span>
+                    <span className="text-slate-500">Rs{price} for two</span>
                 </div>
 
-                <p className="flex items-center text-slate-400 text-[13px] font-medium gap-1.5 line-clamp-1 mb-5">
-                    <MapPin size={13} className="text-slate-300 shrink-0" />
+                <p className="mb-5 flex items-center gap-1.5 line-clamp-1 text-[13px] font-medium text-slate-400">
+                    <MapPin size={13} className="shrink-0 text-slate-300" />
                     {restaurant.address}
                 </p>
 
-                <div className="mt-auto flex items-center justify-between pt-5 border-t border-slate-100">
-                    <div className="flex -space-x-1">
-                        {[1, 2, 3].map((i) => (
-                            <div key={i} className="w-5 h-5 rounded-full border-2 border-white bg-slate-100 flex items-center justify-center overflow-hidden">
-                                <div className="w-full h-full bg-primary-100 text-primary-600 flex items-center justify-center">
-                                    <Utensils size={8} />
-                                </div>
-                            </div>
-                        ))}
-                        <div className="pl-3 text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center">
-                            Fast Delivery
-                        </div>
+                <div className="mt-auto flex items-center justify-between border-t border-slate-100 pt-4">
+                    <div className="flex items-center gap-2">
+                        <span className="rounded-full bg-slate-100 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                            Fast delivery
+                        </span>
+                        <span className="rounded-full bg-primary-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-primary-700">
+                            Trending
+                        </span>
                     </div>
+                    <span className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+                        {restaurant.is_active ? 'Order now' : 'Check later'}
+                    </span>
                 </div>
             </div>
         </motion.div>

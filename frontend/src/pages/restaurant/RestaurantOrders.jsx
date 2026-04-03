@@ -2,6 +2,7 @@ import React, { useState, useEffect, Fragment } from 'react'
 import toast from 'react-hot-toast'
 import { listOrders, updateOrderStatus } from '../../api/orders'
 import { formatDate, formatOrderId } from '../../utils/helpers'
+import { getRestaurantStatusOptions } from '../../utils/orderFlow'
 import { 
     CheckCircle2, 
     ChevronDown, 
@@ -68,16 +69,14 @@ const RestaurantOrders = () => {
     const handleStatusUpdate = async (orderId, newStatus) => {
         setUpdatingOrder(orderId)
         try {
-            await updateOrderStatus(orderId, newStatus)
+            const updatedOrder = await updateOrderStatus(orderId, newStatus)
             setOrders(orders.map(order =>
-                order.id === orderId
-                    ? { ...order, status: newStatus }
-                    : order
+                order.id === orderId ? updatedOrder : order
             ))
             toast.success('Protocol updated.')
         } catch (error) {
             console.error('Failed to update status:', error)
-            toast.error('Update failed.')
+            toast.error(error.response?.data?.status?.[0] || error.response?.data?.error || 'Update failed.')
         } finally {
             setUpdatingOrder(null)
         }
@@ -174,6 +173,7 @@ const RestaurantOrders = () => {
                                 {filteredOrders.map(order => {
                                     const meta = STATUS_METADATA[order.status] || { color: 'slate', icon: Activity }
                                     const StatusIcon = meta.icon;
+                                    const statusOptions = getRestaurantStatusOptions(order)
                                     
                                     return (
                                     <Fragment key={order.id}>
@@ -219,19 +219,25 @@ const RestaurantOrders = () => {
                                                 <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest mt-0.5">Yield Value</p>
                                             </td>
                                             <td className="px-8 py-4 pr-12 text-right">
-                                                <div className="relative inline-flex items-center">
-                                                    <select
-                                                        value={order.status}
-                                                        onChange={(e) => handleStatusUpdate(order.id, e.target.value)}
-                                                        disabled={updatingOrder === order.id}
-                                                        className="pl-4 pr-10 py-2.5 rounded-xl border border-slate-200 bg-white text-[11px] font-black uppercase tracking-widest text-slate-800 cursor-pointer focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all appearance-none shadow-sm hover:shadow-md"
-                                                    >
-                                                        {STATUS_OPTIONS.map(s => (
-                                                            <option key={s} value={s}>{s.replace('_', ' ')}</option>
-                                                        ))}
-                                                    </select>
-                                                    <ChevronDown size={14} className="absolute right-3 pointer-events-none text-slate-400" strokeWidth={3} />
-                                                </div>
+                                                {statusOptions.length > 1 ? (
+                                                    <div className="relative inline-flex items-center">
+                                                        <select
+                                                            value={order.status}
+                                                            onChange={(e) => handleStatusUpdate(order.id, e.target.value)}
+                                                            disabled={updatingOrder === order.id}
+                                                            className="pl-4 pr-10 py-2.5 rounded-xl border border-slate-200 bg-white text-[11px] font-black uppercase tracking-widest text-slate-800 cursor-pointer focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all appearance-none shadow-sm hover:shadow-md"
+                                                        >
+                                                            {statusOptions.map(s => (
+                                                                <option key={s} value={s}>{s.replace('_', ' ')}</option>
+                                                            ))}
+                                                        </select>
+                                                        <ChevronDown size={14} className="absolute right-3 pointer-events-none text-slate-400" strokeWidth={3} />
+                                                    </div>
+                                                ) : (
+                                                    <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 text-slate-500 text-[10px] font-black uppercase tracking-widest">
+                                                        Locked
+                                                    </span>
+                                                )}
                                             </td>
                                         </tr>
                                         <AnimatePresence>
@@ -324,6 +330,12 @@ const RestaurantOrders = () => {
                                                                         <h4 className="text-lg font-black tracking-tight mb-2">Delivery Endpoint</h4>
                                                                         <p className="text-sm font-medium text-white/70 leading-relaxed italic border-l-2 border-primary-500/50 pl-4">
                                                                              {order.address}
+                                                                        </p>
+
+                                                                        <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mt-6">
+                                                                            {order.delivery_agent
+                                                                                ? `Delivery agent assigned: ${order.delivery_agent_name || 'Assigned'}`
+                                                                                : 'No delivery agent assigned yet'}
                                                                         </p>
                                                                     </div>
                                                                 </div>

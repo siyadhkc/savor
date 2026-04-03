@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import api from '../../api/axios'
+import { getImageUrl } from '../../utils/helpers'
 import toast from 'react-hot-toast'
 import { createOrder } from '../../api/orders'
 import { MapPin, CreditCard, Banknote, ShieldCheck, Lock, ChevronLeft, ReceiptText, Loader2, Target, CheckCircle2 } from 'lucide-react'

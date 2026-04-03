@@ -7,6 +7,7 @@ import {
     listOrders,
     updateOrderStatus,
 } from '../../api/orders'
+import { getAdminStatusOptions } from '../../utils/orderFlow'
 import { formatDate, formatOrderId } from '../../utils/helpers'
 import { ChevronDown, Package, Store, Calendar, CreditCard, Activity, Search, Filter, ArrowUpRight, CheckCircle2, Clock, Truck, XCircle, Users } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -108,16 +109,14 @@ const AdminOrders = () => {
     const handleStatusUpdate = async (orderId, newStatus) => {
         setUpdatingOrder(orderId)
         try {
-            await updateOrderStatus(orderId, newStatus)
+            const updatedOrder = await updateOrderStatus(orderId, newStatus)
             setOrders(orders.map(order =>
-                order.id === orderId
-                    ? { ...order, status: newStatus }
-                    : order
+                order.id === orderId ? updatedOrder : order
             ))
             toast.success('Protocol updated.')
         } catch (error) {
             console.error('Failed to update status:', error)
-            toast.error('Update failed.')
+            toast.error(error.response?.data?.status?.[0] || error.response?.data?.error || 'Update failed.')
         } finally {
             setUpdatingOrder(null)
         }
@@ -216,6 +215,8 @@ const AdminOrders = () => {
                                 {filteredOrders.map(order => {
                                     const meta = STATUS_METADATA[order.status] || { color: 'slate', icon: Activity }
                                     const StatusIcon = meta.icon;
+                                    const statusOptions = getAdminStatusOptions(order)
+                                    const canAssignAgent = order.status === 'preparing' && !order.delivery_agent
                                     
                                     return (
                                     <Fragment key={order.id}>
@@ -269,19 +270,25 @@ const AdminOrders = () => {
                                                 <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest mt-0.5">INR Value</p>
                                             </td>
                                             <td className="px-8 py-4 pr-12 text-right">
-                                                <div className="relative inline-flex items-center">
-                                                    <select
-                                                        value={order.status}
-                                                        onChange={(e) => handleStatusUpdate(order.id, e.target.value)}
-                                                        disabled={updatingOrder === order.id}
-                                                        className="pl-4 pr-10 py-2.5 rounded-xl border border-slate-200 bg-white text-[11px] font-black uppercase tracking-widest text-slate-800 cursor-pointer focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all appearance-none shadow-sm hover:shadow-md"
-                                                    >
-                                                        {STATUS_OPTIONS.map(s => (
-                                                            <option key={s} value={s}>{s.replace('_', ' ')}</option>
-                                                        ))}
-                                                    </select>
-                                                    <ChevronDown size={14} className="absolute right-3 pointer-events-none text-slate-400" strokeWidth={3} />
-                                                </div>
+                                                {statusOptions.length > 1 ? (
+                                                    <div className="relative inline-flex items-center">
+                                                        <select
+                                                            value={order.status}
+                                                            onChange={(e) => handleStatusUpdate(order.id, e.target.value)}
+                                                            disabled={updatingOrder === order.id}
+                                                            className="pl-4 pr-10 py-2.5 rounded-xl border border-slate-200 bg-white text-[11px] font-black uppercase tracking-widest text-slate-800 cursor-pointer focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all appearance-none shadow-sm hover:shadow-md"
+                                                        >
+                                                            {statusOptions.map(s => (
+                                                                <option key={s} value={s}>{s.replace('_', ' ')}</option>
+                                                            ))}
+                                                        </select>
+                                                        <ChevronDown size={14} className="absolute right-3 pointer-events-none text-slate-400" strokeWidth={3} />
+                                                    </div>
+                                                ) : (
+                                                    <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 text-slate-500 text-[10px] font-black uppercase tracking-widest">
+                                                        Locked
+                                                    </span>
+                                                )}
                                             </td>
                                         </tr>
                                         <AnimatePresence>
@@ -404,7 +411,7 @@ const AdminOrders = () => {
                                                                                     </div>
                                                                                 )}
                                                                                 
-                                                                                {!order.delivery_agent && order.status !== 'delivered' && (
+                                                                                {canAssignAgent && (
                                                                                     <>
                                                                                         <select
                                                                                             value={order.delivery_agent || ''}
@@ -432,9 +439,15 @@ const AdminOrders = () => {
                                                                                     </>
                                                                                 )}
 
+                                                                                {!canAssignAgent && !order.delivery_agent && (
+                                                                                    <p className="text-[9px] text-white/30 font-medium italic">
+                                                                                        The restaurant must move this order to preparing before dispatch can be assigned.
+                                                                                    </p>
+                                                                                )}
+
                                                                                 {order.delivery_agent && (
                                                                                     <p className="text-[9px] text-emerald-300/80 font-medium italic">
-                                                                                        This order is locked to its assigned delivery agent.
+                                                                                        Dispatch is active. The rider now controls pickup, transit, and delivery updates.
                                                                                     </p>
                                                                                 )}
                                                                             </div>

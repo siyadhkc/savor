@@ -30,23 +30,15 @@ from menu.models import MenuItem
 from payments.models import Payment
 
 DELIVERY_STATUS_TRANSITIONS = {
-    None: {
-        Order.DeliveryStatus.ACCEPTED,
-        Order.DeliveryStatus.PICKED,
-        Order.DeliveryStatus.DELIVERING,
-    },
+    None: set(),
     Order.DeliveryStatus.ASSIGNED: {
         Order.DeliveryStatus.ACCEPTED,
-        Order.DeliveryStatus.PICKED,
-        Order.DeliveryStatus.DELIVERING,
     },
     Order.DeliveryStatus.ACCEPTED: {
         Order.DeliveryStatus.PICKED,
-        Order.DeliveryStatus.DELIVERING,
     },
     Order.DeliveryStatus.PICKED: {
         Order.DeliveryStatus.DELIVERING,
-        Order.DeliveryStatus.DELIVERED,
     },
     Order.DeliveryStatus.DELIVERING: {
         Order.DeliveryStatus.DELIVERED,
@@ -87,18 +79,56 @@ def ensure_location_access(user, order):
     raise PermissionDenied('You do not have permission to view this delivery.')
 
 
-def update_order_status(order, new_status):
+def get_allowed_manual_statuses(user, order):
+    if order.status in {Order.Status.DELIVERED, Order.Status.CANCELLED}:
+        return set()
+
+    if user.is_staff:
+        allowed_statuses = {
+            Order.Status.PENDING,
+            Order.Status.PREPARING,
+            Order.Status.CANCELLED,
+        }
+        if order.status == Order.Status.PENDING:
+            return allowed_statuses
+        if order.status == Order.Status.PREPARING and order.delivery_status in {None, Order.DeliveryStatus.ASSIGNED, Order.DeliveryStatus.ACCEPTED}:
+            return allowed_statuses
+        return {order.status}
+
+    if is_restaurant_owner(user, order):
+        if order.status == Order.Status.PENDING:
+            return {Order.Status.PENDING, Order.Status.PREPARING, Order.Status.CANCELLED}
+        if order.status == Order.Status.PREPARING and order.delivery_status in {None, Order.DeliveryStatus.ASSIGNED, Order.DeliveryStatus.ACCEPTED}:
+            return {Order.Status.PREPARING, Order.Status.CANCELLED}
+        return {order.status}
+
+    return set()
+
+
+def update_order_status(order, new_status, actor):
+    allowed_statuses = get_allowed_manual_statuses(actor, order)
+    if new_status not in allowed_statuses:
+        raise ValidationError(
+            {'status': 'This role cannot move the order to that state.'}
+        )
+
     if order.status == new_status:
         return order
 
+    if new_status == Order.Status.CANCELLED:
+        order.delivery_lat = None
+        order.delivery_lng = None
+
     order.status = new_status
-    order.save(update_fields=['status', 'updated_at'])
+    order.save(update_fields=['status', 'delivery_lat', 'delivery_lng', 'updated_at'])
     return order
 
 
 def assign_delivery_agent(order, agent):
     if order.status in {Order.Status.CANCELLED, Order.Status.DELIVERED}:
         raise ValidationError('This order can no longer be assigned.')
+    if order.status != Order.Status.PREPARING:
+        raise ValidationError('Assign a delivery agent only after the restaurant starts preparing the order.')
     if order.delivery_agent_id:
         raise ValidationError('A delivery agent is already assigned to this order.')
 
@@ -149,7 +179,6 @@ def apply_delivery_update(order, validated_data):
         order.delivery_status = new_status
 
     if order.delivery_status in {
-        Order.DeliveryStatus.ACCEPTED,
         Order.DeliveryStatus.PICKED,
         Order.DeliveryStatus.DELIVERING,
     }:
@@ -433,7 +462,7 @@ Thank you for ordering with Savor!
         ensure_admin_or_restaurant_owner(request.user, order)
         serializer = UpdateOrderStatusSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        update_order_status(order, serializer.validated_data['status'])
+        update_order_status(order, serializer.validated_data['status'], request.user)
         return Response(OrderSerializer(order).data)
 
     @action(detail=True, methods=['post'], permission_classes=[IsAdminUser])
@@ -489,7 +518,7 @@ class UpdateOrderStatusView(OrderActionAPIView):
         ensure_admin_or_restaurant_owner(request.user, order)
         serializer = UpdateOrderStatusSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        update_order_status(order, serializer.validated_data['status'])
+        update_order_status(order, serializer.validated_data['status'], request.user)
         return Response(OrderSerializer(order).data)
 
 

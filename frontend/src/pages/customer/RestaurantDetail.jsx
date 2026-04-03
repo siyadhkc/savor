@@ -46,14 +46,16 @@ const RestaurantDetail = () => {
             const [restaurantRes, menuRes, categoriesRes] = await Promise.all([
                 api.get(`/restaurant/restaurants/${id}/`),
                 api.get('/menu/items/', {
-                    params: { restaurant: id }
+                    params: { restaurant: id, page_size: 200 }
                 }),
-                api.get('/menu/categories/'),
+                api.get('/menu/categories/', {
+                    params: { restaurant: id, page_size: 100 }
+                }),
             ])
 
             setRestaurant(restaurantRes.data)
-            setMenuItems(menuRes.data.results)
-            setCategories(categoriesRes.data.results)
+            setMenuItems(menuRes.data.results || [])
+            setCategories(categoriesRes.data.results || [])
         } catch (error) {
             console.error('Failed to load restaurant:', error)
             toast.error('Failed to load restaurant.')
@@ -131,7 +133,7 @@ const RestaurantDetail = () => {
                                 </h1>
                                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-slate-500 font-bold text-[13px] sm:text-sm tracking-tight mb-5 sm:mb-6">
                                     <span className="flex items-center gap-1.5 underline decoration-slate-200 underline-offset-4">
-                                        Bakery, Desserts, Snacks
+                                        {restaurant.cuisine || "Kerala, Indian"}
                                     </span>
                                     <Dot size={20} className="text-slate-300 hidden sm:block" />
                                     <span className="flex items-center gap-1.5 w-full sm:w-auto">
@@ -198,47 +200,59 @@ const RestaurantDetail = () => {
             </header>
 
             {/* ── STICKY CATEGORY NAV ─────────────────────────────────────── */}
-            <nav className="sticky top-[72px] z-40 bg-white/90 backdrop-blur-xl border-b border-slate-100 overflow-x-auto scrollbar-hide py-3">
+            <nav className="sticky top-[72px] z-40 bg-white/90 backdrop-blur-xl border-b border-slate-100 overflow-x-auto scrollbar-hide py-4">
                 <div className="max-w-4xl mx-auto px-5 flex items-center gap-2">
                     <button
                         onClick={() => setSelectedCategory('all')}
-                        className={`px-5 py-2.5 rounded-xl text-sm font-black tracking-tight transition-all shrink-0 border ${
+                        className={`px-5 py-2 rounded-xl text-sm font-black tracking-tight transition-all shrink-0 border ${
                             selectedCategory === 'all'
                                 ? 'bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-900/10'
                                 : 'bg-white text-slate-500 border-transparent hover:bg-slate-50'
                         }`}
                     >
-                        Full Menu
+                        All
                     </button>
                     {categories.map(cat => (
                         <button
                             key={cat.id}
                             onClick={() => setSelectedCategory(String(cat.id))}
-                            className={`px-5 py-2.5 rounded-xl text-sm font-black tracking-tight transition-all shrink-0 border ${
+                            className={`px-5 py-2 rounded-xl text-sm font-black tracking-tight transition-all shrink-0 border ${
                                 selectedCategory === String(cat.id)
                                     ? 'bg-primary-600 text-white border-primary-600 shadow-lg shadow-primary-600/10'
                                     : 'bg-white text-slate-500 border-transparent hover:bg-slate-50'
-                            }`}
-                        >
-                            {cat.name}
-                        </button>
+                        }`}
+                    >
+                        {cat.name}
+                    </button>
                     ))}
-
-                    <div className="ml-auto hidden md:flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 w-64 focus-within:ring-4 focus-within:ring-primary-500/10 focus-within:border-primary-500 transition-all">
-                        <Search size={14} className="text-slate-400" />
-                        <input 
-                            type="text" 
-                            placeholder="Search in menu..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="bg-transparent text-sm font-bold text-slate-800 placeholder:text-slate-400 outline-none w-full"
-                        />
-                    </div>
+                    
+                    <div className="h-6 w-px bg-slate-100 mx-2 hidden md:block" />
                 </div>
             </nav>
 
             {/* ── MENU LIST ────────────────────────────────────────────────── */}
             <main className="max-w-4xl mx-auto px-5 py-12">
+                
+                {/* Modern Search Bar (Swiggy/Zomato style) */}
+                <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-12"
+                >
+                    <div className="relative group max-w-2xl mx-auto">
+                        <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
+                            <Search size={20} className="text-slate-400 group-focus-within:text-primary-500 transition-colors" />
+                        </div>
+                        <input 
+                            type="text" 
+                            placeholder="Search for dishes..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-14 pr-6 py-4 text-slate-800 font-bold placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all shadow-sm group-hover:shadow-md text-lg"
+                        />
+                    </div>
+                </motion.div>
+
                 <div className="flex items-center justify-between mb-8">
                     <h2 className="text-2xl font-black text-slate-900 tracking-tighter">
                         Menu ({filteredItems.length})

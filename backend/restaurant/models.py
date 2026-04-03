@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from cloudinary.models import CloudinaryField
 
 class Restaurant(models.Model):
     """
@@ -12,6 +13,13 @@ class Restaurant(models.Model):
     owner = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='restaurant', null=True, blank=True)
     name = models.CharField(max_length=255)
     logo = models.ImageField(upload_to='restaurant/logos/', blank=True, null=True)
+    cuisine = models.CharField(max_length=255, blank=True)
+    """
+    WHY cuisine field?
+    In a professional app, users want to know what a restaurant
+    specializes in (e.g., "Malabar, Arabian, Seafood").
+    This field is essential for searching and filtering.
+    """
     """
     WHY ImageField?
     ImageField is a FileField that validates the uploaded

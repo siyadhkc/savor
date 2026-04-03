@@ -3,15 +3,24 @@ from restaurant.models import Restaurant
 
 class Category(models.Model):
     """
-    WHY Category is in menu app, not restaurants app?
-    Categories (Pizza, Burgers, Drinks) belong to the menu system,
-    not to a specific restaurant. They're shared across the platform.
-    Keeping it in the menu app makes logical sense.
+    WHY restaurant ForeignKey?
+    In a professional app, categories are specific to each restaurant.
+    (e.g., "Paragon's Specials", "Rahmath's Signatures").
+    This removes the global "Sharing" issue and makes the menu realistic.
     """
+    restaurant = models.ForeignKey(
+        Restaurant, 
+        on_delete=models.CASCADE, 
+        related_name='categories',
+        null=True, 
+        blank=True
+    )
     name = models.CharField(max_length=100)
-    image = models.ImageField(upload_to='categories/', blank=True, null=True)
+    image = models.ImageField(upload_to='menu/categories/', blank=True, null=True)
 
     def __str__(self):
+        if self.restaurant:
+            return f"{self.name} ({self.restaurant.name})"
         return self.name
 
     class Meta:
@@ -25,70 +34,58 @@ class Category(models.Model):
         """
 
 
-class MenuItem(models.Model):
+class Cuisine(models.Model):
     """
-    WHY MenuItem needs both restaurant and category FKs?
-    A burger belongs to a specific restaurant AND a category.
-    restaurant FK → "this item is sold by Restaurant X"
-    category FK  → "this item is of type Burgers"
-    This lets us filter: "show all Burgers from Restaurant X"
+    WHY Cuisine?
+    Global types (Biryani, Pizza, etc.) that span all restaurants.
+    Used for the Home Page "What's on your mind?" section.
     """
+    name = models.CharField(max_length=100)
+    image = models.ImageField(upload_to='menu/cuisines/', blank=True, null=True)
 
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name_plural = 'Cuisines'
+        ordering = ['name']
+
+
+class MenuItem(models.Model):
     restaurant = models.ForeignKey(
         Restaurant,
         on_delete=models.CASCADE,
         related_name='menu_items'
     )
-    """
-    WHY on_delete=models.CASCADE?
-    If a restaurant is deleted, all its menu items
-    should also be deleted automatically. No orphan data.
-    Other options:
-      SET_NULL  → keep the item but set restaurant to NULL
-      PROTECT   → prevent deletion if items exist
-      CASCADE   → delete everything related (our choice here)
-
-    WHY related_name='menu_items'?
-    This lets you do: restaurant.menu_items.all()
-    Instead of the ugly: MenuItem.objects.filter(restaurant=restaurant)
-    related_name is how you access reverse relationships.
-    BEGINNER MISTAKE: forgetting related_name and then
-    struggling to query reverse relationships later.
-    """
-
+    
+    # Restaurant Section (Must Try, etc.)
     category = models.ForeignKey(
         Category,
         on_delete=models.SET_NULL,
         null=True,
         related_name='menu_items'
     )
-    """
-    WHY SET_NULL here but CASCADE above?
-    If a category is deleted, we don't want to lose
-    all menu items — that would be destructive.
-    Instead, just set category to NULL and the item survives.
-    This is a business logic decision — think carefully
-    about on_delete for every FK you write.
-    """
+
+    # Global Cuisine (Biryani, etc.)
+    cuisine = models.ForeignKey(
+        Cuisine,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='menu_items'
+    )
 
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     price = models.DecimalField(max_digits=8, decimal_places=2)
-    """
-    WHY DecimalField for price, not FloatField?
-    CRITICAL: Never use FloatField for money.
-    Float has precision errors: 19.99 + 0.01 = 20.000000000000004
-    DecimalField stores exact decimal values — essential for prices.
-    max_digits=8 means up to 999999.99
-    decimal_places=2 means two decimal points (cents)
-    """
-
     image = models.ImageField(upload_to='menu/items/', blank=True, null=True)
     is_available = models.BooleanField(default=True)
+    is_recommended = models.BooleanField(default=False)
+    is_popular = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.name} - {self.restaurant.name}"
 
     class Meta:
-        ordering = ['name']
+        ordering = ['name']

@@ -16,21 +16,25 @@ import {
     Activity,
     CheckCircle2,
     ChefHat,
-    ArrowUpRight,
-    Filter
+    Filter,
+    Layers
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
+const PAGE_SIZE = 20
+
 const RestaurantMenu = () => {
     const { user } = useAuth()
-    const [menuItems, setMenuItems] = useState([])
-    const [categories, setCategories] = useState([])
-    const [loading, setLoading] = useState(true)
-    const [showModal, setShowModal] = useState(false)
+    const [menuItems, setMenuItems]     = useState([])
+    const [totalCount, setTotalCount]   = useState(0)
+    const [currentPage, setCurrentPage] = useState(1)
+    const [categories, setCategories]   = useState([])
+    const [loading, setLoading]         = useState(true)
+    const [showModal, setShowModal]     = useState(false)
     const [editingItem, setEditingItem] = useState(null)
-    const [imageFile, setImageFile] = useState(null)
+    const [imageFile, setImageFile]     = useState(null)
     const [searchQuery, setSearchQuery] = useState('')
-    const [formData, setFormData] = useState({
+    const [formData, setFormData]       = useState({
         restaurant: user?.restaurant_id || '',
         category: '',
         name: '',
@@ -40,20 +44,46 @@ const RestaurantMenu = () => {
     })
     const [submitting, setSubmitting] = useState(false)
 
-    useEffect(() => {
-        fetchData()
-    }, [])
+    const totalPages = Math.ceil(totalCount / PAGE_SIZE)
+    const restId = user?.restaurant_id || ''
 
-    const fetchData = async () => {
+    // Fetch THIS restaurant's categories once
+    useEffect(() => {
+        if (!restId) return
+        api.get(`/menu/categories/?restaurant=${restId}&page_size=50`)
+            .then(res => setCategories(res.data.results || []))
+            .catch(() => toast.error('Failed to load sections.'))
+    }, [restId])
+
+    // Fetch paginated menu items
+    useEffect(() => {
+        const fetchData = async () => {
+            setLoading(true)
+            try {
+                const params = { restaurant: restId, page: currentPage, page_size: PAGE_SIZE }
+                if (searchQuery.trim()) params.search = searchQuery.trim()
+                const res = await api.get('/menu/items/', { params })
+                setMenuItems(res.data.results || [])
+                setTotalCount(res.data.count || 0)
+            } catch {
+                toast.error('Failed to load menu items.')
+            } finally {
+                setLoading(false)
+            }
+        }
+        if (restId) fetchData()
+    }, [restId, currentPage, searchQuery])
+
+    const refetchItems = async () => {
+        setLoading(true)
         try {
-            const [menuRes, catRes] = await Promise.all([
-                api.get(`/menu/items/?restaurant=${user?.restaurant_id || ''}`),
-                api.get('/menu/categories/'),
-            ])
-            setMenuItems(menuRes.data.results)
-            setCategories(catRes.data.results)
+            const res = await api.get('/menu/items/', {
+                params: { restaurant: restId, page: currentPage, page_size: PAGE_SIZE }
+            })
+            setMenuItems(res.data.results || [])
+            setTotalCount(res.data.count || 0)
         } catch {
-            toast.error('Failed to sync menu cluster.')
+            toast.error('Failed to reload items.')
         } finally {
             setLoading(false)
         }
@@ -88,9 +118,7 @@ const RestaurantMenu = () => {
     }
 
     const handleChange = (e) => {
-        const value = e.target.type === 'checkbox'
-            ? e.target.checked
-            : e.target.value
+        const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value
         setFormData({ ...formData, [e.target.name]: value })
     }
 
@@ -122,29 +150,24 @@ const RestaurantMenu = () => {
             }
 
             setShowModal(false)
-            fetchData()
+            refetchItems()
         } catch (error) {
-            toast.error('Protocol violation: Failed to save.')
+            toast.error('Failed to save item.')
         } finally {
             setSubmitting(false)
         }
     }
 
     const handleDelete = async (id) => {
-        if (!window.confirm('CAUTION: This will expunge the dish formulation. Proceed?')) return
+        if (!window.confirm('Delete this menu item?')) return
         try {
             await api.delete(`/menu/items/${id}/`)
-            setMenuItems(menuItems.filter(i => i.id !== id))
             toast.success('Item deleted.')
+            refetchItems()
         } catch {
             toast.error('Failed to delete item.')
         }
     }
-
-    const filteredItems = menuItems.filter(i => 
-        i.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        i.description.toLowerCase().includes(searchQuery.toLowerCase())
-    )
 
     if (loading) {
         return (
@@ -200,15 +223,23 @@ const RestaurantMenu = () => {
                     <div className="flex items-center gap-6">
                         <div className="flex items-center gap-2">
                             <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Live: {menuItems.filter(i => i.is_available).length}</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{totalCount} Total Items</span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full bg-rose-500" />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Hidden: {menuItems.filter(i => !i.is_available).length}</span>
+                            <div className="w-2 h-2 rounded-full bg-primary-500" />
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{categories.length} Sections</span>
                         </div>
                     </div>
-                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-300">
-                        Operational Sync Active
+                    <div className="flex items-center gap-3">
+                        {totalPages > 1 && (
+                            <>
+                                <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
+                                    className="w-8 h-8 rounded-xl border border-slate-200 bg-white flex items-center justify-center text-slate-500 hover:bg-slate-50 disabled:opacity-40 text-sm font-black transition-all">‹</button>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{currentPage}/{totalPages}</span>
+                                <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
+                                    className="w-8 h-8 rounded-xl border border-slate-200 bg-white flex items-center justify-center text-slate-500 hover:bg-slate-50 disabled:opacity-40 text-sm font-black transition-all">›</button>
+                            </>
+                        )}
                     </div>
                 </div>
 
@@ -226,7 +257,7 @@ const RestaurantMenu = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {filteredItems.length === 0 ? (
+                                {menuItems.length === 0 ? (
                                     <tr>
                                         <td colSpan={5} className="px-8 py-24 text-center">
                                              <div className="flex flex-col items-center">
@@ -236,7 +267,7 @@ const RestaurantMenu = () => {
                                              </div>
                                         </td>
                                     </tr>
-                                ) : filteredItems.map(item => (
+                                ) : menuItems.map(item => (
                                     <tr key={item.id} className="border-b border-slate-50 hover:bg-slate-50/80 transition-colors group tracking-tight">
                                         <td className="px-8 py-5">
                                             <div className="flex items-center gap-5">
@@ -258,9 +289,20 @@ const RestaurantMenu = () => {
                                             </div>
                                         </td>
                                         <td className="px-8 py-5">
-                                            <span className="text-[9px] font-black uppercase tracking-widest text-primary-500/60 bg-primary-50 px-3 py-1 rounded-lg border border-primary-100/50">
-                                                {item.category_name}
-                                            </span>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-6 h-6 rounded-lg overflow-hidden bg-slate-50 border border-slate-100 flex-shrink-0">
+                                                        {item.category_image ? (
+                                                            <img src={getImageUrl(item.category_image)} alt="" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-slate-300">
+                                                                <Layers size={12} />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <span className="text-[9px] font-black uppercase tracking-widest text-primary-500/60 bg-primary-50 px-3 py-1 rounded-lg border border-primary-100/50">
+                                                        {item.category_name}
+                                                    </span>
+                                                </div>
                                         </td>
                                         <td className="px-8 py-5 text-right font-black text-slate-900">
                                             <span className="text-base tracking-tighter leading-none">₹{item.price}</span>
@@ -347,18 +389,35 @@ const RestaurantMenu = () => {
                                             Manage Categories +
                                         </Link>
                                     </div>
-                                    <select
-                                        name="category"
-                                        value={formData.category}
-                                        onChange={handleChange}
-                                        className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all shadow-inner appearance-none bg-no-repeat bg-[right_1.5rem_center]"
-                                        required
-                                    >
-                                        <option value="" disabled>Select Collection Segment…</option>
-                                        {categories.map(c => (
-                                            <option key={c.id} value={c.id}>{c.name}</option>
-                                        ))}
-                                    </select>
+                                    <div className="relative">
+                                        <select
+                                            name="category"
+                                            value={formData.category}
+                                            onChange={handleChange}
+                                            className="w-full pl-6 pr-12 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all shadow-inner appearance-none bg-no-repeat bg-[right_1.5rem_center]"
+                                            required
+                                        >
+                                            <option value="" disabled>Select Collection Segment…</option>
+                                            {categories.map(c => (
+                                                <option key={c.id} value={c.id}>{c.name}</option>
+                                            ))}
+                                        </select>
+                                        {formData.category && (
+                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg overflow-hidden border border-slate-200 bg-white shadow-sm pointer-events-none">
+                                                {categories.find(c => String(c.id) === String(formData.category))?.image ? (
+                                                    <img 
+                                                        src={getImageUrl(categories.find(c => String(c.id) === String(formData.category)).image)} 
+                                                        alt="" 
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center text-slate-300">
+                                                        <Layers size={14} />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-[1.5fr_1fr] gap-8">
@@ -465,3 +524,4 @@ const RestaurantMenu = () => {
 }
 
 export default RestaurantMenu
+

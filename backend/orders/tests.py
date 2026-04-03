@@ -122,7 +122,21 @@ class DeliveryTrackingAPITests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_assigned_delivery_agent_can_accept_and_update_location(self):
+    def test_admin_cannot_assign_before_restaurant_starts_preparing(self):
+        self.order.status = Order.Status.PENDING
+        self.order.save(update_fields=['status'])
+        self.client.force_authenticate(self.admin)
+        url = reverse('order-assign-delivery', kwargs={'order_id': self.order.id})
+
+        response = self.client.post(
+            url,
+            {'delivery_agent_id': self.agent.id},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_assigned_delivery_agent_must_follow_accept_pick_deliver_flow(self):
         self.order.delivery_agent = self.agent
         self.order.delivery_status = Order.DeliveryStatus.ASSIGNED
         self.order.save()
@@ -137,8 +151,30 @@ class DeliveryTrackingAPITests(APITestCase):
 
         self.assertEqual(accept_response.status_code, status.HTTP_200_OK)
         self.order.refresh_from_db()
-        self.assertEqual(self.order.status, Order.Status.OUT_FOR_DELIVERY)
+        self.assertEqual(self.order.status, Order.Status.PREPARING)
         self.assertIsNotNone(self.order.accepted_at)
+
+        invalid_response = self.client.post(
+            url,
+            {
+                'delivery_status': Order.DeliveryStatus.DELIVERING,
+                'delivery_lat': 9.9312,
+                'delivery_lng': 76.2673,
+            },
+            format='json',
+        )
+
+        self.assertEqual(invalid_response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        pick_response = self.client.post(
+            url,
+            {'delivery_status': Order.DeliveryStatus.PICKED},
+            format='json',
+        )
+
+        self.assertEqual(pick_response.status_code, status.HTTP_200_OK)
+        self.order.refresh_from_db()
+        self.assertEqual(self.order.status, Order.Status.OUT_FOR_DELIVERY)
 
         location_response = self.client.post(
             url,
@@ -208,3 +244,15 @@ class DeliveryTrackingAPITests(APITestCase):
         self.assertEqual(self.order.status, Order.Status.DELIVERED)
         self.assertEqual(self.order.delivery_status, Order.DeliveryStatus.DELIVERED)
         self.assertEqual(self.agent.earnings, Decimal('50.00'))
+
+    def test_restaurant_cannot_mark_order_out_for_delivery_directly(self):
+        self.client.force_authenticate(self.restaurant_owner)
+        url = reverse('order-update-status', kwargs={'order_id': self.order.id})
+
+        response = self.client.post(
+            url,
+            {'status': Order.Status.OUT_FOR_DELIVERY},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
+import { getImageUrl } from '../../utils/helpers'
 import api from '../../api/axios'
 import toast from 'react-hot-toast'
 import { 
@@ -121,8 +122,16 @@ const RestaurantProfile = () => {
                             </div>
 
                             <div className="relative mb-8">
-                                <div className="w-40 h-40 rounded-[48px] bg-slate-900 flex items-center justify-center text-white text-5xl font-black shadow-2xl shadow-slate-900/20 border-8 border-white relative z-10 group-hover:rotate-3 transition-transform duration-500">
-                                    {user?.restaurant?.name?.[0]?.toUpperCase() || user?.username?.[0]?.toUpperCase()}
+                                <div className="w-40 h-40 rounded-[48px] bg-slate-900 flex items-center justify-center text-white text-5xl font-black shadow-2xl shadow-slate-900/20 border-8 border-white relative z-10 group-hover:rotate-3 transition-transform duration-500 overflow-hidden">
+                                    {user?.restaurant?.logo ? (
+                                        <img 
+                                            src={getImageUrl(user.restaurant.logo)} 
+                                            alt={user.restaurant.name} 
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        user?.restaurant?.name?.[0]?.toUpperCase() || user?.username?.[0]?.toUpperCase()
+                                    )}
                                 </div>
                                 <div className="absolute -inset-4 bg-primary-500/10 rounded-[60px] blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                                 <button className="absolute -bottom-2 -right-2 w-12 h-12 bg-white rounded-2xl shadow-xl border border-slate-100 flex items-center justify-center text-primary-600 hover:bg-primary-600 hover:text-white transition-all z-20 active:scale-90">

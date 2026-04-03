@@ -36,6 +36,7 @@ else:
     print('Superuser created!')
 "
 
+
 # > 💡 **WHY build.sh?**
 # > Render runs this script automatically when deploying.
 # > It installs packages, collects static files, and

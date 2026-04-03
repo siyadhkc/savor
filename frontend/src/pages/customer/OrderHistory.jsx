@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { downloadInvoice, listOrders } from '../../api/orders'
 import { formatOrderId, formatDate } from '../../utils/helpers'
+import { getCustomerStatusCopy, getCustomerTimeline } from '../../utils/orderFlow'
 import {
     Clock, 
     ChefHat, 
@@ -31,7 +32,7 @@ const STATUS_CONFIG = {
         border: 'border-amber-100/50',
         text: 'text-amber-600',
         dot: 'bg-amber-500',
-        label: 'Node Pending',
+        label: 'Order placed',
     },
     preparing: {
         icon: ChefHat,
@@ -39,7 +40,7 @@ const STATUS_CONFIG = {
         border: 'border-blue-100/50',
         text: 'text-blue-600',
         dot: 'bg-blue-500',
-        label: 'In Formulation',
+        label: 'Preparing',
     },
     out_for_delivery: {
         icon: Truck,
@@ -47,7 +48,7 @@ const STATUS_CONFIG = {
         border: 'border-violet-100/50',
         text: 'text-violet-600',
         dot: 'bg-violet-500',
-        label: 'Transit Protocol',
+        label: 'On the way',
     },
     delivered: {
         icon: CheckCircle2,
@@ -63,7 +64,7 @@ const STATUS_CONFIG = {
         border: 'border-rose-100/50',
         text: 'text-rose-600',
         dot: 'bg-rose-500',
-        label: 'Nullified',
+        label: 'Cancelled',
     },
 }
 
@@ -149,8 +150,8 @@ const OrderHistory = () => {
                              <div className="w-1.5 h-1.5 rounded-full bg-primary-500" />
                              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 italic">Financial Transaction Log</span>
                         </div>
-                        <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter">Order <span className="text-primary-600 font-light italic">Manifest</span></h1>
-                        <p className="text-slate-500 font-medium mt-2">Comprehensive history of your culinary acquisitions and logistics.</p>
+                        <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter">Your <span className="text-primary-600 font-light italic">Orders</span></h1>
+                        <p className="text-slate-500 font-medium mt-2">Track every order, rider update, and invoice from one place.</p>
                     </div>
 
                     <div className="relative group">
@@ -176,8 +177,8 @@ const OrderHistory = () => {
                             <div className="w-24 h-24 mx-auto bg-slate-50 border border-slate-100 rounded-[32px] flex items-center justify-center mb-8">
                                 <ShoppingBag size={48} className="text-slate-100" strokeWidth={1} />
                             </div>
-                            <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-2">Null Manifest</h2>
-                            <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest mb-10">No transactional records found on this node.</p>
+                            <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-2">No orders yet</h2>
+                            <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest mb-10">Place your first order to start tracking it here.</p>
                             <button
                                 onClick={() => navigate('/restaurants')}
                                 className="inline-flex items-center gap-3 px-8 py-4 bg-slate-900 text-white font-black text-xs uppercase tracking-widest rounded-[20px] hover:bg-primary-600 active:scale-95 transition-all shadow-xl shadow-slate-900/10"
@@ -192,6 +193,7 @@ const OrderHistory = () => {
                             const StatusIcon = status.icon
                             const isExpanded = expandedOrder === order.id
                             const isNew = location.state?.newOrderId === order.id
+                            const timeline = getCustomerTimeline(order)
 
                             return (
                                 <motion.div
@@ -214,7 +216,7 @@ const OrderHistory = () => {
                                             </div>
                                             <div className="min-w-0">
                                                 <div className="flex items-center gap-2 mb-1">
-                                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Node ID:</span>
+                                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Order ID:</span>
                                                     <span className="text-base font-black text-slate-900 tracking-tighter">{formatOrderId(order.id)}</span>
                                                 </div>
                                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">
@@ -227,10 +229,10 @@ const OrderHistory = () => {
                                             <div className="flex items-center gap-4">
                                                 <div className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${status.bg} ${status.text} ${status.border}`}>
                                                     <div className={`w-2 h-2 rounded-full ${status.dot} animate-pulse`} />
-                                                    {status.label}
+                                                    {getCustomerStatusCopy(order)}
                                                 </div>
                                                 <div className="flex flex-col items-end">
-                                                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-300">Net Yield</span>
+                                                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-300">Total paid</span>
                                                     <span className="text-2xl font-black text-slate-900 tracking-tighter leading-none">₹{order.total_amount}</span>
                                                 </div>
                                             </div>
@@ -255,7 +257,7 @@ const OrderHistory = () => {
                                                         <div>
                                                             <div className="flex items-center gap-2 mb-6">
                                                                 <Package size={14} className="text-primary-500" />
-                                                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Payload Contents</span>
+                                                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Items in this order</span>
                                                             </div>
                                                             <div className="space-y-3">
                                                                 {order.items.map(item => (
@@ -275,7 +277,7 @@ const OrderHistory = () => {
                                                                 <div className="mt-10">
                                                                     <div className="flex items-center gap-2 mb-6">
                                                                         <Activity size={14} className="text-emerald-500" />
-                                                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tactical Tracking Map</span>
+                                                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Live tracking</span>
                                                                     </div>
                                                                     <LiveTracking orderId={order.id} />
                                                                 </div>
@@ -287,10 +289,52 @@ const OrderHistory = () => {
                                                             <div>
                                                                 <div className="flex items-center gap-2 mb-4">
                                                                     <MapPin size={14} className="text-rose-500" />
-                                                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Logistics Destination</span>
+                                                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Delivery address</span>
                                                                 </div>
                                                                 <div className="bg-white p-6 rounded-3xl border border-slate-200/50 shadow-sm italic text-sm font-bold text-slate-600 leading-relaxed">
                                                                     {order.address}
+                                                                </div>
+                                                            </div>
+
+                                                            <div>
+                                                                <div className="flex items-center gap-2 mb-4">
+                                                                    <Truck size={14} className="text-primary-500" />
+                                                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Order progress</span>
+                                                                </div>
+                                                                <div className="space-y-3">
+                                                                    {timeline.map((step, index) => {
+                                                                        const isComplete = step.state === 'complete'
+                                                                        const isCurrent = step.state === 'current'
+
+                                                                        return (
+                                                                            <div
+                                                                                key={step.key}
+                                                                                className={`rounded-3xl border px-5 py-4 ${
+                                                                                    isCurrent
+                                                                                        ? 'border-primary-200 bg-primary-50'
+                                                                                        : isComplete
+                                                                                            ? 'border-emerald-200 bg-emerald-50'
+                                                                                            : 'border-slate-200 bg-white'
+                                                                                }`}
+                                                                            >
+                                                                                <div className="flex items-start gap-4">
+                                                                                    <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-black ${
+                                                                                        isCurrent
+                                                                                            ? 'bg-primary-600 text-white'
+                                                                                            : isComplete
+                                                                                                ? 'bg-emerald-600 text-white'
+                                                                                                : 'bg-slate-100 text-slate-500'
+                                                                                    }`}>
+                                                                                        {index + 1}
+                                                                                    </div>
+                                                                                    <div>
+                                                                                        <p className="text-sm font-black text-slate-900">{step.title}</p>
+                                                                                        <p className="mt-1 text-xs font-medium text-slate-500">{step.description}</p>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        )
+                                                                    })}
                                                                 </div>
                                                             </div>
 
@@ -298,12 +342,12 @@ const OrderHistory = () => {
                                                                 <div>
                                                                     <div className="flex items-center gap-2 mb-4">
                                                                         <Truck size={14} className="text-violet-500" />
-                                                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Assigned Delivery Agent</span>
+                                                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Your delivery partner</span>
                                                                     </div>
                                                                     <div className="bg-white p-6 rounded-3xl border border-slate-200/50 shadow-sm">
                                                                         <p className="text-sm font-black text-slate-900">{order.delivery_agent_name}</p>
                                                                         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-2">
-                                                                            {order.delivery_status ? order.delivery_status.replace(/_/g, ' ') : 'Awaiting dispatch'}
+                                                                            {getCustomerStatusCopy(order)}
                                                                         </p>
                                                                     </div>
                                                                 </div>

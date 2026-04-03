@@ -31,7 +31,7 @@ class RestaurantViewSet(viewsets.ModelViewSet):
     # PDF requirement: search & filter
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['is_active']
-    search_fields = ['name', 'address']
+    search_fields = ['name', 'address', 'cuisine']
     ordering_fields = ['name', 'created_at']
     """
     WHY three filter backends?
@@ -45,6 +45,14 @@ class RestaurantViewSet(viewsets.ModelViewSet):
     over how data is fetched and displayed.
     PDF specifically requires search & filter on listings.
     """
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        cuisine_id = self.request.query_params.get('cuisine_id')
+        if cuisine_id:
+            # Filter restaurants that have at least one menu item with this cuisine
+            queryset = queryset.filter(menu_items__cuisine_id=cuisine_id).distinct()
+        return queryset
 
     def get_permissions(self):
         """

@@ -19,6 +19,12 @@ const RestaurantRoute = ({ children }) => {
 
     // Must be restaurant
     if (user.role !== 'restaurant') {
+        if (user.is_staff === true || user.role === 'admin') {
+            return <Navigate to="/admin" replace />
+        }
+        if (user.role === 'delivery') {
+            return <Navigate to="/delivery/dashboard" replace />
+        }
         return <Navigate to="/" replace />
     }
 

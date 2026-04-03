@@ -35,17 +35,19 @@ const AdminDashboard = () => {
     const fetchStats = async () => {
         try {
             const [ordersRes, usersRes, restaurantsRes] = await Promise.all([
-                api.get('/orders/orders/'),
-                api.get('/users/all/'),
-                api.get('/restaurant/restaurants/'),
+                api.get('/orders/orders/', { params: { page_size: 50 } }),  // enough for charts
+                api.get('/users/all/', { params: { page_size: 1 } }),        // we only need count
+                api.get('/restaurant/restaurants/', { params: { page_size: 1 } }),  // we only need count
             ])
 
-            const orders = ordersRes.data.results
+            const orders = ordersRes.data.results || []
 
+            // Revenue: sum all delivered orders in the loaded batch
             const totalRevenue = orders
                 .filter(o => o.status === 'delivered')
-                .reduce((sum, o) => sum + parseFloat(o.total_amount), 0)
+                .reduce((sum, o) => sum + parseFloat(o.total_amount || 0), 0)
 
+            // Status breakdown for charts
             const statusCounts = orders.reduce((acc, order) => {
                 acc[order.status] = (acc[order.status] || 0) + 1
                 return acc
@@ -56,9 +58,9 @@ const AdminDashboard = () => {
             )
 
             setStats({
-                totalOrders: ordersRes.data.count,
-                totalUsers: usersRes.data.count,
-                totalRestaurants: restaurantsRes.data.count,
+                totalOrders: ordersRes.data.count,         // real total from API
+                totalUsers: usersRes.data.count,           // real total from API
+                totalRestaurants: restaurantsRes.data.count, // real total from API
                 totalRevenue: totalRevenue.toFixed(2),
                 recentOrders: orders.slice(0, 8),
                 ordersByStatus,

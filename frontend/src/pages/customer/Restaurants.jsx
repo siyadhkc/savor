@@ -3,19 +3,45 @@ import { useSearchParams, Link } from 'react-router-dom'
 import api from '../../api/axios'
 import RestaurantCard from '../../components/RestaurantCard'
 import Footer from '../../components/Footer'
-import { Search, Compass, Loader2, ChevronLeft, ChevronRight, SlidersHorizontal, X, ArrowLeft, Utensils, Leaf } from 'lucide-react'
+import { Search, Compass, Loader2, ChevronLeft, ChevronRight, SlidersHorizontal, X, Utensils, Leaf } from 'lucide-react'
 import FloatingCart from '../../components/FloatingCart'
 import { motion, AnimatePresence } from 'framer-motion'
+import { getImageUrl } from '../../utils/helpers'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const ITEMS_PER_PAGE = 9
+const ITEMS_PER_PAGE = 8
+
+const getVisiblePages = (currentPage, totalPages) => {
+    if (totalPages <= 1) return [1]
+
+    const pages = new Set([1, totalPages, currentPage, currentPage - 1, currentPage + 1])
+
+    if (currentPage <= 3) {
+        pages.add(2)
+        pages.add(3)
+    }
+
+    if (currentPage >= totalPages - 2) {
+        pages.add(totalPages - 1)
+        pages.add(totalPages - 2)
+    }
+
+    return [...pages]
+        .filter((page) => page >= 1 && page <= totalPages)
+        .sort((a, b) => a - b)
+        .reduce((acc, page, index, arr) => {
+            if (index > 0 && page - arr[index - 1] > 1) acc.push('…')
+            acc.push(page)
+            return acc
+        }, [])
+}
 
 const Restaurants = () => {
     const [searchParams, setSearchParams] = useSearchParams()
 
     // ── State ──────────────────────────────────────────────────────────────────
     const [restaurants, setRestaurants] = useState([])
-    const [categories,  setCategories]  = useState([])
+    const [cuisines,    setCuisines]    = useState([])
     const [totalCount,  setTotalCount]  = useState(0)
     const [loading,     setLoading]     = useState(true)
     const [catLoading,  setCatLoading]  = useState(true)
@@ -38,6 +64,9 @@ const Restaurants = () => {
     }
 
     const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE)
+    const startResult = totalCount === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1
+    const endResult = totalCount === 0 ? 0 : Math.min(currentPage * ITEMS_PER_PAGE, totalCount)
+    const visiblePages = getVisiblePages(currentPage, totalPages)
 
     // ── Sync input when URL changes externally ─────────────────────────────────
     useEffect(() => {
@@ -46,15 +75,15 @@ const Restaurants = () => {
 
     // ── Fetch categories once ──────────────────────────────────────────────────
     useEffect(() => {
-        const fetchCategories = async () => {
+        const fetchCuisines = async () => {
             try {
-                const res = await api.get('/menu/categories/')
-                setCategories(res.data.results || [])
+                const res = await api.get('/menu/cuisines/')
+                setCuisines(res.data.results || [])
             } finally {
                 setCatLoading(false)
             }
         }
-        fetchCategories()
+        fetchCuisines()
     }, [])
 
     // ── Fetch restaurants whenever URL params change ────────────────────────────
@@ -67,7 +96,7 @@ const Restaurants = () => {
                 is_active: true,
             }
             if (search)     params.search   = search
-            if (categoryId) params.category = categoryId
+            if (categoryId) params.cuisine_id = categoryId // Pass as cuisine_id
             if (isVegOnly)  params.is_veg   = true
 
             const res = await api.get('/restaurant/restaurants/', { params })
@@ -84,6 +113,17 @@ const Restaurants = () => {
     useEffect(() => {
         fetchRestaurants()
     }, [fetchRestaurants])
+
+    useEffect(() => {
+        if (currentPage < 1) {
+            updateParams({ page: 1 })
+            return
+        }
+
+        if (totalPages > 0 && currentPage > totalPages) {
+            updateParams({ page: totalPages })
+        }
+    }, [currentPage, totalPages])
 
     // Scroll to top when results change
     useEffect(() => {
@@ -218,7 +258,7 @@ const Restaurants = () => {
                                         </div>
                                     ))
                                 ) : (
-                                    categories.map((cat) => (
+                                    cuisines.map((cat) => (
                                         <button
                                             key={cat.id}
                                             onClick={() => handleCategorySelect(String(cat.id))}
@@ -232,7 +272,7 @@ const Restaurants = () => {
                                                 <div className="w-full h-full rounded-full bg-slate-50 overflow-hidden relative">
                                                     {cat.image ? (
                                                         <img
-                                                            src={`${import.meta.env.VITE_API_URL?.replace('/api', '') || ''}${cat.image}`}
+                                                            src={getImageUrl(cat.image)}
                                                             alt={cat.name}
                                                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                                                         />
@@ -283,7 +323,7 @@ const Restaurants = () => {
                             >
                                 All
                             </button>
-                            {categories.map(cat => (
+                            {cuisines.map(cat => (
                                 <button
                                     key={cat.id}
                                     onClick={() => handleCategorySelect(String(cat.id))}
@@ -365,7 +405,7 @@ const Restaurants = () => {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ duration: 0.3 }}
-                            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8"
+                            className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
                         >
                             {restaurants.map((restaurant) => (
                                 <RestaurantCard key={restaurant.id} restaurant={restaurant} />
@@ -374,53 +414,65 @@ const Restaurants = () => {
 
                         {/* Pagination */}
                         {totalPages > 1 && (
-                            <div className="flex items-center justify-center gap-3 mt-14">
-                                <button
-                                    onClick={() => handlePageChange(currentPage - 1)}
-                                    disabled={currentPage === 1}
-                                    className="p-3 rounded-xl border border-slate-200 bg-white hover:bg-primary-50 hover:border-primary-300 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                                    aria-label="Previous page"
-                                >
-                                    <ChevronLeft size={20} />
-                                </button>
+                            <div className="mt-14 rounded-[32px] border border-slate-200 bg-white px-4 py-5 shadow-sm sm:px-6">
+                                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                                    <div className="text-center lg:text-left">
+                                        <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">
+                                            Page {currentPage} of {totalPages}
+                                        </p>
+                                        <p className="mt-1 text-sm font-semibold text-slate-600">
+                                            Showing {startResult}-{endResult} of {totalCount} restaurants
+                                        </p>
+                                    </div>
 
-                                <div className="flex items-center gap-2">
-                                    {Array.from({ length: totalPages }, (_, i) => i + 1)
-                                        .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
-                                        .reduce((acc, p, idx, arr) => {
-                                            if (idx > 0 && p - arr[idx - 1] > 1) acc.push('…')
-                                            acc.push(p)
-                                            return acc
-                                        }, [])
-                                        .map((p, idx) =>
-                                            p === '…' ? (
-                                                <span key={`ellipsis-${idx}`} className="px-2 text-slate-400 font-bold">…</span>
-                                            ) : (
-                                                <button
-                                                    key={p}
-                                                    onClick={() => handlePageChange(p)}
-                                                    className={`w-10 h-10 rounded-xl font-bold text-sm transition-all ${
-                                                        currentPage === p
-                                                            ? 'bg-primary-600 text-white shadow-md'
-                                                            : 'bg-white border border-slate-200 text-slate-600 hover:bg-primary-50 hover:border-primary-300'
-                                                    }`}
-                                                    aria-current={currentPage === p ? 'page' : undefined}
-                                                >
-                                                    {p}
-                                                </button>
-                                            )
-                                        )
-                                    }
+                                    <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+                                        <button
+                                            onClick={() => handlePageChange(currentPage - 1)}
+                                            disabled={currentPage === 1}
+                                            className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-700 transition-all hover:border-primary-300 hover:bg-primary-50 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
+                                            aria-label="Previous page"
+                                        >
+                                            <ChevronLeft size={18} />
+                                            Previous
+                                        </button>
+
+                                        <div className="flex max-w-full items-center justify-center gap-2 overflow-x-auto rounded-2xl bg-slate-50 px-2 py-2 scrollbar-hide">
+                                            {visiblePages.map((page, index) =>
+                                                page === '…' ? (
+                                                    <span
+                                                        key={`ellipsis-${index}`}
+                                                        className="px-2 text-sm font-bold text-slate-400"
+                                                    >
+                                                        …
+                                                    </span>
+                                                ) : (
+                                                    <button
+                                                        key={page}
+                                                        onClick={() => handlePageChange(page)}
+                                                        className={`h-11 min-w-11 rounded-xl px-3 text-sm font-black transition-all ${
+                                                            currentPage === page
+                                                                ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/20'
+                                                                : 'bg-white text-slate-600 hover:bg-primary-50 hover:text-primary-700'
+                                                        }`}
+                                                        aria-current={currentPage === page ? 'page' : undefined}
+                                                    >
+                                                        {page}
+                                                    </button>
+                                                )
+                                            )}
+                                        </div>
+
+                                        <button
+                                            onClick={() => handlePageChange(currentPage + 1)}
+                                            disabled={currentPage === totalPages}
+                                            className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-700 transition-all hover:border-primary-300 hover:bg-primary-50 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
+                                            aria-label="Next page"
+                                        >
+                                            Next
+                                            <ChevronRight size={18} />
+                                        </button>
+                                    </div>
                                 </div>
-
-                                <button
-                                    onClick={() => handlePageChange(currentPage + 1)}
-                                    disabled={currentPage === totalPages}
-                                    className="p-3 rounded-xl border border-slate-200 bg-white hover:bg-primary-50 hover:border-primary-300 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                                    aria-label="Next page"
-                                >
-                                    <ChevronRight size={20} />
-                                </button>
                             </div>
                         )}
                     </>

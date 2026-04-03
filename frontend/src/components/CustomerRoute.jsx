@@ -39,6 +39,10 @@ const CustomerRoute = ({ children }) => {
         return <Navigate to="/restaurant-admin" replace />
     }
 
+    if (user.role === 'delivery') {
+        return <Navigate to="/delivery/dashboard" replace />
+    }
+
     return children
 }
 
