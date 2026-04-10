@@ -66,5 +66,29 @@ If missing, it falls back to **Unsplash URLs** (used on the live Render server).
 
 ---
 
+## `/menu_items/` — Individual Dish Images (New!)
+
+Place your dish-specific images here. The script uses **Base Names** for mapping.
+
+**Naming Pattern:** `dish_name.jpg` (lowercase, underscore instead of space)
+
+| Filename (Example) | Base Dish Name |
+|---|---|
+| `chicken_biryani.jpg` | Chicken Biryani |
+| `beef_biryani.jpg` | Beef Biryani |
+| `chicken_burger.jpg` | Chicken Burger |
+| `margherita_pizza.jpg` | Margherita Pizza |
+| `chicken_mandhi.jpg` | Chicken Mandhi |
+| `fish_curry_meals.jpg` | Fish Curry Meals |
+| `falooda.jpg` | Falooda |
+| `chicken_fried_rice.jpg`| Chicken Fried Rice |
+| `full_shawaya.jpg` | Full Shawaya |
+| `puttu_and_kadala.jpg` | Puttu and Kadala |
+| `sharjah_shake.jpg` | Sharjah Shake |
+
+> **Pro Tip:** You don't need 100 different filenames. If you have "Chicken Biryani Special" and "Chicken Biryani Combo", both will automatically use `chicken_biryani.jpg` if found.
+
+---
+
 > **Tip:** Recommended image size: **600×400px JPG**, max 500KB each.
-> Images not found here will automatically use Unsplash fallback URLs.
+> **Note:** Unsplash fallbacks have been removed. If a menu image is missing, it will now fall back to the **Cuisine image** (local).

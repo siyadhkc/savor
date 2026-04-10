@@ -308,24 +308,22 @@ const Home = () => {
 
                             <div 
                                 ref={scrollRef}
-                                className="flex items-center gap-6 sm:gap-10 overflow-x-auto pb-4 pt-2 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide snap-x transition-all duration-300"
+                                className="flex items-center gap-6 sm:gap-10 overflow-x-auto pb-4 pt-2 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide snap-x transition-all duration-300 transform-gpu"
                             >
                                 {categories.map((cat, idx) => (
-                                    <motion.button
+                                    <button
                                         key={idx}
-                                        initial={{ opacity: 0, x: 20 }}
-                                        whileInView={{ opacity: 1, x: 0 }}
-                                        viewport={{ once: true }}
-                                        transition={{ delay: Math.min(idx * 0.05, 0.4) }}
                                         onClick={() => goToRestaurants({ category: cat.id })}
                                         className="group/item flex flex-col items-center gap-3 focus:outline-none shrink-0 snap-start"
                                         style={{ minWidth: '90px' }}
                                     >
-                                        <div className="w-[84px] h-[84px] sm:w-28 sm:h-28 rounded-full overflow-hidden bg-slate-50 border border-slate-200/60 shadow-[0_4px_20px_rgb(0,0,0,0.02)] group-hover/item:border-blue-400 group-hover/item:shadow-[0_8px_30px_rgba(37,99,235,0.08)] group-hover/item:-translate-y-1 transition-all duration-500 shrink-0">
+                                        <div className="w-[84px] h-[84px] sm:w-28 sm:h-28 rounded-full overflow-hidden bg-slate-50 border border-slate-200/60 shadow-[0_4px_20px_rgb(0,0,0,0.02)] group-hover/item:border-blue-400 group-hover/item:shadow-[0_8px_30px_rgba(37,99,235,0.08)] group-hover/item:-translate-y-1 transition-all duration-500 shrink-0 transform-gpu will-change-transform">
                                             {cat.image ? (
                                                 <img
                                                     src={getImageUrl(cat.image)}
                                                     alt={cat.name}
+                                                    loading="lazy"
+                                                    decoding="async"
                                                     className="w-full h-full object-cover group-hover/item:scale-110 transition-transform duration-500"
                                                 />
                                             ) : (
@@ -337,7 +335,7 @@ const Home = () => {
                                         <span className="text-[11px] sm:text-xs font-bold text-slate-700 group-hover/item:text-blue-600 transition-colors text-center line-clamp-1 w-full tracking-tight font-display">
                                             {cat.name}
                                         </span>
-                                    </motion.button>
+                                    </button>
                                 ))}
                             </div>
                         </div>

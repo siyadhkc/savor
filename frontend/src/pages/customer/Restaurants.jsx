@@ -3,7 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom'
 import api from '../../api/axios'
 import RestaurantCard from '../../components/RestaurantCard'
 import Footer from '../../components/Footer'
-import { Search, Compass, Loader2, ChevronLeft, ChevronRight, SlidersHorizontal, X, Utensils, Leaf } from 'lucide-react'
+import { Search, Compass, Loader2, ChevronLeft, ChevronRight, SlidersHorizontal, X, Utensils } from 'lucide-react'
 import FloatingCart from '../../components/FloatingCart'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getImageUrl } from '../../utils/helpers'
@@ -45,7 +45,7 @@ const Restaurants = () => {
     const [totalCount,  setTotalCount]  = useState(0)
     const [loading,     setLoading]     = useState(true)
     const [catLoading,  setCatLoading]  = useState(true)
-    const [isVegOnly,   setIsVegOnly]   = useState(searchParams.get('veg') === 'true')
+
 
     // Derived from URL params — single source of truth
     const search      = searchParams.get('search')   || ''
@@ -97,7 +97,7 @@ const Restaurants = () => {
             }
             if (search)     params.search   = search
             if (categoryId) params.cuisine_id = categoryId // Pass as cuisine_id
-            if (isVegOnly)  params.is_veg   = true
+
 
             const res = await api.get('/restaurant/restaurants/', { params })
             setRestaurants(res.data.results || [])
@@ -108,7 +108,7 @@ const Restaurants = () => {
         } finally {
             setLoading(false)
         }
-    }, [search, categoryId, currentPage, isVegOnly])
+    }, [search, categoryId, currentPage])
 
     useEffect(() => {
         fetchRestaurants()
@@ -151,12 +151,6 @@ const Restaurants = () => {
         updateParams({ category: id === categoryId ? '' : id })
     }
 
-    const handleVegToggle = () => {
-        const nextVeg = !isVegOnly
-        setIsVegOnly(nextVeg)
-        updateParams({ veg: nextVeg ? 'true' : '' })
-    }
-
     const handlePageChange = (p) => {
         if (p < 1 || p > totalPages) return
         updateParams({ page: p })
@@ -164,11 +158,11 @@ const Restaurants = () => {
 
     const handleClearAll = () => {
         setInputValue('')
-        setIsVegOnly(false)
+
         setSearchParams({}, { replace: true })
     }
 
-    const hasFilters = !!search || !!categoryId || isVegOnly
+    const hasFilters = !!search || !!categoryId
 
     // ─── Render ────────────────────────────────────────────────────────────────
     return (
@@ -341,17 +335,6 @@ const Restaurants = () => {
 
                     <div className="h-6 w-px bg-slate-200 mx-2 shrink-0 md:block hidden" />
 
-                    <button 
-                        onClick={handleVegToggle}
-                        className={`flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-black tracking-tight border transition-all shrink-0 group ${
-                            isVegOnly 
-                                ? 'bg-emerald-50 border-emerald-200 text-emerald-700' 
-                                : 'border-slate-200 text-slate-600 hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-700'
-                        }`}
-                    >
-                        <Leaf size={16} className={isVegOnly ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-500'} />
-                        Pure Veg
-                    </button>
 
                     {hasFilters && (
                         <button
@@ -401,7 +384,7 @@ const Restaurants = () => {
                 ) : (
                     <>
                         <motion.div
-                            key={`${search}-${categoryId}-${currentPage}-${isVegOnly}`}
+                            key={`${search}-${categoryId}-${currentPage}`}
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ duration: 0.3 }}

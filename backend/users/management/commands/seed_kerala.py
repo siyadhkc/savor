@@ -18,84 +18,96 @@ from restaurant.models import Restaurant
 User = get_user_model()
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
-LOCAL_IMAGES_DIR = BASE_DIR / 'initial_images'
-USE_LOCAL_IMAGES = (LOCAL_IMAGES_DIR / 'cuisines').exists()
+INITIAL_IMAGES_DIR = BASE_DIR / 'initial_images'
 DEFAULT_PASSWORD = 'password123'
 
 
-def get_image_source(subfolder: str, filename: str, fallback_url: str):
-    path = LOCAL_IMAGES_DIR / subfolder / filename
-    if USE_LOCAL_IMAGES and path.exists():
+def get_image_source(subfolder: str, filename: str):
+    """
+    Checks for a local image in initial_images/<subfolder>/<filename>.
+    If missing, returns a special 'missing' flag.
+    """
+    path = INITIAL_IMAGES_DIR / subfolder / filename
+    if path.exists():
         return ('local', path)
-    return ('url', f'{fallback_url}?q=70&w=800&auto=format&fit=crop')
+    return ('missing', None)
 
 
-def apply_image(instance, field_name: str, image_source):
+def apply_image(instance, field_name: str, image_source, fallback_cuisine=None):
+    """
+    Saves a local image to the instance field.
+    If image_source is 'missing', it tries to use the fallback_cuisine image.
+    """
     kind, value = image_source
+    
     if kind == 'local':
         with open(value, 'rb') as image_file:
             getattr(instance, field_name).save(value.name, File(image_file), save=True)
         return
-    instance.__class__.objects.filter(pk=instance.pk).update(**{field_name: value})
+    
+    # If specific item image is missing, copy from cuisine if provided
+    if fallback_cuisine and fallback_cuisine.image:
+        instance.image = fallback_cuisine.image
+        instance.save(update_fields=['image'])
 
 
 class Command(BaseCommand):
     help = 'Seed Kerala demo data for admin, restaurant, delivery, and customer workflows.'
 
     CUISINE_DATA = {
-        'Biryani': ('biryani.jpg', 'https://images.unsplash.com/photo-1563379091339-03b21bc4a6f8'),
-        'Burger': ('burger.jpg', 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd'),
-        'Pizza': ('pizza.jpg', 'https://images.unsplash.com/photo-1513104890138-7c749659a591'),
-        'Mandhi': ('mandhi.jpg', 'https://images.unsplash.com/photo-1633945274405-b6c8069047b0'),
-        'Seafood': ('seafood.jpg', 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2'),
-        'Tea & Snacks': ('tea_snacks.jpg', 'https://images.unsplash.com/photo-1544787210-282fd23217c6'),
-        'Desserts': ('desserts.jpg', 'https://images.unsplash.com/photo-1551024506-0bccd828d307'),
-        'Chinese': ('chinese.jpg', 'https://images.unsplash.com/photo-1512058564366-18510be2db19'),
-        'Shawaya': ('shawaya.jpg', 'https://images.unsplash.com/photo-1599481238640-4c1288750d7a'),
-        'Breakfast': ('breakfast.jpg', 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666'),
-        'Veg Specials': ('veg_specials.jpg', 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c'),
-        'Juices': ('juices.jpg', 'https://images.unsplash.com/photo-1513558161293-cdaf76589fd8'),
-        'Italian': ('italian.jpg', 'https://images.unsplash.com/photo-1473093226795-af9932fe5856'),
-        'South Indian': ('south_indian.jpg', 'https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8'),
-        'North Indian': ('north_indian.jpg', 'https://images.unsplash.com/photo-1585937421612-70a008356fbe'),
+        'Biryani': 'biryani.jpg',
+        'Burger': 'burger.jpg',
+        'Pizza': 'pizza.jpg',
+        'Mandhi': 'mandhi.jpg',
+        'Seafood': 'seafood.jpg',
+        'Tea & Snacks': 'tea_snacks.jpg',
+        'Desserts': 'desserts.jpg',
+        'Chinese': 'chinese.jpg',
+        'Shawaya': 'shawaya.jpg',
+        'Breakfast': 'breakfast.jpg',
+        'Veg Specials': 'veg_specials.jpg',
+        'Juices': 'juices.jpg',
+        'Italian': 'italian.jpg',
+        'South Indian': 'south_indian.jpg',
+        'North Indian': 'north_indian.jpg',
     }
 
     RESTAURANT_BLUEPRINTS = {
         'Kozhikode': [
-            ('Calicut Paragon', 'Malabar, Seafood', 'calicut_paragon.jpg', 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4'),
-            ('Rahmath Hotel', 'Malabar, Beef Specialty', 'rahmath.jpg', 'https://images.unsplash.com/photo-1552566626-52f8b828add9'),
-            ('Sagar Hotel', 'South Indian, Biryani', 'sagar.jpg', 'https://images.unsplash.com/photo-1504674900247-0877df9cc836'),
-            ('Zains Hotel', 'Traditional Malabar', 'zains.jpg', 'https://images.unsplash.com/photo-1424847651672-bf20a4b0982b'),
-            ('Mezban', 'Fine Dining, North Indian', 'mezban.jpg', 'https://images.unsplash.com/photo-1559339352-11d035aa65de'),
-            ('Topform', 'Biryani, Non-Veg', 'topform.jpg', 'https://images.unsplash.com/photo-1520201163981-8cc95007dd2a'),
-            ('Alakapuri', 'Legendary Malabar', 'alkapuri.jpg', 'https://images.unsplash.com/photo-1511914265872-c40692f694e0'),
-            ("King's Mouth", 'Arabian, Chinese', 'kings_mouth.jpg', 'https://images.unsplash.com/photo-1574096079513-d8259312b785'),
-            ('Hotel de Choice', 'South Indian, Snacks', 'hotel_de_choice.jpg', 'https://images.unsplash.com/photo-1482049016688-2d3e1b311543'),
-            ('M-Grill Kozhikode', 'Grill, BBQ, Continental', 'mgrill_kzd.jpg', 'https://images.unsplash.com/photo-1544025162-d76694265947'),
+            ('Calicut Paragon', 'Malabar, Seafood', 'calicut_paragon.jpg'),
+            ('Rahmath Hotel', 'Malabar, Beef Specialty', 'rahmath.jpg'),
+            ('Sagar Hotel', 'South Indian, Biryani', 'sagar.jpg'),
+            ('Zains Hotel', 'Traditional Malabar', 'zains.jpg'),
+            ('Mezban', 'Fine Dining, North Indian', 'mezban.jpg'),
+            ('Topform', 'Biryani, Non-Veg', 'topform.jpg'),
+            ('Alakapuri', 'Legendary Malabar', 'alkapuri.jpg'),
+            ("King's Mouth", 'Arabian, Chinese', 'kings_mouth.jpg'),
+            ('Hotel de Choice', 'South Indian, Snacks', 'hotel_de_choice.jpg'),
+            ('M-Grill Kozhikode', 'Grill, BBQ, Continental', 'mgrill_kzd.jpg'),
         ],
         'Kochi': [
-            ('Dhe Puttu', 'Specialty Puttu', 'dhe_puttu.jpg', 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0'),
-            ('Paragon Lulu', 'Malabar, Premium', 'paragon_lulu.jpg', 'https://images.unsplash.com/photo-1555396273-367ea474df03'),
-            ('Grand Pavilion', 'South Indian, Seafood', 'grand_pavilion.jpg', 'https://images.unsplash.com/photo-1493770348161-369560ae357d'),
-            ('Hotel Seagull', 'Coastal, Continental', 'hotel_seagull.jpg', 'https://images.unsplash.com/photo-1551632432-c735e8399521'),
-            ('Mullapanthal', 'Traditional Toddy Shop', 'mullapanthal.jpg', 'https://images.unsplash.com/photo-1543353071-873f17a7a088'),
-            ('Arippa', 'Nadan Kerala Food', 'arippa.jpg', 'https://images.unsplash.com/photo-1563379091339-03b21bc4a6f8'),
-            ('Kashi Art Cafe', 'Continental, European', 'kashi_art.jpg', 'https://images.unsplash.com/photo-1502301103665-0b95cc738def'),
-            ('Dal Roti', 'North Indian, Tandoor', 'dal_chili.jpg', 'https://images.unsplash.com/photo-1533777419517-3e4017e2e15a'),
-            ('Paragon Kochi', 'Malabar Express', 'paragon_kochi.jpg', 'https://images.unsplash.com/photo-1551632432-c735e8399521'),
-            ('Ceylon Bake House', 'Bakery, Cafe', 'ceylon_bake.jpg', 'https://images.unsplash.com/photo-1464306208223-e0b4495a5553'),
+            ('Dhe Puttu', 'Specialty Puttu', 'dhe_puttu.jpg'),
+            ('Paragon Lulu', 'Malabar, Premium', 'paragon_lulu.jpg'),
+            ('Grand Pavilion', 'South Indian, Seafood', 'grand_pavilion.jpg'),
+            ('Hotel Seagull', 'Coastal, Continental', 'hotel_seagull.jpg'),
+            ('Mullapanthal', 'Traditional Toddy Shop', 'mullapanthal.jpg'),
+            ('Arippa', 'Nadan Kerala Food', 'arippa.jpg'),
+            ('Kashi Art Cafe', 'Continental, European', 'kashi_art.jpg'),
+            ('Dal Roti', 'North Indian, Tandoor', 'dal_chili.jpg'),
+            ('Paragon Kochi', 'Malabar Express', 'paragon_kochi.jpg'),
+            ('Ceylon Bake House', 'Bakery, Cafe', 'ceylon_bake.jpg'),
         ],
         'Kannur': [
-            ('Hotel Othens', 'Legendary Nadan Food', 'hotel_othens.jpg', 'https://images.unsplash.com/photo-1543353071-873f17a7a088'),
-            ('Barka', 'Mandhi, Arabian', 'barka.jpg', 'https://images.unsplash.com/photo-1633945274405-b6c8069047b0'),
-            ('M-Grill Kannur', 'Modern Grill', 'mgrill_kannur.jpg', 'https://images.unsplash.com/photo-1544025162-d76694265947'),
-            ('Choice Hotel', 'South Indian', 'choice_hotel.jpg', 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4'),
-            ('Sahara', 'Traditional Arabic', 'sahara.jpg', 'https://images.unsplash.com/photo-1599481238640-4c1288750d7a'),
-            ('Onas Kitchen', 'Homemade Kerala', 'onas_kitchen.jpg', 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c'),
-            ('Raandhal', 'Traditional Kerala', 'raandhal.jpg', 'https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8'),
-            ("Sahib's Grill", 'Steaks, BBQ', 'sahib_grill.jpg', 'https://images.unsplash.com/photo-1467003909585-2f8a72700288'),
-            ('Soft Drinks', 'Juices, Desserts', 'soft_drinks.jpg', 'https://images.unsplash.com/photo-1513558161293-cdaf76589fd8'),
-            ('Cabane Special', 'Fine Dining', 'cabane_special.jpg', 'https://images.unsplash.com/photo-1552566626-52f8b828add9'),
+            ('Hotel Othens', 'Legendary Nadan Food', 'hotel_othens.jpg'),
+            ('Barka', 'Mandhi, Arabian', 'barka.jpg'),
+            ('M-Grill Kannur', 'Modern Grill', 'mgrill_kannur.jpg'),
+            ('Choice Hotel', 'South Indian', 'choice_hotel.jpg'),
+            ('Sahara', 'Traditional Arabic', 'sahara.jpg'),
+            ('Onas Kitchen', 'Homemade Kerala', 'onas_kitchen.jpg'),
+            ('Raandhal', 'Traditional Kerala', 'raandhal.jpg'),
+            ("Sahib's Grill", 'Steaks, BBQ', 'sahib_grill.jpg'),
+            ('Soft Drinks', 'Juices, Desserts', 'soft_drinks.jpg'),
+            ('Cabane Special', 'Fine Dining', 'cabane_special.jpg'),
         ],
     }
 
@@ -216,8 +228,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         random.seed(42)
-        mode = 'LOCAL IMAGES' if USE_LOCAL_IMAGES else 'REMOTE IMAGE URLS'
-        self.stdout.write(self.style.WARNING(f'Starting Kerala workflow seed ({mode})'))
+        self.stdout.write(self.style.WARNING('Starting Kerala workflow seed (LOCAL IMAGES ONLY)'))
 
         with transaction.atomic():
             self.clear_existing_data()
@@ -313,9 +324,9 @@ class Command(BaseCommand):
     def create_cuisines(self):
         self.stdout.write('Creating global cuisines...')
         cuisines = {}
-        for name, (filename, image_url) in self.CUISINE_DATA.items():
+        for name, filename in self.CUISINE_DATA.items():
             cuisine = Cuisine.objects.create(name=name)
-            apply_image(cuisine, 'image', get_image_source('cuisines', filename, image_url))
+            apply_image(cuisine, 'image', get_image_source('cuisines', filename))
             cuisines[name] = cuisine
         return cuisines
 
@@ -324,7 +335,7 @@ class Command(BaseCommand):
         restaurants = []
         sequence = 1
         for city, entries in self.RESTAURANT_BLUEPRINTS.items():
-            for index, (name, cuisine_label, logo_name, logo_url) in enumerate(entries):
+            for index, (name, cuisine_label, logo_name) in enumerate(entries):
                 owner_slug = slugify(f'{name}-{city}')
                 owner = self.create_user(
                     email=f'{owner_slug}@savor.com',
@@ -340,7 +351,7 @@ class Command(BaseCommand):
                     phone=f'0484{sequence:06d}' if city == 'Kochi' else f'0495{sequence:06d}',
                     is_active=True,
                 )
-                apply_image(restaurant, 'logo', get_image_source('restaurants', logo_name, logo_url))
+                apply_image(restaurant, 'logo', get_image_source('restaurants', logo_name))
                 categories = self.create_categories_for_restaurant(restaurant, cuisine_label)
                 menu_items = self.create_menu_for_restaurant(restaurant, city, categories)
                 restaurants.append(
@@ -373,6 +384,7 @@ class Command(BaseCommand):
                 suffix = self.get_item_suffix(category.name, item_index)
                 item_name = f'{base_name} {suffix}'.strip()
                 price = Decimal(str(self.get_price(cuisine_name, item_index)))
+                
                 menu_item = MenuItem.objects.create(
                     restaurant=restaurant,
                     category=category,
@@ -384,9 +396,11 @@ class Command(BaseCommand):
                     is_recommended=item_index % 4 == 0,
                     is_popular=item_index % 3 == 0,
                 )
-                _, cuisine_url = self.CUISINE_DATA[cuisine_name]
-                menu_item.image = f'{cuisine_url}?q=60&w=600&auto=format&fit=crop'
-                menu_item.save(update_fields=['image'])
+
+                # Look for item image in menu_items/ based on base_name
+                item_filename = f"{slugify(base_name).replace('-', '_')}.jpg"
+                item_source = get_image_source('menu_items', item_filename)
+                apply_image(menu_item, 'image', item_source, fallback_cuisine=cuisine)
                 menu_items.append(menu_item)
 
         extra_categories = categories[:4]
@@ -395,6 +409,7 @@ class Command(BaseCommand):
             cuisine = self.cuisines[cuisine_name]
             base_name = self.DISHES_BY_CUISINE[cuisine_name][extra_index % len(self.DISHES_BY_CUISINE[cuisine_name])]
             item_name = f'{base_name} Featured'
+            
             menu_item = MenuItem.objects.create(
                 restaurant=restaurant,
                 category=category,
@@ -406,9 +421,10 @@ class Command(BaseCommand):
                 is_recommended=True,
                 is_popular=True,
             )
-            _, cuisine_url = self.CUISINE_DATA[cuisine_name]
-            menu_item.image = f'{cuisine_url}?q=60&w=600&auto=format&fit=crop'
-            menu_item.save(update_fields=['image'])
+            
+            item_filename = f"{slugify(base_name).replace('-', '_')}.jpg"
+            item_source = get_image_source('menu_items', item_filename)
+            apply_image(menu_item, 'image', item_source, fallback_cuisine=cuisine)
             menu_items.append(menu_item)
 
         return menu_items
