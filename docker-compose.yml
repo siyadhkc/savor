@@ -1,0 +1,85 @@
+version: "3.9"
+
+services:
+  # ─────────────────────────────────────────
+  #  PostgreSQL Database
+  # ─────────────────────────────────────────
+  db:
+    image: postgres:15-alpine
+    container_name: savor_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: savor_db
+      POSTGRES_USER: savor_user
+      POSTGRES_PASSWORD: savor_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U savor_user -d savor_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─────────────────────────────────────────
+  #  Django Backend
+  # ─────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: savor_backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DEBUG: "True"
+      SECRET_KEY: docker-dev-secret-key-change-in-production
+      DATABASE_URL: postgres://savor_user:savor_password@db:5432/savor_db
+      ALLOWED_HOSTS: "localhost,127.0.0.1,backend"
+      CORS_ALLOWED_ORIGINS: "http://localhost:5173"
+      # Add your Cloudinary and Razorpay keys here or use a .env file
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-your-cloud-name}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-your-api-key}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-your-api-secret}
+      RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-rzp_test_placeholder}
+      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-placeholder}
+    volumes:
+      - ./backend:/app
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    ports:
+      - "8000:8000"
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py seed_kerala &&
+             python manage.py collectstatic --no-input &&
+             python manage.py runserver 0.0.0.0:8000"
+
+  # ─────────────────────────────────────────
+  #  React Frontend (Dev Server)
+  # ─────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: savor_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: http://localhost:8000/api
+      VITE_RAZORPAY_KEY_ID: ${VITE_RAZORPAY_KEY_ID:-rzp_test_placeholder}
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    command: npm run dev -- --host
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:

@@ -1,0 +1,87 @@
+# ========================
+# OS & System Files
+# ========================
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+*.swp
+*.swo
+*~
+
+# ========================
+# IDE & Editor
+# ========================
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ========================
+# Python / Django (Backend)
+# ========================
+backend/venv/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/**/*.pyc
+backend/**/*.pyo
+backend/*.egg-info/
+backend/dist/
+backend/build/
+backend/.eggs/
+backend/staticfiles/
+backend/media/
+backend/.env
+backend/db.sqlite3
+
+# ========================
+# Node / React (Frontend)
+# ========================
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.production.local
+frontend/.env.test.local
+frontend/.cache/
+
+# ========================
+# Root-level env files
+# ========================
+.env
+.env.local
+.env.*.local
+
+# ========================
+# Docker
+# ========================
+.docker/
+docker-compose.override.yml
+
+# ========================
+# Logs
+# ========================
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ========================
+# Coverage & Testing
+# ========================
+coverage/
+.coverage
+htmlcov/
+.pytest_cache/
+.nyc_output/
+
+# ========================
+# Misc
+# ========================
+*.bak
+*.tmp
+.gemini/
