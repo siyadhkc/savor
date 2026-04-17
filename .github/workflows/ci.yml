@@ -8,7 +8,7 @@ on:
 
 jobs:
   # ──────────────────────────────────────
-  #  Backend: Django Lint + Tests
+  #  Backend: Django Migrations + Tests
   # ──────────────────────────────────────
   backend:
     name: 🐍 Django Backend
@@ -30,15 +30,26 @@ jobs:
           - 5432:5432
 
     env:
-      SECRET_KEY: ci-test-secret-key-not-for-production
+      # Django core
+      SECRET_KEY: ci-only-insecure-key-not-used-in-production
       DEBUG: "True"
-      DATABASE_URL: postgres://savor_user:savor_password@localhost:5432/savor_test_db
-      ALLOWED_HOSTS: localhost,127.0.0.1
-      CLOUDINARY_CLOUD_NAME: placeholder
-      CLOUDINARY_API_KEY: placeholder
-      CLOUDINARY_API_SECRET: placeholder
-      RAZORPAY_KEY_ID: rzp_test_placeholder
-      RAZORPAY_KEY_SECRET: placeholder
+
+      # CI test database — matches the postgres service above
+      DB_NAME: savor_test_db
+      DB_USER: savor_user
+      DB_PASSWORD: savor_password
+      DB_HOST: localhost
+      DB_PORT: "5432"
+
+      # Third-party keys — dummy values are fine for CI
+      # (tests don't actually call Cloudinary, Razorpay, or Gmail)
+      CLOUDINARY_CLOUD_NAME: ci-dummy
+      CLOUDINARY_API_KEY: "000000000000000"
+      CLOUDINARY_API_SECRET: ci-dummy-secret
+      RAZORPAY_KEY_ID: rzp_test_ci_dummy
+      RAZORPAY_KEY_SECRET: ci_dummy_secret
+      EMAIL_HOST_USER: ci@example.com
+      EMAIL_HOST_PASSWORD: ci-dummy-password
 
     steps:
       - name: Checkout code
@@ -93,5 +104,5 @@ jobs:
         working-directory: frontend
         env:
           VITE_API_URL: https://food-delivery-backend-c4pe.onrender.com/api
-          VITE_RAZORPAY_KEY_ID: rzp_test_placeholder
+          VITE_RAZORPAY_KEY_ID: rzp_test_ci_dummy
         run: npm run build
