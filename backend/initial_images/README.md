@@ -92,3 +92,68 @@ Place your dish-specific images here. The script uses **Base Names** for mapping
 
 > **Tip:** Recommended image size: **600×400px JPG**, max 500KB each.
 > **Note:** Unsplash fallbacks have been removed. If a menu image is missing, it will now fall back to the **Cuisine image** (local).
+
+local seed data usage
+## admin
+Email: admin@savor.com
+Username: savor_admin
+Password: password123
+Role: ADMIN
+
+## customer
+| Name         | Email                                                         | Username     |
+| ------------ | ------------------------------------------------------------- | ------------ |
+| Amina Joseph | [customer_amina@savor.com](mailto:customer_amina@savor.com)   | amina_joseph |
+| Nikhil Das   | [customer_nikhil@savor.com](mailto:customer_nikhil@savor.com) | nikhil_das   |
+| Riya Mathew  | [customer_riya@savor.com](mailto:customer_riya@savor.com)     | riya_mathew  |
+| Farhan Ali   | [customer_farhan@savor.com](mailto:customer_farhan@savor.com) | farhan_ali   |
+| Sana Fathima | [customer_sana@savor.com](mailto:customer_sana@savor.com)     | sana_fathima |
+| Arjun Menon  | [customer_arjun@savor.com](mailto:customer_arjun@savor.com)   | arjun_menon  |
+
+## delivery agents
+| Name              | Email                                                             | Username          | Available |
+| ----------------- | ----------------------------------------------------------------- | ----------------- | --------- |
+| Kochi Rider 1     | [rider_kochi_1@savor.com](mailto:rider_kochi_1@savor.com)         | kochi_rider_1     | ✅         |
+| Kochi Rider 2     | [rider_kochi_2@savor.com](mailto:rider_kochi_2@savor.com)         | kochi_rider_2     | ✅         |
+| Kozhikode Rider 1 | [rider_kozhikode_1@savor.com](mailto:rider_kozhikode_1@savor.com) | kozhikode_rider_1 | ✅         |
+| Kozhikode Rider 2 | [rider_kozhikode_2@savor.com](mailto:rider_kozhikode_2@savor.com) | kozhikode_rider_2 | ✅         |
+| Kannur Rider 1    | [rider_kannur_1@savor.com](mailto:rider_kannur_1@savor.com)       | kannur_rider_1    | ✅         |
+| Kannur Rider 2    | [rider_kannur_2@savor.com](mailto:rider_kannur_2@savor.com)       | kannur_rider_2    | ❌         |
+
+## Restaurant owners
+| Restaurant      | Email                                                                             | Username                             |
+| --------------- | --------------------------------------------------------------------------------- | ------------------------------------ |
+| Calicut Paragon | [calicut-paragon-kozhikode@savor.com](mailto:calicut-paragon-kozhikode@savor.com) | restaurant_calicut-paragon-kozhikode |
+| Rahmath Hotel   | [rahmath-hotel-kozhikode@savor.com](mailto:rahmath-hotel-kozhikode@savor.com)     | restaurant_rahmath-hotel-kozhikode   |
+| Sagar Hotel     | [sagar-hotel-kozhikode@savor.com](mailto:sagar-hotel-kozhikode@savor.com)         | restaurant_sagar-hotel-kozhikode     |
+| Restaurant     | Email                                                                   |
+| -------------- | ----------------------------------------------------------------------- |
+| Dhe Puttu      | [dhe-puttu-kochi@savor.com](mailto:dhe-puttu-kochi@savor.com)           |
+| Paragon Lulu   | [paragon-lulu-kochi@savor.com](mailto:paragon-lulu-kochi@savor.com)     |
+| Grand Pavilion | [grand-pavilion-kochi@savor.com](mailto:grand-pavilion-kochi@savor.com) |
+| Restaurant     | Email                                                                     |
+| -------------- | ------------------------------------------------------------------------- |
+| Hotel Othens   | [hotel-othens-kannur@savor.com](mailto:hotel-othens-kannur@savor.com)     |
+| Barka          | [barka-kannur@savor.com](mailto:barka-kannur@savor.com)                   |
+| M-Grill Kannur | [m-grill-kannur-kannur@savor.com](mailto:m-grill-kannur-kannur@savor.com) |
+
+
+
+i will show a work flow of this project 
+## step1 admin
+admin
+show dashboard users,
+## step2 customer
+login
+browse resturent
+add to cart 
+place order
+## step3 restaurant admin
+Login
+Accept order
+Change status
+## Delivery agent 
+Login
+Accept delivery
+Mark delivered
+earning dashboard
